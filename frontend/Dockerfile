@@ -12,6 +12,8 @@ RUN npm run build
 FROM nginx:1.27-alpine AS runtime
 WORKDIR /usr/share/nginx/html
 
+RUN apk add --no-cache wget
+
 COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist ./
 

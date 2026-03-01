@@ -6,10 +6,11 @@ services:
     ports:
       - "${APP_WEB_BIND_ADDRESS}:${APP_WEB_BIND_PORT}:80"
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost/ || exit 1"]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost/health || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5
+      start_period: 10s
     networks:
       - edge
 

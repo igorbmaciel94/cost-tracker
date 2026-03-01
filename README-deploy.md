@@ -8,10 +8,9 @@ Este guia assume que:
 ## Visão de arquitetura
 
 - BloodWatch Caddy continua dono das portas `80/443`
-- Cost Tracker expõe apenas localmente:
-  - Web: `127.0.0.1:18080`
-  - API: `127.0.0.1:18081`
+- Cost Tracker expoe `18080/18081` no host para o Caddy de outro stack Docker
 - PostgreSQL externo existente (host)
+- Firewall/security group deve bloquear acesso externo direto a `18080/18081` e `5432`
 
 ## 1) Preparar banco (reaproveitando PostgreSQL existente)
 
@@ -43,12 +42,14 @@ cp deploy/.env.prod.example deploy/.env.prod
 Edite `deploy/.env.prod`:
 
 - `IMAGE_TAG=main`
+- `APP_WEB_BIND_ADDRESS=0.0.0.0`
 - `APP_WEB_BIND_PORT=18080`
+- `APP_API_BIND_ADDRESS=0.0.0.0`
 - `APP_API_BIND_PORT=18081`
 - `DB_HOST=host.docker.internal`
 - `DB_PORT=5432`
 - `DB_NAME=costtracker`
-- `DB_USER=<seu usuário postgres>`
+- `DB_USER=<seu usuario postgres>`
 - `DB_PASSWORD=<sua senha>`
 - `DB_SSL_MODE=Disable`
 - `GHCR_USERNAME` e `GHCR_TOKEN`
@@ -65,21 +66,28 @@ Validar stack:
 ```bash
 docker compose --env-file deploy/.env.prod -f deploy/docker-compose.prod.yml ps
 curl -I http://127.0.0.1:18080
-curl -I http://127.0.0.1:18081/api/months
+curl -sS http://127.0.0.1:18081/api/months
 ```
 
 Checagem rapida de conflito de portas (esperado):
 - BloodWatch usa `80/443` publicamente (Caddy).
-- Cost Tracker usa apenas `127.0.0.1:18080` (web) e `127.0.0.1:18081` (api).
-- Postgres do Cost Tracker nao abre porta publica nova.
+- Cost Tracker usa `18080` (web) e `18081` (api) para roteamento interno via Caddy.
+- Postgres do Cost Tracker nao sobe container proprio.
 
-## 4) Ajustar Caddy do BloodWatch para publicar o domínio do Cost Tracker
+## 4) Ajustar Caddy do BloodWatch para publicar o dominio do Cost Tracker
 
-No projeto BloodWatch (`/opt/blood-watch/deploy/Caddyfile`), adicione:
+No projeto BloodWatch (exemplo: `/opt/bloodwatch/compose/Caddyfile`), adicione:
 
 ```caddy
 cost.lighthousedev.uk {
   encode zstd gzip
+
+  # compatibilidade temporaria para builds antigas do frontend
+  @api_dup path /api/api/*
+  handle @api_dup {
+    uri strip_prefix /api
+    reverse_proxy host.docker.internal:18081
+  }
 
   @api path /api/*
   reverse_proxy @api host.docker.internal:18081
@@ -88,7 +96,7 @@ cost.lighthousedev.uk {
 }
 ```
 
-No `deploy/docker-compose.prod.yml` do BloodWatch, no serviço `caddy`, adicione:
+No compose de producao do BloodWatch (exemplo: `/opt/bloodwatch/compose/docker-compose.prod.yml`), no servico `caddy`, adicione:
 
 ```yaml
 extra_hosts:
@@ -98,15 +106,14 @@ extra_hosts:
 Aplicar no BloodWatch:
 
 ```bash
-cd /opt/blood-watch
-docker compose --env-file .env -f deploy/docker-compose.prod.yml up -d caddy
+docker compose -f /opt/bloodwatch/compose/docker-compose.prod.yml --env-file /opt/bloodwatch/compose/.env up -d --force-recreate caddy
 ```
 
 ## 5) Validar domínio público
 
 ```bash
 curl -I https://cost.lighthousedev.uk
-curl -I https://cost.lighthousedev.uk/api/months
+curl -sS https://cost.lighthousedev.uk/api/months
 ```
 
 ## 6) Atualização manual do Cost Tracker

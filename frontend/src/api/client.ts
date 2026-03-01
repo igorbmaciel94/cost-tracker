@@ -15,10 +15,11 @@ import type {
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ??
-  (import.meta.env.PROD ? '/api' : 'http://localhost:8080');
+  (import.meta.env.PROD ? '/api' : 'http://localhost:8080/api');
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  const response = await fetch(`${API_BASE_URL}${normalizedPath}`, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
@@ -39,52 +40,52 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  getMonths: () => apiFetch<MonthSummaryDto[]>('/api/months'),
+  getMonths: () => apiFetch<MonthSummaryDto[]>('/months'),
   createNewMonth: (request?: CreateMonthRequest) =>
-    apiFetch<MonthSummaryDto>('/api/months/new', {
+    apiFetch<MonthSummaryDto>('/months/new', {
       method: 'POST',
       body: JSON.stringify(request ?? {})
     }),
   updateSalary: (monthId: string, request: UpdateSalaryRequest) =>
-    apiFetch<MonthSummaryDto>(`/api/months/${monthId}/salary`, {
+    apiFetch<MonthSummaryDto>(`/months/${monthId}/salary`, {
       method: 'PUT',
       body: JSON.stringify(request)
     }),
-  getBudget: (monthId: string) => apiFetch<BudgetResponseDto>(`/api/months/${monthId}/budget`),
+  getBudget: (monthId: string) => apiFetch<BudgetResponseDto>(`/months/${monthId}/budget`),
   createCategory: (monthId: string, request: CreateCategoryRequest) =>
-    apiFetch<BudgetResponseDto>(`/api/months/${monthId}/budget/categories`, {
+    apiFetch<BudgetResponseDto>(`/months/${monthId}/budget/categories`, {
       method: 'POST',
       body: JSON.stringify(request)
     }),
   updateCategory: (monthId: string, categoryId: string, request: UpdateCategoryRequest) =>
-    apiFetch<BudgetResponseDto>(`/api/months/${monthId}/budget/categories/${categoryId}`, {
+    apiFetch<BudgetResponseDto>(`/months/${monthId}/budget/categories/${categoryId}`, {
       method: 'PUT',
       body: JSON.stringify(request)
     }),
   deleteCategory: (monthId: string, categoryId: string) =>
-    apiFetch<BudgetResponseDto>(`/api/months/${monthId}/budget/categories/${categoryId}`, {
+    apiFetch<BudgetResponseDto>(`/months/${monthId}/budget/categories/${categoryId}`, {
       method: 'DELETE'
     }),
-  getEntries: (monthId: string) => apiFetch<EntriesResponseDto>(`/api/months/${monthId}/entries`),
+  getEntries: (monthId: string) => apiFetch<EntriesResponseDto>(`/months/${monthId}/entries`),
   createEntry: (monthId: string, request: CreateEntryRequest) =>
-    apiFetch<EntriesResponseDto>(`/api/months/${monthId}/entries`, {
+    apiFetch<EntriesResponseDto>(`/months/${monthId}/entries`, {
       method: 'POST',
       body: JSON.stringify(request)
     }),
   updateEntry: (monthId: string, entryId: string, request: UpdateEntryRequest) =>
-    apiFetch<EntriesResponseDto>(`/api/months/${monthId}/entries/${entryId}`, {
+    apiFetch<EntriesResponseDto>(`/months/${monthId}/entries/${entryId}`, {
       method: 'PUT',
       body: JSON.stringify(request)
     }),
   deleteEntry: (monthId: string, entryId: string) =>
-    apiFetch<EntriesResponseDto>(`/api/months/${monthId}/entries/${entryId}`, {
+    apiFetch<EntriesResponseDto>(`/months/${monthId}/entries/${entryId}`, {
       method: 'DELETE'
     }),
-  getTargets: (monthId: string) => apiFetch<TargetsResponseDto>(`/api/months/${monthId}/targets`),
+  getTargets: (monthId: string) => apiFetch<TargetsResponseDto>(`/months/${monthId}/targets`),
   updateTargets: (monthId: string, request: UpdateTargetsRequest) =>
-    apiFetch<TargetsResponseDto>(`/api/months/${monthId}/targets`, {
+    apiFetch<TargetsResponseDto>(`/months/${monthId}/targets`, {
       method: 'PUT',
       body: JSON.stringify(request)
     }),
-  getDashboard: (monthId: string) => apiFetch<DashboardDto>(`/api/months/${monthId}/dashboard`)
+  getDashboard: (monthId: string) => apiFetch<DashboardDto>(`/months/${monthId}/dashboard`)
 };
