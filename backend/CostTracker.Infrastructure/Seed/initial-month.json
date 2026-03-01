@@ -1,0 +1,55 @@
+{
+  "referenceMonth": "2026-03",
+  "salary": 2760.00,
+  "currency": "EUR",
+  "categories": [
+    { "name": "Arrendamento", "groupName": "Essenciais", "plannedAmount": 335.00, "displayOrder": 1 },
+    { "name": "Agua", "groupName": "Essenciais", "plannedAmount": 29.00, "displayOrder": 2 },
+    { "name": "Luz", "groupName": "Essenciais", "plannedAmount": 100.00, "displayOrder": 3 },
+    { "name": "Internet", "groupName": "Essenciais", "plannedAmount": 106.00, "displayOrder": 4 },
+    { "name": "Mercado", "groupName": "Essenciais", "plannedAmount": 400.00, "displayOrder": 5 },
+    { "name": "Transporte", "groupName": "Essenciais", "plannedAmount": 0.00, "displayOrder": 6 },
+    { "name": "Lavanderia", "groupName": "Essenciais", "plannedAmount": 40.00, "displayOrder": 7 },
+    { "name": "Saude", "groupName": "Essenciais", "plannedAmount": 60.00, "displayOrder": 8 },
+    { "name": "Credito", "groupName": "Essenciais", "plannedAmount": 75.00, "displayOrder": 9 },
+    { "name": "Dividas", "groupName": "Essenciais", "plannedAmount": 511.00, "displayOrder": 10 },
+    { "name": "Lazer", "groupName": "Desejos", "plannedAmount": 315.00, "displayOrder": 11 },
+    { "name": "Compras online", "groupName": "Desejos", "plannedAmount": 315.00, "displayOrder": 12 },
+    { "name": "Viagem", "groupName": "Desejos", "plannedAmount": 138.00, "displayOrder": 13 },
+    { "name": "Assinaturas", "groupName": "Desejos", "plannedAmount": 60.00, "displayOrder": 14 },
+    { "name": "Saving", "groupName": "Investimentos", "plannedAmount": 276.00, "displayOrder": 15 },
+    { "name": "Estudos", "groupName": "Estudos", "plannedAmount": 0.00, "displayOrder": 16 }
+  ],
+  "targets": [
+    { "groupName": "Essenciais", "targetPercent": 0.6 },
+    { "groupName": "Desejos", "targetPercent": 0.3 },
+    { "groupName": "Estudos", "targetPercent": 0.0 },
+    { "groupName": "Investimentos", "targetPercent": 0.1 }
+  ],
+  "entries": [
+    {
+      "entryDate": "2026-03-01",
+      "categoryName": "Arrendamento",
+      "description": "Pagamento Arrendamento",
+      "amount": 0.0
+    },
+    {
+      "entryDate": "2026-03-01",
+      "categoryName": "Agua",
+      "description": "Pagamento agua",
+      "amount": 0.0
+    },
+    {
+      "entryDate": "2026-03-01",
+      "categoryName": "Dividas",
+      "description": "Pagamento dividas",
+      "amount": 0.0
+    },
+    {
+      "entryDate": "2026-03-01",
+      "categoryName": "Assinaturas",
+      "description": "Pagamento assinatura",
+      "amount": 0.0
+    }
+  ]
+}

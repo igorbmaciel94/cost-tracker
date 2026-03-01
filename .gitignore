@@ -1,0 +1,12 @@
+.DS_Store
+
+# .NET
+**/bin/
+**/obj/
+
+# Node
+**/node_modules/
+frontend/dist/
+
+# Environment
+.env
