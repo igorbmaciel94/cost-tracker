@@ -1,0 +1,12 @@
+# This file is kept only as a reference template.
+# In your current server setup, Caddy is managed by BloodWatch,
+# so Cost Tracker does not run its own Caddy container.
+
+cost.lighthousedev.uk {
+  encode gzip zstd
+
+  @api path /api/*
+  reverse_proxy @api host.docker.internal:18081
+
+  reverse_proxy host.docker.internal:18080
+}

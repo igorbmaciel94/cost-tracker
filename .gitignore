@@ -10,3 +10,4 @@ frontend/dist/
 
 # Environment
 .env
+deploy/.env.prod

@@ -1,0 +1,54 @@
+name: Deploy Manual
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Image tag to deploy (ex: main or sha-xxxxxxx)
+        required: true
+        default: main
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+
+            cd /opt/cost-tracker
+
+            if [ -d .git ]; then
+              git fetch --all --prune
+              git checkout main
+              git pull --ff-only origin main
+            fi
+
+            if [ ! -f deploy/.env.prod ]; then
+              cp deploy/.env.prod.example deploy/.env.prod
+            fi
+
+            if grep -q '^IMAGE_TAG=' deploy/.env.prod; then
+              sed -i.bak 's/^IMAGE_TAG=.*/IMAGE_TAG=${{ inputs.image_tag }}/' deploy/.env.prod
+              rm -f deploy/.env.prod.bak
+            else
+              echo 'IMAGE_TAG=${{ inputs.image_tag }}' >> deploy/.env.prod
+            fi
+
+            if [ -n "${{ secrets.GHCR_USERNAME }}" ] && [ -n "${{ secrets.GHCR_TOKEN }}" ]; then
+              echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+            fi
+
+            docker compose --env-file deploy/.env.prod -f deploy/docker-compose.prod.yml pull
+            docker compose --env-file deploy/.env.prod -f deploy/docker-compose.prod.yml up -d --remove-orphans
+            docker image prune -f

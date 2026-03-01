@@ -33,6 +33,10 @@ Depois abra:
 - Frontend: http://localhost:5173
 - API: http://localhost:8080
 
+## Deploy em servidor
+
+Veja o runbook completo em [README-deploy.md](README-deploy.md).
+
 ## Estrutura
 
 - `/Users/igorbmaciel/cost-tracker/backend`
