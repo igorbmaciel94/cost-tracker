@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api/client';
-import { MonthlySummaryCards } from '../components/MonthlySummaryCards';
 import { CategoryPlannedVsSpentBarChart } from '../components/charts/CategoryPlannedVsSpentBarChart';
 import { GroupSpentPieChart } from '../components/charts/GroupSpentPieChart';
 
@@ -29,7 +28,6 @@ export function DashboardPage({ monthId }: DashboardPageProps) {
 
   return (
     <div className="page-stack">
-      <MonthlySummaryCards dashboard={dashboardQuery.data} />
       <div className="charts-grid">
         <CategoryPlannedVsSpentBarChart data={dashboardQuery.data.categoryChart} />
         <GroupSpentPieChart data={dashboardQuery.data.groupPie} />

@@ -32,6 +32,7 @@ export function Layout({
     : 0;
   const monthBalance = selectedMonth ? selectedMonth.salary - selectedMonth.spentTotal : 0;
   const monthStatusLabel = selectedMonth?.status === 'OPEN' ? 'Mes aberto' : 'Mes fechado';
+  const showTopKpis = Boolean(selectedMonth);
 
   return (
     <div className="app-shell">
@@ -68,7 +69,7 @@ export function Layout({
         </div>
       </header>
 
-      {selectedMonth && (
+      {showTopKpis && selectedMonth && (
         <section className="month-kpis">
           <article className="kpi-card">
             <p className="kpi-label">Salario base</p>
