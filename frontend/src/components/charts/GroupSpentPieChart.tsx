@@ -2,7 +2,7 @@ import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recha
 import type { DashboardGroupPointDto } from '../../api/types';
 import { formatCurrency } from '../../utils/format';
 
-const COLORS = ['#0f766e', '#0369a1', '#9333ea', '#ca8a04', '#dc2626'];
+const COLORS = ['#2463eb', '#0f766e', '#f59e0b', '#ef4444', '#6366f1', '#0891b2'];
 
 interface GroupSpentPieChartProps {
   data: DashboardGroupPointDto[];
@@ -20,8 +20,15 @@ export function GroupSpentPieChart({ data }: GroupSpentPieChartProps) {
                 <Cell key={entry.groupName} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
-            <Tooltip formatter={(value: number) => formatCurrency(value)} />
-            <Legend />
+            <Tooltip
+              formatter={(value: number) => formatCurrency(value)}
+              contentStyle={{
+                borderRadius: 12,
+                border: '1px solid #d9e2f4',
+                backgroundColor: '#ffffff'
+              }}
+            />
+            <Legend wrapperStyle={{ paddingTop: 8 }} />
           </PieChart>
         </ResponsiveContainer>
       </div>
