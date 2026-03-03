@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import type { MonthSummaryDto } from '../api/types';
 import { MonthSelector } from './MonthSelector';
@@ -24,6 +24,7 @@ export function Layout({
   creatingMonth,
   children
 }: LayoutProps) {
+  const location = useLocation();
   const plannedRatio = selectedMonth && selectedMonth.salary > 0
     ? selectedMonth.plannedTotal / selectedMonth.salary
     : 0;
@@ -32,6 +33,7 @@ export function Layout({
     : 0;
   const monthBalance = selectedMonth ? selectedMonth.salary - selectedMonth.spentTotal : 0;
   const monthStatusLabel = selectedMonth?.status === 'OPEN' ? 'Mes aberto' : 'Mes fechado';
+  const showTopKpis = Boolean(selectedMonth) && location.pathname !== '/';
 
   return (
     <div className="app-shell">
@@ -68,7 +70,7 @@ export function Layout({
         </div>
       </header>
 
-      {selectedMonth && (
+      {showTopKpis && selectedMonth && (
         <section className="month-kpis">
           <article className="kpi-card">
             <p className="kpi-label">Salario base</p>
