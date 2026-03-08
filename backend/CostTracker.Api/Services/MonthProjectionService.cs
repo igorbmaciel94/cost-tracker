@@ -101,12 +101,14 @@ public class MonthProjectionService
         var spentTotal = budget.Sum(x => x.Spent);
 
         var categoryChart = budget
-            .Select(line => new DashboardCategoryPointDto(line.CategoryName, line.Planned, line.Spent))
+            .Where(line => line.Difference > 0)
+            .Select(line => new DashboardCategoryPointDto(line.CategoryName, line.Difference))
             .ToList();
 
         var groupPie = MonthCalculations
-            .ComputeGroupMetrics(month.CategoryBudgets, month.Entries, month.GroupTargets)
-            .Select(metric => new DashboardGroupPointDto(metric.GroupName, metric.SpentAmount))
+            .ComputeRemainingByGroup(month.CategoryBudgets, month.Entries)
+            .Where(group => group.RemainingAmount > 0)
+            .Select(group => new DashboardGroupPointDto(group.GroupName, group.RemainingAmount))
             .ToList();
 
         return new DashboardDto(

@@ -4,24 +4,33 @@ import { formatCurrency } from '../../utils/format';
 
 const COLORS = ['#2463eb', '#0f766e', '#f59e0b', '#ef4444', '#6366f1', '#0891b2'];
 
-interface GroupSpentPieChartProps {
+interface GroupRemainingPieChartProps {
   data: DashboardGroupPointDto[];
 }
 
-export function GroupSpentPieChart({ data }: GroupSpentPieChartProps) {
+export function GroupRemainingPieChart({ data }: GroupRemainingPieChartProps) {
+  if (data.length === 0) {
+    return (
+      <section className="chart-card">
+        <h3>Distribuição de saldo por grupo</h3>
+        <p className="chart-empty">Nenhum grupo com saldo disponível neste mês.</p>
+      </section>
+    );
+  }
+
   return (
     <section className="chart-card">
-      <h3>Distribuição de gasto por grupo</h3>
+      <h3>Distribuição de saldo por grupo</h3>
       <div className="chart-container">
         <ResponsiveContainer width="100%" height={300}>
           <PieChart>
-            <Pie data={data} dataKey="spent" nameKey="groupName" outerRadius={110} label>
+            <Pie data={data} dataKey="remaining" nameKey="groupName" outerRadius={110} label>
               {data.map((entry, index) => (
                 <Cell key={entry.groupName} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
             <Tooltip
-              formatter={(value: number) => formatCurrency(value)}
+              formatter={(value: number) => [formatCurrency(value), 'Saldo disponível']}
               contentStyle={{
                 borderRadius: 12,
                 border: '1px solid #d9e2f4',

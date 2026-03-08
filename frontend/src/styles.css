@@ -482,6 +482,16 @@ select:focus {
   min-height: 300px;
 }
 
+.chart-empty {
+  min-height: 300px;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  text-align: center;
+  color: var(--muted);
+  font-weight: 600;
+}
+
 .center-message {
   text-align: center;
   margin-top: 3rem;
