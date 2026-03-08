@@ -61,12 +61,11 @@ public sealed record TargetsResponseDto(
 
 public sealed record DashboardCategoryPointDto(
     string Category,
-    decimal Planned,
-    decimal Spent);
+    decimal Remaining);
 
 public sealed record DashboardGroupPointDto(
     string GroupName,
-    decimal Spent);
+    decimal Remaining);
 
 public sealed record DashboardDto(
     Guid MonthId,

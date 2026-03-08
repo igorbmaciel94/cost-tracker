@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api/client';
-import { MonthlySummaryCards } from '../components/MonthlySummaryCards';
-import { CategoryPlannedVsSpentBarChart } from '../components/charts/CategoryPlannedVsSpentBarChart';
-import { GroupSpentPieChart } from '../components/charts/GroupSpentPieChart';
+import { CategoryRemainingTreemap } from '../components/charts/CategoryRemainingTreemap';
+import { GroupRemainingPieChart } from '../components/charts/GroupRemainingPieChart';
 
 interface DashboardPageProps {
   monthId: string | null;
@@ -29,10 +28,9 @@ export function DashboardPage({ monthId }: DashboardPageProps) {
 
   return (
     <div className="page-stack">
-      <MonthlySummaryCards dashboard={dashboardQuery.data} />
       <div className="charts-grid">
-        <CategoryPlannedVsSpentBarChart data={dashboardQuery.data.categoryChart} />
-        <GroupSpentPieChart data={dashboardQuery.data.groupPie} />
+        <CategoryRemainingTreemap data={dashboardQuery.data.categoryChart} />
+        <GroupRemainingPieChart data={dashboardQuery.data.groupPie} />
       </div>
     </div>
   );

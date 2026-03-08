@@ -89,6 +89,19 @@ public static class MonthCalculations
             .ToList();
     }
 
+    public static IReadOnlyList<GroupRemainingComputation> ComputeRemainingByGroup(
+        IEnumerable<CategoryBudget> categories,
+        IEnumerable<Entry> entries)
+    {
+        return ComputeBudgetLines(categories, entries)
+            .GroupBy(x => x.GroupName, StringComparer.OrdinalIgnoreCase)
+            .Select(group => new GroupRemainingComputation(
+                group.First().GroupName,
+                group.Sum(x => x.Difference)))
+            .OrderBy(x => x.GroupName)
+            .ToList();
+    }
+
     public static string ResolveStatus(decimal difference)
     {
         if (Math.Abs(difference) <= 0.005m)
@@ -119,3 +132,7 @@ public sealed record GroupMetricComputation(
     decimal SpentDifference,
     string SpentStatus,
     decimal SpentAmount);
+
+public sealed record GroupRemainingComputation(
+    string GroupName,
+    decimal RemainingAmount);

@@ -74,6 +74,52 @@ public class MonthCalculationsTests
     }
 
     [Fact]
+    public void ComputeRemainingByGroup_ShouldSumRemainingBalancePerGroup()
+    {
+        var mercado = new CategoryBudget
+        {
+            Id = Guid.NewGuid(),
+            Name = "Mercado",
+            GroupName = "Essenciais",
+            PlannedAmount = 400m,
+            DisplayOrder = 1
+        };
+
+        var renda = new CategoryBudget
+        {
+            Id = Guid.NewGuid(),
+            Name = "Renda Extra",
+            GroupName = "Investimentos",
+            PlannedAmount = 200m,
+            DisplayOrder = 2
+        };
+
+        var farmacia = new CategoryBudget
+        {
+            Id = Guid.NewGuid(),
+            Name = "Farmácia",
+            GroupName = "Essenciais",
+            PlannedAmount = 100m,
+            DisplayOrder = 3
+        };
+
+        var entries = new List<Entry>
+        {
+            new() { CategoryBudgetId = mercado.Id, Amount = 150m },
+            new() { CategoryBudgetId = renda.Id, Amount = 250m },
+            new() { CategoryBudgetId = farmacia.Id, Amount = 25m }
+        };
+
+        var remainingByGroup = MonthCalculations.ComputeRemainingByGroup(
+                [mercado, renda, farmacia],
+                entries)
+            .ToDictionary(x => x.GroupName, x => x.RemainingAmount);
+
+        Assert.Equal(325m, remainingByGroup["Essenciais"]);
+        Assert.Equal(-50m, remainingByGroup["Investimentos"]);
+    }
+
+    [Fact]
     public void ResolveStatus_ShouldReturnOkWithinHalfPoint()
     {
         Assert.Equal("OK", MonthCalculations.ResolveStatus(0.005m));

@@ -75,6 +75,7 @@ export default function App() {
     <Layout
       months={months}
       selectedMonthId={selectedMonthId}
+      selectedMonth={selectedMonth}
       onSelectMonth={setSelectedMonthId}
       onCreateMonth={() => {
         createMonthMutation.mutate();

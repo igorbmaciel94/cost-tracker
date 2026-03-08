@@ -68,13 +68,12 @@ export interface TargetsResponseDto {
 
 export interface DashboardCategoryPointDto {
   category: string;
-  planned: number;
-  spent: number;
+  remaining: number;
 }
 
 export interface DashboardGroupPointDto {
   groupName: string;
-  spent: number;
+  remaining: number;
 }
 
 export interface DashboardDto {
