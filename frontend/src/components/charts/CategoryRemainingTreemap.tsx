@@ -20,8 +20,28 @@ interface CategoryTreemapCellProps {
   value?: number;
 }
 
-function splitLabel(label: string, maxCharsPerLine: number, maxLines: number): string[] {
-  const words = label.split(' ');
+function chunkWord(word: string, maxCharsPerLine: number): string[] {
+  if (word.length <= maxCharsPerLine) {
+    return [word];
+  }
+
+  const chunks: string[] = [];
+  let remaining = word;
+
+  while (remaining.length > maxCharsPerLine) {
+    chunks.push(remaining.slice(0, maxCharsPerLine));
+    remaining = remaining.slice(maxCharsPerLine);
+  }
+
+  if (remaining) {
+    chunks.push(remaining);
+  }
+
+  return chunks;
+}
+
+function wrapLabel(label: string, maxCharsPerLine: number, maxLines: number): string[] {
+  const words = label.split(' ').flatMap((word) => chunkWord(word, maxCharsPerLine));
   const lines: string[] = [];
   let currentLine = '';
 
@@ -62,14 +82,6 @@ function splitLabel(label: string, maxCharsPerLine: number, maxLines: number): s
   return lines;
 }
 
-function truncateLabel(label: string, maxChars: number): string {
-  if (label.length <= maxChars) {
-    return label;
-  }
-
-  return `${label.slice(0, Math.max(1, maxChars - 1))}…`;
-}
-
 function CategoryTreemapCell({
   x = 0,
   y = 0,
@@ -88,20 +100,21 @@ function CategoryTreemapCell({
   const fill = COLORS[index % COLORS.length];
   const label = category ?? name;
   const showValue = width > 92 && height > 64;
-  const showRotatedLabel = width <= 72 && width > 26 && height > 72;
-  const showCenteredLabel = !showRotatedLabel && width > 62 && height > 24;
-  const maxLabelLines = showValue && height > 88 ? 2 : 1;
-  const labelLines = splitLabel(
+  const showLabel = width > 38 && height > 26;
+  const reservedTopSpace = showValue ? 34 : 0;
+  const availableHeight = Math.max(16, height - reservedTopSpace - 10);
+  const maxLabelLines = Math.max(1, Math.min(3, Math.floor(availableHeight / 13)));
+  const labelLines = wrapLabel(
     label,
-    Math.max(8, Math.floor((width - 20) / 7)),
+    Math.max(4, Math.floor((width - 16) / 7)),
     maxLabelLines
   );
-  const labelFontSize = maxLabelLines === 1 ? 11 : 12;
-  const labelLineHeight = maxLabelLines === 1 ? 12 : 14;
+  const labelFontSize = width < 56 ? 10 : 11;
+  const labelLineHeight = labelFontSize + 2;
   const valueY = y + 24;
   const labelX = x + width / 2;
-  const labelStartY = y + height / 2 - ((labelLines.length - 1) * labelLineHeight) / 2;
-  const rotatedLabel = truncateLabel(label, Math.max(4, Math.floor((height - 24) / 7)));
+  const labelAreaCenterY = y + reservedTopSpace + (height - reservedTopSpace) / 2;
+  const labelStartY = labelAreaCenterY - ((labelLines.length - 1) * labelLineHeight) / 2;
   const labelStroke = 'rgba(12, 23, 49, 0.18)';
 
   return (
@@ -117,7 +130,7 @@ function CategoryTreemapCell({
         stroke="#f8fbff"
         strokeWidth={2}
       />
-      {showCenteredLabel && (
+      {showLabel && (
         <text
           x={labelX}
           y={labelStartY}
@@ -134,23 +147,6 @@ function CategoryTreemapCell({
               {line}
             </tspan>
           ))}
-        </text>
-      )}
-      {showRotatedLabel && (
-        <text
-          x={labelX}
-          y={y + height / 2}
-          fill="#ffffff"
-          fontSize={11}
-          fontWeight={600}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          transform={`rotate(-90 ${labelX} ${y + height / 2})`}
-          stroke={labelStroke}
-          strokeWidth={2}
-          paintOrder="stroke"
-        >
-          {rotatedLabel}
         </text>
       )}
       {showValue && (
