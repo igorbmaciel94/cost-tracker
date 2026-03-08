@@ -62,6 +62,14 @@ function splitLabel(label: string, maxCharsPerLine: number, maxLines: number): s
   return lines;
 }
 
+function truncateLabel(label: string, maxChars: number): string {
+  if (label.length <= maxChars) {
+    return label;
+  }
+
+  return `${label.slice(0, Math.max(1, maxChars - 1))}…`;
+}
+
 function CategoryTreemapCell({
   x = 0,
   y = 0,
@@ -79,8 +87,9 @@ function CategoryTreemapCell({
 
   const fill = COLORS[index % COLORS.length];
   const label = category ?? name;
-  const showLabel = width > 62 && height > 24;
   const showValue = width > 92 && height > 64;
+  const showRotatedLabel = width <= 72 && width > 26 && height > 72;
+  const showCenteredLabel = !showRotatedLabel && width > 62 && height > 24;
   const maxLabelLines = showValue && height > 88 ? 2 : 1;
   const labelLines = splitLabel(
     label,
@@ -92,6 +101,8 @@ function CategoryTreemapCell({
   const valueY = y + 24;
   const labelX = x + width / 2;
   const labelStartY = y + height / 2 - ((labelLines.length - 1) * labelLineHeight) / 2;
+  const rotatedLabel = truncateLabel(label, Math.max(4, Math.floor((height - 24) / 7)));
+  const labelStroke = 'rgba(12, 23, 49, 0.18)';
 
   return (
     <g>
@@ -106,7 +117,7 @@ function CategoryTreemapCell({
         stroke="#f8fbff"
         strokeWidth={2}
       />
-      {showLabel && (
+      {showCenteredLabel && (
         <text
           x={labelX}
           y={labelStartY}
@@ -114,12 +125,32 @@ function CategoryTreemapCell({
           fontSize={labelFontSize}
           fontWeight={600}
           textAnchor="middle"
+          stroke={labelStroke}
+          strokeWidth={2}
+          paintOrder="stroke"
         >
           {labelLines.map((line, lineIndex) => (
             <tspan key={`${label}-${lineIndex}`} x={labelX} dy={lineIndex === 0 ? 0 : labelLineHeight}>
               {line}
             </tspan>
           ))}
+        </text>
+      )}
+      {showRotatedLabel && (
+        <text
+          x={labelX}
+          y={y + height / 2}
+          fill="#ffffff"
+          fontSize={11}
+          fontWeight={600}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          transform={`rotate(-90 ${labelX} ${y + height / 2})`}
+          stroke={labelStroke}
+          strokeWidth={2}
+          paintOrder="stroke"
+        >
+          {rotatedLabel}
         </text>
       )}
       {showValue && (
