@@ -1,4 +1,5 @@
 using CostTracker.Domain.Entities;
+using CostTracker.Domain.Constants;
 
 namespace CostTracker.Domain.Calculations;
 
@@ -59,11 +60,15 @@ public static class MonthCalculations
             .ToDictionary(x => x.Key, x => x.Sum(y => y.Amount));
 
         return targetList
-            .OrderBy(x => x.GroupName)
+            .OrderBy(x => GroupNames.Normalize(x.GroupName))
             .Select(target =>
             {
+                var normalizedTargetGroup = GroupNames.Normalize(target.GroupName);
                 var groupCategories = categoryList
-                    .Where(x => string.Equals(x.GroupName, target.GroupName, StringComparison.OrdinalIgnoreCase))
+                    .Where(x => string.Equals(
+                        GroupNames.Normalize(x.GroupName),
+                        normalizedTargetGroup,
+                        StringComparison.OrdinalIgnoreCase))
                     .ToList();
 
                 var plannedGroup = groupCategories.Sum(x => x.PlannedAmount);
@@ -76,7 +81,7 @@ public static class MonthCalculations
                 var spentDiff = currentSpentPercent - target.TargetPercent;
 
                 return new GroupMetricComputation(
-                    target.GroupName,
+                    normalizedTargetGroup,
                     target.TargetPercent,
                     currentPlannedPercent,
                     currentSpentPercent,
@@ -94,9 +99,9 @@ public static class MonthCalculations
         IEnumerable<Entry> entries)
     {
         return ComputeBudgetLines(categories, entries)
-            .GroupBy(x => x.GroupName, StringComparer.OrdinalIgnoreCase)
+            .GroupBy(x => GroupNames.Normalize(x.GroupName), StringComparer.OrdinalIgnoreCase)
             .Select(group => new GroupRemainingComputation(
-                group.First().GroupName,
+                GroupNames.Normalize(group.Key),
                 group.Sum(x => x.Difference)))
             .OrderBy(x => x.GroupName)
             .ToList();

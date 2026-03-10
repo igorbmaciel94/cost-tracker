@@ -17,14 +17,15 @@
     { "name": "Compras online", "groupName": "Desejos", "plannedAmount": 315.00, "displayOrder": 12 },
     { "name": "Viagem", "groupName": "Desejos", "plannedAmount": 138.00, "displayOrder": 13 },
     { "name": "Assinaturas", "groupName": "Desejos", "plannedAmount": 60.00, "displayOrder": 14 },
-    { "name": "Saving", "groupName": "Investimentos", "plannedAmount": 276.00, "displayOrder": 15 },
-    { "name": "Estudos", "groupName": "Estudos", "plannedAmount": 0.00, "displayOrder": 16 }
+    { "name": "Saving", "groupName": "Saving", "plannedAmount": 276.00, "displayOrder": 15 },
+    { "name": "Investimento", "groupName": "Investimento", "plannedAmount": 0.00, "displayOrder": 16 }
   ],
   "targets": [
     { "groupName": "Essenciais", "targetPercent": 0.6 },
     { "groupName": "Desejos", "targetPercent": 0.3 },
-    { "groupName": "Estudos", "targetPercent": 0.0 },
-    { "groupName": "Investimentos", "targetPercent": 0.1 }
+    { "groupName": "Investimento", "targetPercent": 0.0 },
+    { "groupName": "Saving", "targetPercent": 0.1 },
+    { "groupName": "Buffer", "targetPercent": 0.0 }
   ],
   "entries": [
     {

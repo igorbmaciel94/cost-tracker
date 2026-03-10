@@ -25,6 +25,8 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__Default: Host=db;Port=5432;Database=costtracker;Username=costtracker;Password=costtracker
+      Auth__Username: ${AUTH_USERNAME}
+      Auth__PasswordHash: ${AUTH_PASSWORD_HASH}
     ports:
       - "8080:8080"
     depends_on:

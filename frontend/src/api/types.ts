@@ -88,8 +88,18 @@ export interface DashboardDto {
   groupPie: DashboardGroupPointDto[];
 }
 
+export interface AuthSessionDto {
+  isAuthenticated: boolean;
+  username: string | null;
+}
+
 export interface CreateMonthRequest {
   referenceMonth?: string;
+}
+
+export interface LoginRequest {
+  username: string;
+  password: string;
 }
 
 export interface UpdateSalaryRequest {

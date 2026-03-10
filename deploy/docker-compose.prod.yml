@@ -25,10 +25,12 @@ services:
       ASPNETCORE_URLS: http://+:8080
       ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
       ConnectionStrings__Default: Host=${DB_HOST};Port=${DB_PORT};Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD};SSL Mode=${DB_SSL_MODE}
+      Auth__Username: ${AUTH_USERNAME}
+      Auth__PasswordHash: ${AUTH_PASSWORD_HASH}
     ports:
       - "${APP_API_BIND_ADDRESS}:${APP_API_BIND_PORT}:8080"
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8080/api/months || exit 1"]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8080/api/health || exit 1"]
       interval: 20s
       timeout: 5s
       retries: 6

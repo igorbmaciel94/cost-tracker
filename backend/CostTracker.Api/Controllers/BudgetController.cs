@@ -1,5 +1,6 @@
 using CostTracker.Api.Contracts;
 using CostTracker.Api.Services;
+using CostTracker.Domain.Constants;
 using CostTracker.Domain.Entities;
 using CostTracker.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
@@ -44,6 +45,9 @@ public class BudgetController(
             return BadRequest("plannedAmount must be greater than or equal to zero.");
         }
 
+        var normalizedName = CategoryNames.Normalize(request.Name);
+        var normalizedGroupName = GroupNames.Normalize(request.GroupName);
+
         var month = await dbContext.Months
             .WithDetails()
             .FirstOrDefaultAsync(x => x.Id == monthId, cancellationToken);
@@ -59,7 +63,7 @@ public class BudgetController(
         }
 
         var alreadyExists = month.CategoryBudgets
-            .Any(x => string.Equals(x.Name, request.Name.Trim(), StringComparison.OrdinalIgnoreCase));
+            .Any(x => string.Equals(x.Name, normalizedName, StringComparison.OrdinalIgnoreCase));
 
         if (alreadyExists)
         {
@@ -72,8 +76,8 @@ public class BudgetController(
         {
             Id = Guid.NewGuid(),
             MonthId = monthId,
-            Name = request.Name.Trim(),
-            GroupName = request.GroupName.Trim(),
+            Name = normalizedName,
+            GroupName = normalizedGroupName,
             PlannedAmount = decimal.Round(request.PlannedAmount, 2),
             DisplayOrder = displayOrder
         };
@@ -105,6 +109,9 @@ public class BudgetController(
             return BadRequest("plannedAmount must be greater than or equal to zero.");
         }
 
+        var normalizedName = CategoryNames.Normalize(request.Name);
+        var normalizedGroupName = GroupNames.Normalize(request.GroupName);
+
         var month = await dbContext.Months
             .WithDetails()
             .FirstOrDefaultAsync(x => x.Id == monthId, cancellationToken);
@@ -126,15 +133,15 @@ public class BudgetController(
         }
 
         var alreadyExists = month.CategoryBudgets
-            .Any(x => x.Id != categoryId && string.Equals(x.Name, request.Name.Trim(), StringComparison.OrdinalIgnoreCase));
+            .Any(x => x.Id != categoryId && string.Equals(x.Name, normalizedName, StringComparison.OrdinalIgnoreCase));
 
         if (alreadyExists)
         {
             return Conflict("Category name already exists for this month.");
         }
 
-        category.Name = request.Name.Trim();
-        category.GroupName = request.GroupName.Trim();
+        category.Name = normalizedName;
+        category.GroupName = normalizedGroupName;
         category.PlannedAmount = decimal.Round(request.PlannedAmount, 2);
 
         if (request.DisplayOrder is not null)

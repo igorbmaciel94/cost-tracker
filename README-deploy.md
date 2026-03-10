@@ -52,7 +52,15 @@ Edite `deploy/.env.prod`:
 - `DB_USER=<seu usuario postgres>`
 - `DB_PASSWORD=<sua senha>`
 - `DB_SSL_MODE=Disable`
+- `AUTH_USERNAME=<username do app>`
+- `AUTH_PASSWORD_HASH=<hash gerado pelo utilitário>`
 - `GHCR_USERNAME` e `GHCR_TOKEN`
+
+Gerar hash:
+
+```bash
+dotnet run --project backend/CostTracker.PasswordHash -- <username> <password>
+```
 
 ## 3) Primeiro deploy do Cost Tracker
 
@@ -66,7 +74,7 @@ Validar stack:
 ```bash
 docker compose --env-file deploy/.env.prod -f deploy/docker-compose.prod.yml ps
 curl -I http://127.0.0.1:18080
-curl -sS http://127.0.0.1:18081/api/months
+curl -sS http://127.0.0.1:18081/api/health
 ```
 
 Checagem rapida de conflito de portas (esperado):
@@ -113,7 +121,7 @@ docker compose -f /opt/bloodwatch/compose/docker-compose.prod.yml --env-file /op
 
 ```bash
 curl -I https://cost.lighthousedev.uk
-curl -sS https://cost.lighthousedev.uk/api/months
+curl -sS https://cost.lighthousedev.uk/api/health
 ```
 
 ## 6) Atualização manual do Cost Tracker

@@ -24,7 +24,15 @@ export function GroupRemainingPieChart({ data }: GroupRemainingPieChartProps) {
       <div className="chart-container">
         <ResponsiveContainer width="100%" height={300}>
           <PieChart>
-            <Pie data={data} dataKey="remaining" nameKey="groupName" outerRadius={110} label>
+            <Pie
+              data={data}
+              dataKey="remaining"
+              nameKey="groupName"
+              innerRadius={58}
+              outerRadius={110}
+              paddingAngle={2}
+              label
+            >
               {data.map((entry, index) => (
                 <Cell key={entry.groupName} fill={COLORS[index % COLORS.length]} />
               ))}

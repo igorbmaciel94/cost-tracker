@@ -1,5 +1,6 @@
 using CostTracker.Api.Contracts;
 using CostTracker.Api.Services;
+using CostTracker.Domain.Constants;
 using CostTracker.Domain.Entities;
 using CostTracker.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
@@ -65,9 +66,12 @@ public class TargetsController(
                 return BadRequest("targetPercent must be between 0 and 1.");
             }
 
-            var normalizedGroupName = item.GroupName.Trim();
+            var normalizedGroupName = GroupNames.Normalize(item.GroupName);
             var existing = month.GroupTargets
-                .FirstOrDefault(x => string.Equals(x.GroupName, normalizedGroupName, StringComparison.OrdinalIgnoreCase));
+                .FirstOrDefault(x => string.Equals(
+                    GroupNames.Normalize(x.GroupName),
+                    normalizedGroupName,
+                    StringComparison.OrdinalIgnoreCase));
 
             if (existing is null)
             {

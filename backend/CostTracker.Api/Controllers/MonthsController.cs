@@ -1,5 +1,6 @@
 using CostTracker.Api.Contracts;
 using CostTracker.Api.Services;
+using CostTracker.Domain.Constants;
 using CostTracker.Domain.Entities;
 using CostTracker.Domain.Enums;
 using CostTracker.Infrastructure.Persistence;
@@ -83,22 +84,44 @@ public class MonthsController(
             {
                 Id = Guid.NewGuid(),
                 MonthId = newMonthId,
-                Name = category.Name,
-                GroupName = category.GroupName,
+                Name = CategoryNames.Normalize(category.Name),
+                GroupName = GroupNames.Normalize(category.GroupName),
                 PlannedAmount = category.PlannedAmount,
                 DisplayOrder = category.DisplayOrder
             })
             .ToList();
 
         var newTargets = openMonth.GroupTargets
-            .Select(target => new GroupTarget
+            .GroupBy(target => GroupNames.Normalize(target.GroupName), StringComparer.OrdinalIgnoreCase)
+            .Select(group =>
+            {
+                var source = group.First();
+
+                return new GroupTarget
+                {
+                    Id = Guid.NewGuid(),
+                    MonthId = newMonthId,
+                    GroupName = GroupNames.Normalize(group.Key),
+                    TargetPercent = source.TargetPercent
+                };
+            })
+            .ToList();
+
+        foreach (var groupName in GroupNames.All)
+        {
+            if (newTargets.Any(target => string.Equals(target.GroupName, groupName, StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
+            newTargets.Add(new GroupTarget
             {
                 Id = Guid.NewGuid(),
                 MonthId = newMonthId,
-                GroupName = target.GroupName,
-                TargetPercent = target.TargetPercent
-            })
-            .ToList();
+                GroupName = groupName,
+                TargetPercent = 0m
+            });
+        }
 
         await dbContext.Months.AddAsync(newMonth, cancellationToken);
         await dbContext.CategoryBudgets.AddRangeAsync(newCategories, cancellationToken);

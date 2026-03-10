@@ -40,6 +40,7 @@ describe('BudgetTable', () => {
     expect(screen.getByRole('button', { name: /categoria/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /grupo/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /previsto/i })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Buffer' })).toBeInTheDocument();
   });
 
   it('edits a category inline and saves', async () => {
