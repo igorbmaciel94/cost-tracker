@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { categorySchema, entrySchema, salarySchema } from './validators';
+import { categorySchema, entrySchema, salarySchema, targetSchema } from './validators';
 
 describe('validators', () => {
   it('should reject negative salary', () => {
@@ -23,6 +23,15 @@ describe('validators', () => {
       entryDate: '2026-02-28',
       description: 'Compra',
       amount: -5
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject target percentages above 100', () => {
+    const result = targetSchema.safeParse({
+      groupName: 'Buffer',
+      targetPercent: 101
     });
 
     expect(result.success).toBe(false);

@@ -78,9 +78,19 @@ public sealed record DashboardDto(
     IReadOnlyList<DashboardCategoryPointDto> CategoryChart,
     IReadOnlyList<DashboardGroupPointDto> GroupPie);
 
+public sealed record AuthSessionDto(
+    bool IsAuthenticated,
+    string? Username);
+
 public sealed class CreateMonthRequest
 {
     public string? ReferenceMonth { get; set; }
+}
+
+public sealed class LoginRequest
+{
+    public string Username { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
 }
 
 public sealed class UpdateSalaryRequest

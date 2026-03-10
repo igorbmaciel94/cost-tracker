@@ -7,11 +7,55 @@ namespace CostTracker.Tests.Integration;
 
 public class ApiFlowTests
 {
+    private static async Task LoginAsync(HttpClient client)
+    {
+        var response = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest
+        {
+            Username = TestWebApplicationFactory.TestUsername,
+            Password = TestWebApplicationFactory.TestPassword
+        });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ProtectedEndpoints_ShouldRequireAuthentication()
+    {
+        using var factory = new TestWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        var response = await client.GetAsync("/api/months");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task LoginLogoutAndSession_ShouldManageCookieAuthentication()
+    {
+        using var factory = new TestWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        await LoginAsync(client);
+
+        var session = await client.GetFromJsonAsync<AuthSessionDto>("/api/auth/session");
+        Assert.NotNull(session);
+        Assert.True(session.IsAuthenticated);
+        Assert.Equal(TestWebApplicationFactory.TestUsername, session.Username);
+
+        var logoutResponse = await client.PostAsJsonAsync("/api/auth/logout", new { });
+        Assert.Equal(HttpStatusCode.OK, logoutResponse.StatusCode);
+
+        var protectedResponse = await client.GetAsync("/api/months");
+        Assert.Equal(HttpStatusCode.Unauthorized, protectedResponse.StatusCode);
+    }
+
     [Fact]
     public async Task CreateNewMonth_ShouldCloseOldAndKeepOneOpen()
     {
         using var factory = new TestWebApplicationFactory();
         using var client = factory.CreateClient();
+
+        await LoginAsync(client);
 
         var initialMonths = await client.GetFromJsonAsync<List<MonthSummaryDto>>("/api/months");
         var initialOpen = Assert.Single(initialMonths!, x => x.Status == "OPEN");
@@ -33,6 +77,8 @@ public class ApiFlowTests
         using var factory = new TestWebApplicationFactory();
         using var client = factory.CreateClient();
 
+        await LoginAsync(client);
+
         await client.PostAsJsonAsync("/api/months/new", new CreateMonthRequest());
         var months = await client.GetFromJsonAsync<List<MonthSummaryDto>>("/api/months");
         var closed = Assert.Single(months!, x => x.Status == "CLOSED");
@@ -46,6 +92,8 @@ public class ApiFlowTests
     {
         using var factory = new TestWebApplicationFactory();
         using var client = factory.CreateClient();
+
+        await LoginAsync(client);
 
         var months = await client.GetFromJsonAsync<List<MonthSummaryDto>>("/api/months");
         var openMonth = Assert.Single(months!, x => x.Status == "OPEN");
@@ -88,6 +136,8 @@ public class ApiFlowTests
         using var factory = new TestWebApplicationFactory();
         using var client = factory.CreateClient();
 
+        await LoginAsync(client);
+
         var months = await client.GetFromJsonAsync<List<MonthSummaryDto>>("/api/months");
         var openMonth = Assert.Single(months!, x => x.Status == "OPEN");
 
@@ -105,5 +155,27 @@ public class ApiFlowTests
         var targets = await client.GetFromJsonAsync<TargetsResponseDto>($"/api/months/{openMonth.Id}/targets");
         Assert.Equal(0.65m, targets!.Items.Single(x => x.GroupName == GroupNames.Essenciais).TargetPercent);
         Assert.Equal(0.25m, targets.Items.Single(x => x.GroupName == GroupNames.Desejos).TargetPercent);
+        Assert.Contains(targets.Items, x => x.GroupName == GroupNames.Investimento && x.TargetPercent == 0m);
+        Assert.Contains(targets.Items, x => x.GroupName == GroupNames.Saving && x.TargetPercent == 0.1m);
+        Assert.Contains(targets.Items, x => x.GroupName == GroupNames.Buffer && x.TargetPercent == 0m);
+    }
+
+    [Fact]
+    public async Task SeededData_ShouldExposeCanonicalGroupsAndCategories()
+    {
+        using var factory = new TestWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        await LoginAsync(client);
+
+        var months = await client.GetFromJsonAsync<List<MonthSummaryDto>>("/api/months");
+        var openMonth = Assert.Single(months!, x => x.Status == "OPEN");
+
+        var budget = await client.GetFromJsonAsync<BudgetResponseDto>($"/api/months/{openMonth.Id}/budget");
+        Assert.Contains(budget!.Lines, line => line.Name == "Investimento" && line.GroupName == GroupNames.Investimento);
+        Assert.Contains(budget.Lines, line => line.Name == "Saving" && line.GroupName == GroupNames.Saving);
+
+        var targets = await client.GetFromJsonAsync<TargetsResponseDto>($"/api/months/{openMonth.Id}/targets");
+        Assert.Contains(targets!.Items, item => item.GroupName == GroupNames.Buffer && item.TargetPercent == 0m);
     }
 }

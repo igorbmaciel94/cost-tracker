@@ -1,10 +1,44 @@
+using CostTracker.Api.Configuration;
 using CostTracker.Api.Services;
 using CostTracker.Infrastructure.Extensions;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddOptions<AuthOptions>()
+    .Bind(builder.Configuration.GetSection("Auth"))
+    .Validate(options => !string.IsNullOrWhiteSpace(options.Username), "Auth:Username is required.")
+    .Validate(options => !string.IsNullOrWhiteSpace(options.PasswordHash), "Auth:PasswordHash is required.")
+    .ValidateOnStart();
+
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add(new AuthorizeFilter());
+});
 builder.Services.AddOpenApi();
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.Cookie.Name = "costtracker.auth";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.Events = new CookieAuthenticationEvents
+        {
+            OnRedirectToLogin = context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return Task.CompletedTask;
+            },
+            OnRedirectToAccessDenied = context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                return Task.CompletedTask;
+            }
+        };
+    });
+builder.Services.AddAuthorization();
 
 builder.Services.AddCors(options =>
 {
@@ -15,12 +49,14 @@ builder.Services.AddCors(options =>
                 "http://localhost:5173",
                 "http://127.0.0.1:5173")
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<MonthProjectionService>();
+builder.Services.AddScoped<PasswordHashService>();
 
 var app = builder.Build();
 
@@ -30,6 +66,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("frontend");
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 

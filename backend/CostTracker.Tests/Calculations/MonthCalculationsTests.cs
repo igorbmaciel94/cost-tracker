@@ -116,7 +116,7 @@ public class MonthCalculationsTests
             .ToDictionary(x => x.GroupName, x => x.RemainingAmount);
 
         Assert.Equal(325m, remainingByGroup["Essenciais"]);
-        Assert.Equal(-50m, remainingByGroup["Investimentos"]);
+        Assert.Equal(-50m, remainingByGroup["Saving"]);
     }
 
     [Fact]

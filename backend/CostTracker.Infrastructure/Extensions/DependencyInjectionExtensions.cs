@@ -20,6 +20,7 @@ public static class DependencyInjectionExtensions
             }));
 
         services.AddScoped<DatabaseSeeder>();
+        services.AddScoped<CanonicalDataBackfillService>();
 
         return services;
     }
@@ -40,5 +41,8 @@ public static class DependencyInjectionExtensions
 
         var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
         await seeder.SeedAsync();
+
+        var backfill = scope.ServiceProvider.GetRequiredService<CanonicalDataBackfillService>();
+        await backfill.ApplyAsync();
     }
 }

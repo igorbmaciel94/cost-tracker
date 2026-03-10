@@ -12,6 +12,9 @@ interface LayoutProps {
   onSelectMonth: (monthId: string) => void;
   onCreateMonth: () => void;
   creatingMonth: boolean;
+  username: string | null;
+  onLogout: () => Promise<void>;
+  loggingOut: boolean;
   children: ReactNode;
 }
 
@@ -22,6 +25,9 @@ export function Layout({
   onSelectMonth,
   onCreateMonth,
   creatingMonth,
+  username,
+  onLogout,
+  loggingOut,
   children
 }: LayoutProps) {
   const plannedRatio = selectedMonth && selectedMonth.salary > 0
@@ -66,6 +72,16 @@ export function Layout({
             loading={creatingMonth}
             onClick={onCreateMonth}
           />
+          <button
+            type="button"
+            className="button-secondary"
+            onClick={() => {
+              void onLogout();
+            }}
+            disabled={loggingOut}
+          >
+            {loggingOut ? 'Saindo...' : `Sair${username ? ` (${username})` : ''}`}
+          </button>
         </div>
       </header>
 

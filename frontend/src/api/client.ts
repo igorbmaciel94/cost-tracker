@@ -1,10 +1,12 @@
 import type {
+  AuthSessionDto,
   BudgetResponseDto,
   CreateCategoryRequest,
   CreateEntryRequest,
   CreateMonthRequest,
   DashboardDto,
   EntriesResponseDto,
+  LoginRequest,
   MonthSummaryDto,
   TargetsResponseDto,
   UpdateCategoryRequest,
@@ -21,6 +23,7 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   const response = await fetch(`${API_BASE_URL}${normalizedPath}`, {
     ...init,
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       ...(init?.headers ?? {})
@@ -40,6 +43,16 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  getSession: () => apiFetch<AuthSessionDto>('/auth/session'),
+  login: (request: LoginRequest) =>
+    apiFetch<AuthSessionDto>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(request)
+    }),
+  logout: () =>
+    apiFetch<AuthSessionDto>('/auth/logout', {
+      method: 'POST'
+    }),
   getMonths: () => apiFetch<MonthSummaryDto[]>('/months'),
   createNewMonth: (request?: CreateMonthRequest) =>
     apiFetch<MonthSummaryDto>('/months/new', {

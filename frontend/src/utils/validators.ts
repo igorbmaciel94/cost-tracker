@@ -19,5 +19,5 @@ export const entrySchema = z.object({
 
 export const targetSchema = z.object({
   groupName: z.string().trim().min(1),
-  targetPercent: z.coerce.number().min(0).max(1)
+  targetPercent: z.coerce.number().min(0).max(100)
 });

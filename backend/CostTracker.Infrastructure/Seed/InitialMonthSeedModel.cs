@@ -34,15 +34,16 @@ public sealed class InitialMonthSeedModel
                 new("Compras online", GroupNames.Desejos, 315m, 12),
                 new("Viagem", GroupNames.Desejos, 138m, 13),
                 new("Assinaturas", GroupNames.Desejos, 60m, 14),
-                new("Saving", GroupNames.Investimentos, 276m, 15),
-                new("Estudos", GroupNames.Estudos, 0m, 16)
+                new("Saving", GroupNames.Saving, 276m, 15),
+                new("Investimento", GroupNames.Investimento, 0m, 16)
             ],
             Targets =
             [
                 new(GroupNames.Essenciais, 0.6m),
                 new(GroupNames.Desejos, 0.3m),
-                new(GroupNames.Estudos, 0.0m),
-                new(GroupNames.Investimentos, 0.1m)
+                new(GroupNames.Investimento, 0.0m),
+                new(GroupNames.Saving, 0.1m),
+                new(GroupNames.Buffer, 0.0m)
             ],
             Entries =
             [

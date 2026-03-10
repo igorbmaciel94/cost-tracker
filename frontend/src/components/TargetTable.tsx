@@ -24,7 +24,7 @@ const initialSortState: SortState<TargetSortKey> = {
 
 function toDraftMap(items: TargetGroupDto[]): Record<string, number> {
   return items.reduce<Record<string, number>>((acc, item) => {
-    acc[item.groupName] = item.targetPercent;
+    acc[item.groupName] = Number((item.targetPercent * 100).toFixed(2));
     return acc;
   }, {});
 }
@@ -89,7 +89,7 @@ export function TargetTable({ targets, readOnly, onSave }: TargetTableProps) {
             await onSave({
               items: Object.entries(draft).map(([groupName, targetPercent]) => ({
                 groupName,
-                targetPercent
+                targetPercent: Number((targetPercent / 100).toFixed(4))
               }))
             });
           }}
@@ -141,15 +141,15 @@ export function TargetTable({ targets, readOnly, onSave }: TargetTableProps) {
                 <input
                   type="number"
                   min={0}
-                  max={1}
-                  step={0.01}
+                  max={100}
+                  step={0.1}
                   disabled={readOnly}
-                  value={draft[item.groupName] ?? item.targetPercent}
+                  value={draft[item.groupName] ?? Number((item.targetPercent * 100).toFixed(2))}
                   onChange={(event) => {
                     const parsed = Number(event.target.value);
                     setDraft((current) => ({
                       ...current,
-                      [item.groupName]: Number.isNaN(parsed) ? 0 : parsed
+                      [item.groupName]: Number.isNaN(parsed) ? 0 : Math.min(100, Math.max(0, parsed))
                     }));
                   }}
                 />

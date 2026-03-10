@@ -7,6 +7,7 @@ import type {
   CreateCategoryRequest,
   UpdateCategoryRequest
 } from '../api/types';
+import { buildGroupOptions } from '../constants/groups';
 import { formatCurrency } from '../utils/format';
 import { applyDirection, compareNumbers, compareStrings, sortIndicator, toggleSort, type SortState } from '../utils/sorting';
 import { categorySchema, salarySchema } from '../utils/validators';
@@ -125,6 +126,16 @@ export function BudgetTable({
 
     return items;
   }, [budget.lines, sortState]);
+
+  const groupOptions = useMemo(
+    () =>
+      buildGroupOptions([
+        ...budget.lines.map((line) => line.groupName),
+        editingDraft?.groupName ?? '',
+        createCategoryForm.getValues('groupName')
+      ]),
+    [budget.lines, createCategoryForm, editingDraft?.groupName]
+  );
 
   function startEdit(line: BudgetLineDto) {
     if (readOnly) {
@@ -270,7 +281,7 @@ export function BudgetTable({
                 </td>
                 <td>
                   {isEditing ? (
-                    <input
+                    <select
                       value={editingDraft.groupName}
                       onChange={(event) =>
                         setEditingDraft((current) =>
@@ -282,7 +293,13 @@ export function BudgetTable({
                             : current
                         )
                       }
-                    />
+                    >
+                      {groupOptions.map((groupName) => (
+                        <option key={groupName} value={groupName}>
+                          {groupName}
+                        </option>
+                      ))}
+                    </select>
                   ) : (
                     line.groupName
                   )}
@@ -363,7 +380,13 @@ export function BudgetTable({
       >
         <h3>Nova categoria</h3>
         <input placeholder="Nome" disabled={readOnly} {...createCategoryForm.register('name')} />
-        <input placeholder="Grupo" disabled={readOnly} {...createCategoryForm.register('groupName')} />
+        <select disabled={readOnly} aria-label="Grupo" {...createCategoryForm.register('groupName')}>
+          {groupOptions.map((groupName) => (
+            <option key={groupName} value={groupName}>
+              {groupName}
+            </option>
+          ))}
+        </select>
         <input
           type="number"
           step="0.01"
