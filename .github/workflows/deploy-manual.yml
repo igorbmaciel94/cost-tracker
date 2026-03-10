@@ -34,21 +34,12 @@ jobs:
               git pull --ff-only origin main
             fi
 
-            if [ ! -f deploy/.env.prod ]; then
-              cp deploy/.env.prod.example deploy/.env.prod
-            fi
-
-            if grep -q '^IMAGE_TAG=' deploy/.env.prod; then
-              sed -i.bak 's/^IMAGE_TAG=.*/IMAGE_TAG=${{ inputs.image_tag }}/' deploy/.env.prod
-              rm -f deploy/.env.prod.bak
-            else
-              echo 'IMAGE_TAG=${{ inputs.image_tag }}' >> deploy/.env.prod
-            fi
+            export IMAGE_TAG='${{ inputs.image_tag }}'
 
             if [ -n "${{ secrets.GHCR_USERNAME }}" ] && [ -n "${{ secrets.GHCR_TOKEN }}" ]; then
               echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
             fi
 
-            docker compose --env-file deploy/.env.prod -f deploy/docker-compose.prod.yml pull
-            docker compose --env-file deploy/.env.prod -f deploy/docker-compose.prod.yml up -d --remove-orphans
+            docker compose -f deploy/docker-compose.prod.yml pull
+            docker compose -f deploy/docker-compose.prod.yml up -d --remove-orphans
             docker image prune -f

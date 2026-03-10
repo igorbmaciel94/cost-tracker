@@ -36,10 +36,24 @@ sudo mkdir -p /opt/cost-tracker
 sudo chown -R "$USER":"$USER" /opt/cost-tracker
 cd /opt/cost-tracker
 git clone https://github.com/igorbmaciel94/cost-tracker.git .
-cp deploy/.env.prod.example deploy/.env.prod
 ```
 
-Edite `deploy/.env.prod`:
+Voce pode escolher entre:
+
+1. Exportar as variaveis direto no shell do servidor.
+2. Criar `deploy/.env.prod` a partir de `deploy/.env.prod.example`.
+
+Com shell env, o minimo e:
+
+```bash
+export DB_PASSWORD='<senha do postgres>'
+export AUTH_USERNAME='<username do app>'
+export AUTH_PASSWORD_HASH='<hash gerado pelo utilitario>'
+export GHCR_USERNAME='<usuario do ghcr>'
+export GHCR_TOKEN='<token do ghcr>'
+```
+
+Defaults ja embutidos no compose:
 
 - `IMAGE_TAG=main`
 - `APP_WEB_BIND_ADDRESS=0.0.0.0`
@@ -49,12 +63,15 @@ Edite `deploy/.env.prod`:
 - `DB_HOST=host.docker.internal`
 - `DB_PORT=5432`
 - `DB_NAME=costtracker`
-- `DB_USER=<seu usuario postgres>`
-- `DB_PASSWORD=<sua senha>`
+- `DB_USER=costtracker`
 - `DB_SSL_MODE=Disable`
-- `AUTH_USERNAME=<username do app>`
-- `AUTH_PASSWORD_HASH=<hash gerado pelo utilitário>`
-- `GHCR_USERNAME` e `GHCR_TOKEN`
+
+Se preferir arquivo, copie e edite:
+
+```bash
+cp deploy/.env.prod.example deploy/.env.prod
+nano deploy/.env.prod
+```
 
 Gerar hash:
 
@@ -72,7 +89,7 @@ cd /opt/cost-tracker
 Validar stack:
 
 ```bash
-docker compose --env-file deploy/.env.prod -f deploy/docker-compose.prod.yml ps
+docker compose -f deploy/docker-compose.prod.yml ps
 curl -I http://127.0.0.1:18080
 curl -sS http://127.0.0.1:18081/api/health
 ```
@@ -141,6 +158,9 @@ Secrets necessários:
 - `DEPLOY_HOST=46.225.216.71`
 - `DEPLOY_USER`
 - `DEPLOY_SSH_KEY`
+- `DB_PASSWORD`
+- `AUTH_USERNAME`
+- `AUTH_PASSWORD_HASH`
 - `GHCR_USERNAME`
 - `GHCR_TOKEN`
 
@@ -149,7 +169,7 @@ Secrets necessários:
 Sem backup por enquanto:
 - nao configure cron
 - nao rode `backup.sh`
-- pode ignorar as variaveis `BACKUP_*` no `.env.prod`
+- pode ignorar as variaveis `BACKUP_*`
 
 Com backup diário:
 

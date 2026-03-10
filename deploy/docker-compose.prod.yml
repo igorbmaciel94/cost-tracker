@@ -1,10 +1,10 @@
 services:
   web:
-    image: ghcr.io/${GHCR_OWNER}/cost-tracker-web:${IMAGE_TAG}
+    image: ghcr.io/${GHCR_OWNER:-igorbmaciel94}/cost-tracker-web:${IMAGE_TAG:-main}
     container_name: cost-tracker-web
     restart: unless-stopped
     ports:
-      - "${APP_WEB_BIND_ADDRESS}:${APP_WEB_BIND_PORT}:80"
+      - "${APP_WEB_BIND_ADDRESS:-0.0.0.0}:${APP_WEB_BIND_PORT:-18080}:80"
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost/health || exit 1"]
       interval: 15s
@@ -15,7 +15,7 @@ services:
       - edge
 
   api:
-    image: ghcr.io/${GHCR_OWNER}/cost-tracker-api:${IMAGE_TAG}
+    image: ghcr.io/${GHCR_OWNER:-igorbmaciel94}/cost-tracker-api:${IMAGE_TAG:-main}
     container_name: cost-tracker-api
     restart: unless-stopped
     extra_hosts:
@@ -24,11 +24,11 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
       ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
-      ConnectionStrings__Default: Host=${DB_HOST};Port=${DB_PORT};Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD};SSL Mode=${DB_SSL_MODE}
-      Auth__Username: ${AUTH_USERNAME}
-      Auth__PasswordHash: ${AUTH_PASSWORD_HASH}
+      ConnectionStrings__Default: Host=${DB_HOST:-host.docker.internal};Port=${DB_PORT:-5432};Database=${DB_NAME:-costtracker};Username=${DB_USER:-costtracker};Password=${DB_PASSWORD:?DB_PASSWORD is required};SSL Mode=${DB_SSL_MODE:-Disable}
+      Auth__Username: ${AUTH_USERNAME:?AUTH_USERNAME is required}
+      Auth__PasswordHash: ${AUTH_PASSWORD_HASH:?AUTH_PASSWORD_HASH is required}
     ports:
-      - "${APP_API_BIND_ADDRESS}:${APP_API_BIND_PORT}:8080"
+      - "${APP_API_BIND_ADDRESS:-0.0.0.0}:${APP_API_BIND_PORT:-18081}:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8080/api/health || exit 1"]
       interval: 20s
