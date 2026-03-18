@@ -1,6 +1,7 @@
 import { ResponsiveContainer, Tooltip, Treemap } from 'recharts';
 import type { DashboardCategoryPointDto } from '../../api/types';
 import { formatCurrency } from '../../utils/format';
+import { usePrivacy } from '../../contexts/PrivacyContext';
 
 const COLORS = ['#2463eb', '#0f766e', '#f59e0b', '#ef4444', '#6366f1', '#0891b2'];
 
@@ -18,6 +19,7 @@ interface CategoryTreemapCellProps {
   category?: string;
   name?: string;
   value?: number;
+  privacyHidden?: boolean;
 }
 
 function chunkWord(word: string, maxCharsPerLine: number): string[] {
@@ -91,7 +93,8 @@ function CategoryTreemapCell({
   index = 0,
   category,
   name = '',
-  value = 0
+  value = 0,
+  privacyHidden = false
 }: CategoryTreemapCellProps) {
   if (depth < 1 || width <= 0 || height <= 0) {
     return null;
@@ -151,7 +154,7 @@ function CategoryTreemapCell({
       )}
       {showValue && (
         <text x={x + 14} y={valueY} fill="#ffffff" fontSize={14} fontWeight={700}>
-          {formatCurrency(value)}
+          {privacyHidden ? '***' : formatCurrency(value)}
         </text>
       )}
     </g>
@@ -159,21 +162,22 @@ function CategoryTreemapCell({
 }
 
 export function CategoryRemainingTreemap({ data }: CategoryRemainingTreemapProps) {
+  const { hidden } = usePrivacy();
   const chartData = [...data].sort((left, right) => right.remaining - left.remaining);
   const chartHeight = Math.max(360, Math.ceil(chartData.length / 3) * 120);
 
   if (chartData.length === 0) {
     return (
       <section className="chart-card">
-        <h3>Saldo disponível por categoria</h3>
-        <p className="chart-empty">Nenhuma categoria com saldo disponível neste mês.</p>
+        <h3>Saldo disponivel por categoria</h3>
+        <p className="chart-empty">Nenhuma categoria com saldo disponivel neste mes.</p>
       </section>
     );
   }
 
   return (
     <section className="chart-card">
-      <h3>Saldo disponível por categoria</h3>
+      <h3>Saldo disponivel por categoria</h3>
       <div className="chart-container">
         <ResponsiveContainer width="100%" height={chartHeight}>
           <Treemap
@@ -183,10 +187,10 @@ export function CategoryRemainingTreemap({ data }: CategoryRemainingTreemapProps
             aspectRatio={4 / 3}
             stroke="#f8fbff"
             isAnimationActive={false}
-            content={<CategoryTreemapCell />}
+            content={<CategoryTreemapCell privacyHidden={hidden} />}
           >
             <Tooltip
-              formatter={(value: number) => [formatCurrency(value), 'Saldo disponível']}
+              formatter={(value: number) => [hidden ? '***' : formatCurrency(value), 'Saldo disponivel']}
               labelFormatter={(_, payload) => payload?.[0]?.payload?.category ?? ''}
               contentStyle={{
                 borderRadius: 12,

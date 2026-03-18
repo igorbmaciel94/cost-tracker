@@ -8,6 +8,7 @@ import type {
   UpdateEntryRequest
 } from '../api/types';
 import { formatCurrency, formatDateIsoToPt } from '../utils/format';
+import { PrivacyMask } from '../contexts/PrivacyContext';
 import {
   applyDirection,
   compareDateIso,
@@ -195,7 +196,7 @@ export function EntriesTable({
     <section className="panel">
       <header className="panel-header">
         <h2>Lançamentos do mês {entries.referenceMonth}</h2>
-        <p>Total gasto: {formatCurrency(entries.totalSpent)}</p>
+        <p>Total gasto: <PrivacyMask value={formatCurrency(entries.totalSpent)} /></p>
       </header>
 
       <form
@@ -340,7 +341,7 @@ export function EntriesTable({
                       }
                     />
                   ) : (
-                    formatCurrency(entry.amount)
+                    <PrivacyMask value={formatCurrency(entry.amount)} />
                   )}
                 </td>
                 <td>

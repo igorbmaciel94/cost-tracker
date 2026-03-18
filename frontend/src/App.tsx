@@ -5,6 +5,7 @@ import { api } from './api/client';
 import type { AuthSessionDto, LoginRequest } from './api/types';
 import { Layout } from './components/Layout';
 import { LoginPage } from './pages/LoginPage';
+import { PrivacyProvider } from './contexts/PrivacyContext';
 
 const DashboardPage = lazy(() =>
   import('./pages/DashboardPage').then((module) => ({ default: module.DashboardPage }))
@@ -80,43 +81,45 @@ function AuthenticatedApp({ session, onLogout, loggingOut }: AuthenticatedAppPro
   }
 
   return (
-    <Layout
-      months={months}
-      selectedMonthId={selectedMonthId}
-      selectedMonth={selectedMonth}
-      onSelectMonth={setSelectedMonthId}
-      onCreateMonth={() => {
-        createMonthMutation.mutate();
-      }}
-      creatingMonth={createMonthMutation.isPending}
-      username={session.username}
-      onLogout={onLogout}
-      loggingOut={loggingOut}
-    >
-      <Suspense fallback={<p className="center-message">Carregando página...</p>}>
-        <Routes>
-          <Route path="/" element={<DashboardPage monthId={selectedMonthId} />} />
-          <Route
-            path="/orcamento"
-            element={
-              <OrcamentoPage monthId={selectedMonthId} readOnly={selectedMonth?.status === 'CLOSED'} />
-            }
-          />
-          <Route
-            path="/lancamentos"
-            element={
-              <LancamentosPage monthId={selectedMonthId} readOnly={selectedMonth?.status === 'CLOSED'} />
-            }
-          />
-          <Route
-            path="/metas"
-            element={<MetasPage monthId={selectedMonthId} readOnly={selectedMonth?.status === 'CLOSED'} />}
-          />
-          <Route path="/historico" element={<HistoricoPage months={months} />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Suspense>
-    </Layout>
+    <PrivacyProvider>
+      <Layout
+        months={months}
+        selectedMonthId={selectedMonthId}
+        selectedMonth={selectedMonth}
+        onSelectMonth={setSelectedMonthId}
+        onCreateMonth={() => {
+          createMonthMutation.mutate();
+        }}
+        creatingMonth={createMonthMutation.isPending}
+        username={session.username}
+        onLogout={onLogout}
+        loggingOut={loggingOut}
+      >
+        <Suspense fallback={<p className="center-message">Carregando página...</p>}>
+          <Routes>
+            <Route path="/" element={<DashboardPage monthId={selectedMonthId} />} />
+            <Route
+              path="/orcamento"
+              element={
+                <OrcamentoPage monthId={selectedMonthId} readOnly={selectedMonth?.status === 'CLOSED'} />
+              }
+            />
+            <Route
+              path="/lancamentos"
+              element={
+                <LancamentosPage monthId={selectedMonthId} readOnly={selectedMonth?.status === 'CLOSED'} />
+              }
+            />
+            <Route
+              path="/metas"
+              element={<MetasPage monthId={selectedMonthId} readOnly={selectedMonth?.status === 'CLOSED'} />}
+            />
+            <Route path="/historico" element={<HistoricoPage months={months} />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+      </Layout>
+    </PrivacyProvider>
   );
 }
 
