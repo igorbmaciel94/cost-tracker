@@ -5,6 +5,7 @@ import type { MonthSummaryDto } from '../api/types';
 import { BudgetTable } from '../components/BudgetTable';
 import { MonthlySummaryCards } from '../components/MonthlySummaryCards';
 import { formatCurrency } from '../utils/format';
+import { PrivacyMask } from '../contexts/PrivacyContext';
 import { applyDirection, compareNumbers, compareStrings, sortIndicator, toggleSort, type SortState } from '../utils/sorting';
 
 interface HistoricoPageProps {
@@ -122,9 +123,9 @@ export function HistoricoPage({ months }: HistoricoPageProps) {
             {sortedClosedMonths.map((month) => (
               <tr key={month.id}>
                 <td>{month.referenceMonth}</td>
-                <td>{formatCurrency(month.salary)}</td>
-                <td>{formatCurrency(month.plannedTotal)}</td>
-                <td>{formatCurrency(month.spentTotal)}</td>
+                <td><PrivacyMask value={formatCurrency(month.salary)} /></td>
+                <td><PrivacyMask value={formatCurrency(month.plannedTotal)} /></td>
+                <td><PrivacyMask value={formatCurrency(month.spentTotal)} /></td>
                 <td>
                   <button type="button" onClick={() => setSelectedMonthId(month.id)}>
                     Ver detalhes

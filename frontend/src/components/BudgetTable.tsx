@@ -9,6 +9,7 @@ import type {
 } from '../api/types';
 import { buildGroupOptions } from '../constants/groups';
 import { formatCurrency } from '../utils/format';
+import { PrivacyMask } from '../contexts/PrivacyContext';
 import { applyDirection, compareNumbers, compareStrings, sortIndicator, toggleSort, type SortState } from '../utils/sorting';
 import { categorySchema, salarySchema } from '../utils/validators';
 
@@ -325,8 +326,8 @@ export function BudgetTable({
                     formatCurrency(line.planned)
                   )}
                 </td>
-                <td>{formatCurrency(line.spent)}</td>
-                <td className={line.difference < 0 ? 'negative' : ''}>{formatCurrency(line.difference)}</td>
+                <td><PrivacyMask value={formatCurrency(line.spent)} /></td>
+                <td className={line.difference < 0 ? 'negative' : ''}><PrivacyMask value={formatCurrency(line.difference)} /></td>
                 <td>
                   <div className="row-actions">
                     {isEditing ? (
@@ -361,10 +362,10 @@ export function BudgetTable({
           <tr className="totals-row">
             <td>Total</td>
             <td>-</td>
-            <td>{formatCurrency(budget.plannedTotal)}</td>
-            <td>{formatCurrency(budget.spentTotal)}</td>
+            <td><PrivacyMask value={formatCurrency(budget.plannedTotal)} /></td>
+            <td><PrivacyMask value={formatCurrency(budget.spentTotal)} /></td>
             <td className={budget.differenceTotal < 0 ? 'negative' : ''}>
-              {formatCurrency(budget.differenceTotal)}
+              <PrivacyMask value={formatCurrency(budget.differenceTotal)} />
             </td>
             <td />
           </tr>

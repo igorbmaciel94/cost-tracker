@@ -1,5 +1,6 @@
 import type { DashboardDto } from '../api/types';
 import { formatCurrency } from '../utils/format';
+import { PrivacyMask } from '../contexts/PrivacyContext';
 
 interface MonthlySummaryCardsProps {
   dashboard: DashboardDto;
@@ -13,23 +14,23 @@ export function MonthlySummaryCards({ dashboard }: MonthlySummaryCardsProps) {
   return (
     <section className="summary-grid">
       <article className="summary-card summary-card-income">
-        <h3>Salário</h3>
-        <p>{formatCurrency(dashboard.salary)}</p>
+        <h3>Salario</h3>
+        <p><PrivacyMask value={formatCurrency(dashboard.salary)} /></p>
         <small>Base mensal de receita.</small>
       </article>
       <article className="summary-card">
         <h3>Total previsto</h3>
-        <p>{formatCurrency(dashboard.plannedTotal)}</p>
+        <p><PrivacyMask value={formatCurrency(dashboard.plannedTotal)} /></p>
         <small>{Math.round(plannedRatio * 100)}% da renda.</small>
       </article>
       <article className="summary-card">
         <h3>Total gasto</h3>
-        <p>{formatCurrency(dashboard.spentTotal)}</p>
+        <p><PrivacyMask value={formatCurrency(dashboard.spentTotal)} /></p>
         <small>{Math.round(spentRatio * 100)}% executado.</small>
       </article>
       <article className={`summary-card ${currentBalance < 0 ? 'summary-card-negative' : 'summary-card-positive'}`}>
         <h3>Saldo atual</h3>
-        <p>{formatCurrency(currentBalance)}</p>
+        <p><PrivacyMask value={formatCurrency(currentBalance)} /></p>
         <small>{currentBalance >= 0 ? 'Resultado positivo no ciclo.' : 'Resultado negativo no ciclo.'}</small>
       </article>
       {dashboard.isOverPlanned && (
