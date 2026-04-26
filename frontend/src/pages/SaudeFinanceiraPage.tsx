@@ -66,14 +66,15 @@ export function SaudeFinanceiraPage({ monthId, salary }: { monthId: string | nul
 
     let inv = targetPct('Investimento');
 
-    setEssentials(ess > 0 ? String(ess) : '');
-    setSaved(sav > 0 ? String(sav) : '');
-    setCommittedEssentials(ess);
-    setCommittedSaved(sav);
+    const round2 = (n: number) => Math.round(n * 100) / 100;
+    setEssentials(ess > 0 ? String(round2(ess)) : '');
+    setSaved(sav > 0 ? String(round2(sav)) : '');
+    setCommittedEssentials(round2(ess));
+    setCommittedSaved(round2(sav));
 
     if (inv > 0) {
-      setMonthlyInvest(String(inv));
-      setCommittedMonthly(inv);
+      setMonthlyInvest(String(round2(inv)));
+      setCommittedMonthly(round2(inv));
     }
 
     setProfileLoaded(true);
