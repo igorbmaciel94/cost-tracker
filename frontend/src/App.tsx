@@ -27,6 +27,10 @@ const HistoricoPage = lazy(() =>
   import('./pages/HistoricoPage').then((module) => ({ default: module.HistoricoPage }))
 );
 
+const PlanejamentoPage = lazy(() =>
+  import('./pages/PlanejamentoPage').then((module) => ({ default: module.PlanejamentoPage }))
+);
+
 interface AuthenticatedAppProps {
   session: AuthSessionDto;
   onLogout: () => Promise<void>;
@@ -114,6 +118,7 @@ function AuthenticatedApp({ session, onLogout, loggingOut }: AuthenticatedAppPro
               path="/metas"
               element={<MetasPage monthId={selectedMonthId} readOnly={selectedMonth?.status === 'CLOSED'} />}
             />
+            <Route path="/planejamento" element={<PlanejamentoPage />} />
             <Route path="/historico" element={<HistoricoPage months={months} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
