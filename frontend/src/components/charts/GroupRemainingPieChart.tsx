@@ -60,6 +60,8 @@ export function GroupRemainingPieChart({ data }: GroupRemainingPieChartProps) {
             <Tooltip
               formatter={(value: number) => [hidden ? '***' : formatCurrency(value), 'Saldo disponível']}
               contentStyle={tooltipStyle}
+              itemStyle={{ color: labelColor }}
+              labelStyle={{ color: labelColor }}
             />
             <Legend wrapperStyle={{ paddingTop: 8, ...legendStyle }} />
           </PieChart>
