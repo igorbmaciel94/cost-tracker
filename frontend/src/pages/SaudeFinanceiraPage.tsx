@@ -1,0 +1,231 @@
+import { useState } from 'react';
+import { formatCurrency, formatPercent } from '../utils/format';
+import { PrivacyMask } from '../contexts/PrivacyContext';
+
+const RATES = [
+  { label: 'Poupança (~6% a.a.)', monthly: 0.06 / 12 },
+  { label: 'Selic (~10.5% a.a.)', monthly: 0.105 / 12 },
+  { label: 'CDI (~10.4% a.a.)', monthly: 0.104 / 12 },
+  { label: 'Tesouro Direto (~11% a.a.)', monthly: 0.11 / 12 },
+];
+
+function compoundFV(monthly: number, rate: number, months: number): number {
+  if (rate === 0) return monthly * months;
+  return monthly * ((Math.pow(1 + rate, months) - 1) / rate);
+}
+
+function ProgressBar({ value, max }: { value: number; max: number }) {
+  const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
+  const color = pct >= 100 ? '#0f766e' : pct >= 50 ? '#f59e0b' : '#ef4444';
+  return (
+    <div style={{ background: 'var(--border)', borderRadius: 8, height: 10, overflow: 'hidden', margin: '0.5rem 0' }}>
+      <div style={{ width: `${pct}%`, background: color, height: '100%', borderRadius: 8, transition: 'width 0.3s' }} />
+    </div>
+  );
+}
+
+export function SaudeFinanceiraPage() {
+  const [essentials, setEssentials] = useState('');
+  const [saved, setSaved] = useState('');
+  const [monthlyInvest, setMonthlyInvest] = useState('');
+  const [rateIndex, setRateIndex] = useState(1);
+
+  const essentialsVal = Number(essentials.replace(',', '.')) || 0;
+  const savedVal = Number(saved.replace(',', '.')) || 0;
+  const monthlyVal = Number(monthlyInvest.replace(',', '.')) || 0;
+  const rate = RATES[rateIndex].monthly;
+
+  const targets = [
+    { label: '3 meses (mínimo)', months: 3 },
+    { label: '6 meses (recomendado)', months: 6 },
+    { label: '12 meses (ideal)', months: 12 },
+  ];
+
+  const projections = [
+    { label: '1 ano', months: 12 },
+    { label: '2 anos', months: 24 },
+    { label: '5 anos', months: 60 },
+  ];
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+      {/* Colchão de Emergência */}
+      <section className="panel">
+        <header className="panel-header">
+          <h2>Colchão de emergência</h2>
+        </header>
+
+        <div className="inline-form" style={{ marginBottom: '1.5rem' }}>
+          <label htmlFor="essentials-input">Gastos essenciais mensais (R$)</label>
+          <input
+            id="essentials-input"
+            type="number"
+            step="0.01"
+            placeholder="Ex: 3000"
+            value={essentials}
+            onChange={(e) => setEssentials(e.target.value)}
+            style={{ maxWidth: 180 }}
+          />
+          <label htmlFor="saved-input">Já reservado (R$)</label>
+          <input
+            id="saved-input"
+            type="number"
+            step="0.01"
+            placeholder="Ex: 5000"
+            value={saved}
+            onChange={(e) => setSaved(e.target.value)}
+            style={{ maxWidth: 180 }}
+          />
+        </div>
+
+        {essentialsVal > 0 ? (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Cenário</th>
+                <th>Meta</th>
+                <th>Já reservado</th>
+                <th>Faltam</th>
+                <th>Progresso</th>
+              </tr>
+            </thead>
+            <tbody>
+              {targets.map(({ label, months }) => {
+                const target = essentialsVal * months;
+                const gap = Math.max(0, target - savedVal);
+                const pct = target > 0 ? Math.min(1, savedVal / target) : 0;
+                return (
+                  <tr key={months}>
+                    <td>{label}</td>
+                    <td><PrivacyMask value={formatCurrency(target)} /></td>
+                    <td><PrivacyMask value={formatCurrency(Math.min(savedVal, target))} /></td>
+                    <td className={gap > 0 ? 'negative' : ''}>
+                      <PrivacyMask value={gap > 0 ? formatCurrency(gap) : '✓ Atingido'} />
+                    </td>
+                    <td style={{ minWidth: 140 }}>
+                      <ProgressBar value={savedVal} max={target} />
+                      <small style={{ color: 'var(--text-secondary)' }}>{formatPercent(pct)}</small>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        ) : (
+          <p style={{ color: 'var(--text-secondary)' }}>
+            Informe seus gastos essenciais mensais para calcular o colchão ideal.
+          </p>
+        )}
+      </section>
+
+      {/* Simulador de Renda Fixa */}
+      <section className="panel">
+        <header className="panel-header">
+          <h2>Simulador de renda fixa</h2>
+        </header>
+
+        <div className="inline-form" style={{ marginBottom: '1.5rem' }}>
+          <label htmlFor="monthly-invest">Aporte mensal (R$)</label>
+          <input
+            id="monthly-invest"
+            type="number"
+            step="0.01"
+            placeholder="Ex: 500"
+            value={monthlyInvest}
+            onChange={(e) => setMonthlyInvest(e.target.value)}
+            style={{ maxWidth: 160 }}
+          />
+          <label htmlFor="rate-select">Indexador</label>
+          <select
+            id="rate-select"
+            value={rateIndex}
+            onChange={(e) => setRateIndex(Number(e.target.value))}
+          >
+            {RATES.map((r, i) => (
+              <option key={r.label} value={i}>{r.label}</option>
+            ))}
+          </select>
+        </div>
+
+        {monthlyVal > 0 ? (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Período</th>
+                <th>Total investido</th>
+                <th>Saldo estimado</th>
+                <th>Rendimento</th>
+              </tr>
+            </thead>
+            <tbody>
+              {projections.map(({ label, months }) => {
+                const invested = monthlyVal * months;
+                const fv = compoundFV(monthlyVal, rate, months);
+                const gain = fv - invested;
+                return (
+                  <tr key={months}>
+                    <td>{label}</td>
+                    <td><PrivacyMask value={formatCurrency(invested)} /></td>
+                    <td><PrivacyMask value={formatCurrency(fv)} /></td>
+                    <td style={{ color: '#0f766e' }}>
+                      <PrivacyMask value={`+${formatCurrency(gain)}`} />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        ) : (
+          <p style={{ color: 'var(--text-secondary)' }}>
+            Informe o aporte mensal para ver a projeção de crescimento.
+          </p>
+        )}
+      </section>
+
+      {/* Simulador de Renda Variável */}
+      <section className="panel">
+        <header className="panel-header">
+          <h2>Estimativa de renda variável</h2>
+        </header>
+
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '1rem' }}>
+          ⚠️ Valores estimados com base em históricos. Renda variável não garante retorno. Use como referência educativa.
+        </p>
+
+        {monthlyVal > 0 ? (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Período</th>
+                <th>Total investido</th>
+                <th>Cenário conservador <small>(~8% a.a.)</small></th>
+                <th>Cenário otimista <small>(~15% a.a.)</small></th>
+              </tr>
+            </thead>
+            <tbody>
+              {projections.map(({ label, months }) => {
+                const invested = monthlyVal * months;
+                const conservative = compoundFV(monthlyVal, 0.08 / 12, months);
+                const optimistic = compoundFV(monthlyVal, 0.15 / 12, months);
+                return (
+                  <tr key={months}>
+                    <td>{label}</td>
+                    <td><PrivacyMask value={formatCurrency(invested)} /></td>
+                    <td><PrivacyMask value={formatCurrency(conservative)} /></td>
+                    <td><PrivacyMask value={formatCurrency(optimistic)} /></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        ) : (
+          <p style={{ color: 'var(--text-secondary)' }}>
+            Informe o aporte mensal no simulador acima para ver as estimativas de renda variável.
+          </p>
+        )}
+      </section>
+
+    </div>
+  );
+}
