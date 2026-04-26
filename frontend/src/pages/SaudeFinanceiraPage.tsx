@@ -3,10 +3,10 @@ import { formatCurrency, formatPercent } from '../utils/format';
 import { PrivacyMask } from '../contexts/PrivacyContext';
 
 const RATES = [
-  { label: 'Poupança (~6% a.a.)', monthly: 0.06 / 12 },
-  { label: 'Selic (~10.5% a.a.)', monthly: 0.105 / 12 },
-  { label: 'CDI (~10.4% a.a.)', monthly: 0.104 / 12 },
-  { label: 'Tesouro Direto (~11% a.a.)', monthly: 0.11 / 12 },
+  { label: 'Conta remunerada (~2% a.a.)', monthly: 0.02 / 12 },
+  { label: 'Depósito a prazo (~3.5% a.a.)', monthly: 0.035 / 12 },
+  { label: 'ETF obrigações (~4.5% a.a.)', monthly: 0.045 / 12 },
+  { label: 'ETF ações globais (~7% a.a.)', monthly: 0.07 / 12 },
 ];
 
 function compoundFV(monthly: number, rate: number, months: number): number {
@@ -57,7 +57,7 @@ export function SaudeFinanceiraPage() {
         </header>
 
         <div className="inline-form" style={{ marginBottom: '1.5rem' }}>
-          <label htmlFor="essentials-input">Gastos essenciais mensais (R$)</label>
+          <label htmlFor="essentials-input">Gastos essenciais mensais (€)</label>
           <input
             id="essentials-input"
             type="number"
@@ -67,7 +67,7 @@ export function SaudeFinanceiraPage() {
             onChange={(e) => setEssentials(e.target.value)}
             style={{ maxWidth: 180 }}
           />
-          <label htmlFor="saved-input">Já reservado (R$)</label>
+          <label htmlFor="saved-input">Já reservado (€)</label>
           <input
             id="saved-input"
             type="number"
@@ -119,14 +119,14 @@ export function SaudeFinanceiraPage() {
         )}
       </section>
 
-      {/* Simulador de Renda Fixa */}
+      {/* Simulador de Investimento */}
       <section className="panel">
         <header className="panel-header">
-          <h2>Simulador de renda fixa</h2>
+          <h2>Simulador de investimento</h2>
         </header>
 
         <div className="inline-form" style={{ marginBottom: '1.5rem' }}>
-          <label htmlFor="monthly-invest">Aporte mensal (R$)</label>
+          <label htmlFor="monthly-invest">Aporte mensal (€)</label>
           <input
             id="monthly-invest"
             type="number"
@@ -136,7 +136,7 @@ export function SaudeFinanceiraPage() {
             onChange={(e) => setMonthlyInvest(e.target.value)}
             style={{ maxWidth: 160 }}
           />
-          <label htmlFor="rate-select">Indexador</label>
+          <label htmlFor="rate-select">Produto</label>
           <select
             id="rate-select"
             value={rateIndex}
@@ -183,10 +183,10 @@ export function SaudeFinanceiraPage() {
         )}
       </section>
 
-      {/* Simulador de Renda Variável */}
+      {/* Simulador de ETFs/Ações */}
       <section className="panel">
         <header className="panel-header">
-          <h2>Estimativa de renda variável</h2>
+          <h2>Estimativa ETFs / ações</h2>
         </header>
 
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '1rem' }}>
@@ -199,15 +199,15 @@ export function SaudeFinanceiraPage() {
               <tr>
                 <th>Período</th>
                 <th>Total investido</th>
-                <th>Cenário conservador <small>(~8% a.a.)</small></th>
-                <th>Cenário otimista <small>(~15% a.a.)</small></th>
+                <th>Cenário conservador <small>(~5% a.a.)</small></th>
+                <th>Cenário otimista <small>(~10% a.a.)</small></th>
               </tr>
             </thead>
             <tbody>
               {projections.map(({ label, months }) => {
                 const invested = monthlyVal * months;
-                const conservative = compoundFV(monthlyVal, 0.08 / 12, months);
-                const optimistic = compoundFV(monthlyVal, 0.15 / 12, months);
+                const conservative = compoundFV(monthlyVal, 0.05 / 12, months);
+                const optimistic = compoundFV(monthlyVal, 0.10 / 12, months);
                 return (
                   <tr key={months}>
                     <td>{label}</td>
