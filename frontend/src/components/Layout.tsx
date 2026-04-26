@@ -61,6 +61,14 @@ function IconPlanning() {
   );
 }
 
+function IconHealth() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+    </svg>
+  );
+}
+
 function IconHistory() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -242,6 +250,7 @@ export function Layout({
         <NavLink to="/lancamentos"><IconEntries /><span>Lançamentos</span></NavLink>
         <NavLink to="/metas"><IconGoals /><span>Metas</span></NavLink>
         <NavLink to="/planejamento"><IconPlanning /><span>Planejamento</span></NavLink>
+        <NavLink to="/saude-financeira"><IconHealth /><span>Saúde</span></NavLink>
         <NavLink to="/historico"><IconHistory /><span>Histórico</span></NavLink>
       </nav>
 

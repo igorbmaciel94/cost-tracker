@@ -31,6 +31,10 @@ const PlanejamentoPage = lazy(() =>
   import('./pages/PlanejamentoPage').then((module) => ({ default: module.PlanejamentoPage }))
 );
 
+const SaudeFinanceiraPage = lazy(() =>
+  import('./pages/SaudeFinanceiraPage').then((module) => ({ default: module.SaudeFinanceiraPage }))
+);
+
 interface AuthenticatedAppProps {
   session: AuthSessionDto;
   onLogout: () => Promise<void>;
@@ -119,6 +123,7 @@ function AuthenticatedApp({ session, onLogout, loggingOut }: AuthenticatedAppPro
               element={<MetasPage monthId={selectedMonthId} readOnly={selectedMonth?.status === 'CLOSED'} />}
             />
             <Route path="/planejamento" element={<PlanejamentoPage />} />
+            <Route path="/saude-financeira" element={<SaudeFinanceiraPage />} />
             <Route path="/historico" element={<HistoricoPage months={months} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
