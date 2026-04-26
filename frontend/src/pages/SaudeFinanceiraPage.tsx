@@ -33,6 +33,7 @@ export function SaudeFinanceiraPage({ monthId, salary }: { monthId: string | nul
   const [committedEssentials, setCommittedEssentials] = useState(0);
   const [committedSaved, setCommittedSaved] = useState(0);
   const [monthlyInvest, setMonthlyInvest] = useState('');
+  const [committedMonthly, setCommittedMonthly] = useState(0);
   const [rateIndex, setRateIndex] = useState(1);
   const [profileLoaded, setProfileLoaded] = useState(false);
 
@@ -70,7 +71,10 @@ export function SaudeFinanceiraPage({ monthId, salary }: { monthId: string | nul
     setCommittedSaved(sav);
 
     const investDefault = targetPct('Investimento');
-    if (investDefault > 0) setMonthlyInvest(String(investDefault));
+    if (investDefault > 0) {
+      setMonthlyInvest(String(investDefault));
+      setCommittedMonthly(investDefault);
+    }
 
     setProfileLoaded(true);
   }, [profileQuery.data, targetsQuery.data, profileLoaded, salary]);
@@ -90,7 +94,7 @@ export function SaudeFinanceiraPage({ monthId, salary }: { monthId: string | nul
 
   const essentialsVal = committedEssentials;
   const savedVal = committedSaved;
-  const monthlyVal = Number(monthlyInvest.replace(',', '.')) || 0;
+  const monthlyVal = committedMonthly;
   const rate = RATES[rateIndex].monthly;
 
   const targets = [
@@ -211,6 +215,12 @@ export function SaudeFinanceiraPage({ monthId, salary }: { monthId: string | nul
               <option key={r.label} value={i}>{r.label}</option>
             ))}
           </select>
+          <button
+            type="button"
+            onClick={() => setCommittedMonthly(Number(monthlyInvest.replace(',', '.')) || 0)}
+          >
+            Simular
+          </button>
         </div>
 
         {monthlyVal > 0 ? (
