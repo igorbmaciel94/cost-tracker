@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type {
@@ -12,6 +12,7 @@ import { formatCurrency } from '../utils/format';
 import { PrivacyMask } from '../contexts/PrivacyContext';
 import { applyDirection, compareNumbers, compareStrings, sortIndicator, toggleSort, type SortState } from '../utils/sorting';
 import { categorySchema, salarySchema } from '../utils/validators';
+import { ConfirmModal } from './ConfirmModal';
 
 interface BudgetTableProps {
   budget: BudgetResponseDto;
@@ -57,6 +58,7 @@ export function BudgetTable({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingDraft, setEditingDraft] = useState<BudgetEditDraft | null>(null);
   const [editingError, setEditingError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const salaryForm = useForm<SalaryFormData>({
     resolver: zodResolver(salarySchema),
@@ -186,15 +188,17 @@ export function BudgetTable({
     cancelEdit();
   }
 
-  async function handleDelete(categoryId: string) {
-    if (readOnly) {
-      return;
-    }
-
-    if (window.confirm('Deseja remover esta categoria?')) {
-      await onDeleteCategory(categoryId);
-    }
+  function handleDelete(categoryId: string) {
+    if (readOnly) return;
+    setDeletingId(categoryId);
   }
+
+  const confirmDelete = useCallback(async () => {
+    if (deletingId) {
+      await onDeleteCategory(deletingId);
+      setDeletingId(null);
+    }
+  }, [deletingId, onDeleteCategory]);
 
   function sortBy(key: BudgetSortKey) {
     setSortState((current) => toggleSort(current, key));
@@ -399,6 +403,15 @@ export function BudgetTable({
           Adicionar
         </button>
       </form>
+
+      <ConfirmModal
+        open={deletingId !== null}
+        title="Remover categoria?"
+        description="Esta ação não pode ser desfeita. O histórico de lançamentos desta categoria será mantido."
+        confirmLabel="Remover"
+        onConfirm={() => { void confirmDelete(); }}
+        onCancel={() => setDeletingId(null)}
+      />
     </section>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type {
@@ -19,6 +19,7 @@ import {
   type SortState
 } from '../utils/sorting';
 import { entrySchema } from '../utils/validators';
+import { ConfirmModal } from './ConfirmModal';
 
 interface EntriesTableProps {
   entries: EntriesResponseDto;
@@ -66,6 +67,7 @@ export function EntriesTable({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingDraft, setEditingDraft] = useState<EntryEditDraft | null>(null);
   const [editingError, setEditingError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const form = useForm<EntryFormData>({
     resolver: zodResolver(entrySchema),
@@ -178,15 +180,17 @@ export function EntriesTable({
     cancelEdit();
   }
 
-  async function handleDelete(entryId: string) {
-    if (readOnly) {
-      return;
-    }
-
-    if (window.confirm('Deseja remover este lançamento?')) {
-      await onDeleteEntry(entryId);
-    }
+  function handleDelete(entryId: string) {
+    if (readOnly) return;
+    setDeletingId(entryId);
   }
+
+  const confirmDelete = useCallback(async () => {
+    if (deletingId) {
+      await onDeleteEntry(deletingId);
+      setDeletingId(null);
+    }
+  }, [deletingId, onDeleteEntry]);
 
   function sortBy(key: EntrySortKey) {
     setSortState((current) => toggleSort(current, key));
@@ -389,6 +393,15 @@ export function EntriesTable({
           })}
         </tbody>
       </table>
+
+      <ConfirmModal
+        open={deletingId !== null}
+        title="Remover lançamento?"
+        description="Esta ação não pode ser desfeita."
+        confirmLabel="Remover"
+        onConfirm={() => { void confirmDelete(); }}
+        onCancel={() => setDeletingId(null)}
+      />
     </section>
   );
 }
