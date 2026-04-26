@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { api } from '../api/client';
 import { formatCurrency, formatPercent } from '../utils/format';
 import { PrivacyMask } from '../contexts/PrivacyContext';
 
@@ -24,11 +26,38 @@ function ProgressBar({ value, max }: { value: number; max: number }) {
   );
 }
 
-export function SaudeFinanceiraPage() {
+export function SaudeFinanceiraPage({ plannedTotal }: { plannedTotal: number }) {
+  const queryClient = useQueryClient();
   const [essentials, setEssentials] = useState('');
   const [saved, setSaved] = useState('');
   const [monthlyInvest, setMonthlyInvest] = useState('');
   const [rateIndex, setRateIndex] = useState(1);
+  const [profileLoaded, setProfileLoaded] = useState(false);
+
+  const profileQuery = useQuery({
+    queryKey: ['health-profile'],
+    queryFn: api.getHealthProfile
+  });
+
+  useEffect(() => {
+    if (profileLoaded || !profileQuery.data) return;
+    const profile = profileQuery.data;
+    const essentialsDefault = profile.essentialExpenses > 0 ? profile.essentialExpenses : plannedTotal;
+    setEssentials(essentialsDefault > 0 ? String(essentialsDefault) : '');
+    setSaved(profile.savedEmergencyFund > 0 ? String(profile.savedEmergencyFund) : '');
+    setProfileLoaded(true);
+  }, [profileQuery.data, profileLoaded, plannedTotal]);
+
+  const saveProfile = useMutation({
+    mutationFn: api.updateHealthProfile,
+    onSuccess: () => { void queryClient.invalidateQueries({ queryKey: ['health-profile'] }); }
+  });
+
+  function handleSave() {
+    const essentialsVal = Number(essentials.replace(',', '.')) || 0;
+    const savedVal = Number(saved.replace(',', '.')) || 0;
+    saveProfile.mutate({ essentialExpenses: essentialsVal, savedEmergencyFund: savedVal });
+  }
 
   const essentialsVal = Number(essentials.replace(',', '.')) || 0;
   const savedVal = Number(saved.replace(',', '.')) || 0;
@@ -77,6 +106,13 @@ export function SaudeFinanceiraPage() {
             onChange={(e) => setSaved(e.target.value)}
             style={{ maxWidth: 180 }}
           />
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saveProfile.isPending}
+          >
+            {saveProfile.isPending ? 'A guardar...' : 'Guardar'}
+          </button>
         </div>
 
         {essentialsVal > 0 ? (

@@ -7,12 +7,14 @@ import type {
   CreatePlanningGoalRequest,
   DashboardDto,
   EntriesResponseDto,
+  HealthProfileDto,
   LoginRequest,
   MonthSummaryDto,
   PlanningGoalDto,
   TargetsResponseDto,
   UpdateCategoryRequest,
   UpdateEntryRequest,
+  UpdateHealthProfileRequest,
   UpdatePlanningGoalRequest,
   UpdateSalaryRequest,
   UpdateTargetsRequest
@@ -116,5 +118,11 @@ export const api = {
       body: JSON.stringify(request)
     }),
   deletePlanningGoal: (id: string) =>
-    apiFetch<PlanningGoalDto[]>(`/planning/goals/${id}`, { method: 'DELETE' })
+    apiFetch<PlanningGoalDto[]>(`/planning/goals/${id}`, { method: 'DELETE' }),
+  getHealthProfile: () => apiFetch<HealthProfileDto>('/financial-health/profile'),
+  updateHealthProfile: (request: UpdateHealthProfileRequest) =>
+    apiFetch<HealthProfileDto>('/financial-health/profile', {
+      method: 'PUT',
+      body: JSON.stringify(request)
+    })
 };

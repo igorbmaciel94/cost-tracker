@@ -162,3 +162,14 @@ export interface UpdatePlanningGoalRequest {
   savedAmount: number;
   months: number;
 }
+
+export interface HealthProfileDto {
+  id: string;
+  essentialExpenses: number;
+  savedEmergencyFund: number;
+}
+
+export interface UpdateHealthProfileRequest {
+  essentialExpenses: number;
+  savedEmergencyFund: number;
+}
