@@ -15,15 +15,16 @@ export function GroupRemainingPieChart({ data }: GroupRemainingPieChartProps) {
   const { theme } = useTheme();
 
   const isDark = theme === 'dark';
+  const labelColor = isDark ? '#f1f5f9' : '#111827';
   const tooltipStyle = {
     borderRadius: 8,
     border: `1px solid ${isDark ? '#2d3f57' : '#e5e7eb'}`,
     backgroundColor: isDark ? '#1e293b' : '#ffffff',
-    color: isDark ? '#f1f5f9' : '#111827',
+    color: labelColor,
     fontSize: '0.85rem',
   };
   const legendStyle = {
-    color: isDark ? '#94a3b8' : '#6b7280',
+    color: labelColor,
     fontSize: '0.8rem',
   };
 
@@ -49,7 +50,7 @@ export function GroupRemainingPieChart({ data }: GroupRemainingPieChartProps) {
               innerRadius={58}
               outerRadius={110}
               paddingAngle={2}
-              label={!hidden}
+              label={!hidden ? { fill: labelColor, fontSize: 12 } : false}
               stroke="none"
             >
               {data.map((entry, index) => (
