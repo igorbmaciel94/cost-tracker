@@ -1,18 +1,11 @@
 import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { api } from '../api/client';
+import type { PlanningGoalDto } from '../api/types';
 import { formatCurrency } from '../utils/format';
 import { PrivacyMask } from '../contexts/PrivacyContext';
 
-type Goal = {
-  id: number;
-  name: string;
-  totalAmount: number;
-  savedAmount: number;
-  months: number;
-};
-
-let nextId = 1;
-
-function calcMonthly(goal: Goal) {
+function calcMonthly(goal: PlanningGoalDto) {
   const remaining = Math.max(0, goal.totalAmount - goal.savedAmount);
   return goal.months > 0 ? remaining / goal.months : 0;
 }
@@ -28,7 +21,7 @@ function MonthlyImpact({ monthly, salary }: { monthly: number; salary: number })
 }
 
 export function PlanejamentoPage() {
-  const [goals, setGoals] = useState<Goal[]>([]);
+  const queryClient = useQueryClient();
   const [salary, setSalary] = useState('');
   const [name, setName] = useState('');
   const [totalAmount, setTotalAmount] = useState('');
@@ -36,7 +29,24 @@ export function PlanejamentoPage() {
   const [months, setMonths] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  function addGoal() {
+  const goalsQuery = useQuery({
+    queryKey: ['planning-goals'],
+    queryFn: api.getPlanningGoals
+  });
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['planning-goals'] });
+
+  const createGoal = useMutation({
+    mutationFn: api.createPlanningGoal,
+    onSuccess: invalidate
+  });
+
+  const deleteGoal = useMutation({
+    mutationFn: api.deletePlanningGoal,
+    onSuccess: invalidate
+  });
+
+  async function addGoal() {
     const total = Number(totalAmount.replace(',', '.'));
     const saved = Number(savedAmount.replace(',', '.'));
     const m = Number(months);
@@ -47,19 +57,24 @@ export function PlanejamentoPage() {
     if (!m || m <= 0 || !Number.isInteger(m)) { setError('Informe um prazo em meses válido.'); return; }
 
     setError(null);
-    setGoals((prev) => [...prev, { id: nextId++, name: name.trim(), totalAmount: total, savedAmount: saved, months: m }]);
+    await createGoal.mutateAsync({ name: name.trim(), totalAmount: total, savedAmount: saved, months: m });
     setName('');
     setTotalAmount('');
     setSavedAmount('');
     setMonths('');
   }
 
-  function removeGoal(id: number) {
-    setGoals((prev) => prev.filter((g) => g.id !== id));
+  const parsedSalary = Number(salary.replace(',', '.'));
+  const goals = goalsQuery.data ?? [];
+  const totalMonthly = goals.reduce((sum, g) => sum + calcMonthly(g), 0);
+
+  if (goalsQuery.isLoading) {
+    return <p className="center-message">A carregar objetivos...</p>;
   }
 
-  const parsedSalary = Number(salary.replace(',', '.'));
-  const totalMonthly = goals.reduce((sum, g) => sum + calcMonthly(g), 0);
+  if (goalsQuery.isError) {
+    return <p className="center-message">Falha ao carregar os objetivos.</p>;
+  }
 
   return (
     <section className="panel">
@@ -91,14 +106,14 @@ export function PlanejamentoPage() {
         <input
           type="number"
           step="0.01"
-          placeholder="Valor total (R$)"
+          placeholder="Valor total (€)"
           value={totalAmount}
           onChange={(e) => setTotalAmount(e.target.value)}
         />
         <input
           type="number"
           step="0.01"
-          placeholder="Já guardado (R$)"
+          placeholder="Já guardado (€)"
           value={savedAmount}
           onChange={(e) => setSavedAmount(e.target.value)}
         />
@@ -109,8 +124,8 @@ export function PlanejamentoPage() {
           value={months}
           onChange={(e) => setMonths(e.target.value)}
         />
-        <button type="button" onClick={addGoal}>
-          Adicionar
+        <button type="button" onClick={() => { void addGoal(); }} disabled={createGoal.isPending}>
+          {createGoal.isPending ? 'A adicionar...' : 'Adicionar'}
         </button>
       </div>
       {error && <p className="inline-error" role="alert">{error}</p>}
@@ -145,7 +160,12 @@ export function PlanejamentoPage() {
                       <MonthlyImpact monthly={monthly} salary={parsedSalary} />
                     </td>
                     <td>
-                      <button type="button" className="button-secondary" onClick={() => removeGoal(goal.id)}>
+                      <button
+                        type="button"
+                        className="button-secondary"
+                        onClick={() => { void deleteGoal.mutateAsync(goal.id); }}
+                        disabled={deleteGoal.isPending}
+                      >
                         Remover
                       </button>
                     </td>

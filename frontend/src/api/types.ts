@@ -140,3 +140,25 @@ export interface UpdateTargetsRequest {
     targetPercent: number;
   }>;
 }
+
+export interface PlanningGoalDto {
+  id: string;
+  name: string;
+  totalAmount: number;
+  savedAmount: number;
+  months: number;
+}
+
+export interface CreatePlanningGoalRequest {
+  name: string;
+  totalAmount: number;
+  savedAmount: number;
+  months: number;
+}
+
+export interface UpdatePlanningGoalRequest {
+  name: string;
+  totalAmount: number;
+  savedAmount: number;
+  months: number;
+}

@@ -140,3 +140,26 @@ public sealed class UpdateTargetGroupRequest
     public string GroupName { get; set; } = string.Empty;
     public decimal TargetPercent { get; set; }
 }
+
+public sealed record PlanningGoalDto(
+    Guid Id,
+    string Name,
+    decimal TotalAmount,
+    decimal SavedAmount,
+    int Months);
+
+public sealed class CreatePlanningGoalRequest
+{
+    public string Name { get; set; } = string.Empty;
+    public decimal TotalAmount { get; set; }
+    public decimal SavedAmount { get; set; }
+    public int Months { get; set; }
+}
+
+public sealed class UpdatePlanningGoalRequest
+{
+    public string Name { get; set; } = string.Empty;
+    public decimal TotalAmount { get; set; }
+    public decimal SavedAmount { get; set; }
+    public int Months { get; set; }
+}
