@@ -49,7 +49,7 @@ export function SaudeFinanceiraPage({ monthId, salary }: { monthId: string | nul
   });
 
   useEffect(() => {
-    if (profileLoaded || !profileQuery.data) return;
+    if (profileLoaded || !profileQuery.data || (!!monthId && !targetsQuery.data)) return;
     const profile = profileQuery.data;
 
     const items = targetsQuery.data?.items ?? [];
@@ -58,26 +58,26 @@ export function SaudeFinanceiraPage({ monthId, salary }: { monthId: string | nul
       return g && salary > 0 ? salary * g.targetPercent : 0;
     };
 
-    let essentialsDefault = profile.essentialExpenses;
-    if (essentialsDefault === 0) essentialsDefault = targetPct('Essenciais');
+    let ess = profile.essentialExpenses;
+    if (ess === 0) ess = targetPct('Essenciais');
 
-    const ess = essentialsDefault > 0 ? essentialsDefault : 0;
-    let savDefault = profile.savedEmergencyFund;
-    if (savDefault === 0) savDefault = targetPct('Saving');
-    const sav = savDefault > 0 ? savDefault : 0;
+    let sav = profile.savedEmergencyFund;
+    if (sav === 0) sav = targetPct('Saving');
+
+    let inv = targetPct('Investimento');
+
     setEssentials(ess > 0 ? String(ess) : '');
     setSaved(sav > 0 ? String(sav) : '');
     setCommittedEssentials(ess);
     setCommittedSaved(sav);
 
-    const investDefault = targetPct('Investimento');
-    if (investDefault > 0) {
-      setMonthlyInvest(String(investDefault));
-      setCommittedMonthly(investDefault);
+    if (inv > 0) {
+      setMonthlyInvest(String(inv));
+      setCommittedMonthly(inv);
     }
 
     setProfileLoaded(true);
-  }, [profileQuery.data, targetsQuery.data, profileLoaded, salary]);
+  }, [profileQuery.data, targetsQuery.data, profileLoaded, salary, monthId]);
 
   const saveProfile = useMutation({
     mutationFn: api.updateHealthProfile,
