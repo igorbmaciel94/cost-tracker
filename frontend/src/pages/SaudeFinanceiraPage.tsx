@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { api } from '../api/client';
 import { formatCurrency, formatPercent } from '../utils/format';
 import { PrivacyMask } from '../contexts/PrivacyContext';
 
@@ -24,15 +26,76 @@ function ProgressBar({ value, max }: { value: number; max: number }) {
   );
 }
 
-export function SaudeFinanceiraPage() {
+export function SaudeFinanceiraPage({ monthId, salary }: { monthId: string | null; salary: number }) {
+  const queryClient = useQueryClient();
   const [essentials, setEssentials] = useState('');
   const [saved, setSaved] = useState('');
+  const [committedEssentials, setCommittedEssentials] = useState(0);
+  const [committedSaved, setCommittedSaved] = useState(0);
   const [monthlyInvest, setMonthlyInvest] = useState('');
+  const [committedMonthly, setCommittedMonthly] = useState(0);
   const [rateIndex, setRateIndex] = useState(1);
+  const [profileLoaded, setProfileLoaded] = useState(false);
 
-  const essentialsVal = Number(essentials.replace(',', '.')) || 0;
-  const savedVal = Number(saved.replace(',', '.')) || 0;
-  const monthlyVal = Number(monthlyInvest.replace(',', '.')) || 0;
+  const profileQuery = useQuery({
+    queryKey: ['health-profile'],
+    queryFn: api.getHealthProfile
+  });
+
+  const targetsQuery = useQuery({
+    queryKey: ['targets', monthId],
+    queryFn: () => api.getTargets(monthId!),
+    enabled: !!monthId
+  });
+
+  useEffect(() => {
+    if (profileLoaded || !profileQuery.data || (!!monthId && !targetsQuery.data)) return;
+    const profile = profileQuery.data;
+
+    const items = targetsQuery.data?.items ?? [];
+    const targetPct = (name: string) => {
+      const g = items.find((g) => g.groupName === name);
+      return g && salary > 0 ? salary * g.targetPercent : 0;
+    };
+
+    let ess = profile.essentialExpenses;
+    if (ess === 0) ess = targetPct('Essenciais');
+
+    let sav = profile.savedEmergencyFund;
+    if (sav === 0) sav = targetPct('Saving');
+
+    let inv = targetPct('Investimento');
+
+    const round2 = (n: number) => Math.round(n * 100) / 100;
+    setEssentials(ess > 0 ? String(round2(ess)) : '');
+    setSaved(sav > 0 ? String(round2(sav)) : '');
+    setCommittedEssentials(round2(ess));
+    setCommittedSaved(round2(sav));
+
+    if (inv > 0) {
+      setMonthlyInvest(String(round2(inv)));
+      setCommittedMonthly(round2(inv));
+    }
+
+    setProfileLoaded(true);
+  }, [profileQuery.data, targetsQuery.data, profileLoaded, salary, monthId]);
+
+  const saveProfile = useMutation({
+    mutationFn: api.updateHealthProfile,
+    onSuccess: () => { void queryClient.invalidateQueries({ queryKey: ['health-profile'] }); }
+  });
+
+  function handleSave() {
+    const essentialsVal = Number(essentials.replace(',', '.')) || 0;
+    const savedVal = Number(saved.replace(',', '.')) || 0;
+    setCommittedEssentials(essentialsVal);
+    setCommittedSaved(savedVal);
+    saveProfile.mutate({ essentialExpenses: essentialsVal, savedEmergencyFund: savedVal });
+  }
+
+  const essentialsVal = committedEssentials;
+  const savedVal = committedSaved;
+  const monthlyVal = committedMonthly;
   const rate = RATES[rateIndex].monthly;
 
   const targets = [
@@ -77,6 +140,13 @@ export function SaudeFinanceiraPage() {
             onChange={(e) => setSaved(e.target.value)}
             style={{ maxWidth: 180 }}
           />
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saveProfile.isPending}
+          >
+            {saveProfile.isPending ? 'A guardar...' : 'Guardar'}
+          </button>
         </div>
 
         {essentialsVal > 0 ? (
@@ -146,6 +216,12 @@ export function SaudeFinanceiraPage() {
               <option key={r.label} value={i}>{r.label}</option>
             ))}
           </select>
+          <button
+            type="button"
+            onClick={() => setCommittedMonthly(Number(monthlyInvest.replace(',', '.')) || 0)}
+          >
+            Simular
+          </button>
         </div>
 
         {monthlyVal > 0 ? (

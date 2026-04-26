@@ -11,6 +11,7 @@ public class CostTrackerDbContext(DbContextOptions<CostTrackerDbContext> options
     public DbSet<Entry> Entries => Set<Entry>();
     public DbSet<GroupTarget> GroupTargets => Set<GroupTarget>();
     public DbSet<PlanningGoal> PlanningGoals => Set<PlanningGoal>();
+    public DbSet<HealthProfile> HealthProfiles => Set<HealthProfile>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -126,6 +127,20 @@ public class CostTrackerDbContext(DbContextOptions<CostTrackerDbContext> options
             entity.Property(x => x.SavedAmount).HasColumnName("saved_amount").HasColumnType("numeric(12,2)").IsRequired();
             entity.Property(x => x.Months).HasColumnName("months").IsRequired();
             entity.Property(x => x.CreatedAt).HasColumnName("created_at").IsRequired();
+        });
+
+        modelBuilder.Entity<HealthProfile>(entity =>
+        {
+            entity.ToTable("health_profiles", tableBuilder =>
+            {
+                tableBuilder.HasCheckConstraint("ck_health_profiles_essential_expenses", "essential_expenses >= 0");
+                tableBuilder.HasCheckConstraint("ck_health_profiles_saved_emergency_fund", "saved_emergency_fund >= 0");
+            });
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Id).HasColumnName("id");
+            entity.Property(x => x.EssentialExpenses).HasColumnName("essential_expenses").HasColumnType("numeric(12,2)").IsRequired();
+            entity.Property(x => x.SavedEmergencyFund).HasColumnName("saved_emergency_fund").HasColumnType("numeric(12,2)").IsRequired();
         });
     }
 }

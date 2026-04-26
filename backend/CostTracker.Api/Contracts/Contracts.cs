@@ -163,3 +163,11 @@ public sealed class UpdatePlanningGoalRequest
     public decimal SavedAmount { get; set; }
     public int Months { get; set; }
 }
+
+public sealed record HealthProfileDto(Guid Id, decimal EssentialExpenses, decimal SavedEmergencyFund);
+
+public sealed class UpdateHealthProfileRequest
+{
+    public decimal EssentialExpenses { get; set; }
+    public decimal SavedEmergencyFund { get; set; }
+}
