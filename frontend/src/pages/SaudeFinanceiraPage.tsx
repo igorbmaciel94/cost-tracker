@@ -51,18 +51,27 @@ export function SaudeFinanceiraPage({ monthId, salary }: { monthId: string | nul
     if (profileLoaded || !profileQuery.data) return;
     const profile = profileQuery.data;
 
+    const items = targetsQuery.data?.items ?? [];
+    const targetPct = (name: string) => {
+      const g = items.find((g) => g.groupName === name);
+      return g && salary > 0 ? salary * g.targetPercent : 0;
+    };
+
     let essentialsDefault = profile.essentialExpenses;
-    if (essentialsDefault === 0 && salary > 0 && targetsQuery.data) {
-      const group = targetsQuery.data.items.find((g) => g.groupName === 'Essenciais');
-      if (group) essentialsDefault = salary * group.targetPercent;
-    }
+    if (essentialsDefault === 0) essentialsDefault = targetPct('Essenciais');
 
     const ess = essentialsDefault > 0 ? essentialsDefault : 0;
-    const sav = profile.savedEmergencyFund > 0 ? profile.savedEmergencyFund : 0;
+    let savDefault = profile.savedEmergencyFund;
+    if (savDefault === 0) savDefault = targetPct('Saving');
+    const sav = savDefault > 0 ? savDefault : 0;
     setEssentials(ess > 0 ? String(ess) : '');
     setSaved(sav > 0 ? String(sav) : '');
     setCommittedEssentials(ess);
     setCommittedSaved(sav);
+
+    const investDefault = targetPct('Investimento');
+    if (investDefault > 0) setMonthlyInvest(String(investDefault));
+
     setProfileLoaded(true);
   }, [profileQuery.data, targetsQuery.data, profileLoaded, salary]);
 
