@@ -20,9 +20,8 @@ function MonthlyImpact({ monthly, salary }: { monthly: number; salary: number })
   );
 }
 
-export function PlanejamentoPage() {
+export function PlanejamentoPage({ salary }: { salary: number }) {
   const queryClient = useQueryClient();
-  const [salary, setSalary] = useState('');
   const [name, setName] = useState('');
   const [totalAmount, setTotalAmount] = useState('');
   const [savedAmount, setSavedAmount] = useState('');
@@ -64,8 +63,8 @@ export function PlanejamentoPage() {
     setMonths('');
   }
 
-  const parsedSalary = Number(salary.replace(',', '.'));
   const goals = goalsQuery.data ?? [];
+  const parsedSalary = salary;
   const totalMonthly = goals.reduce((sum, g) => sum + calcMonthly(g), 0);
 
   if (goalsQuery.isLoading) {
@@ -81,19 +80,6 @@ export function PlanejamentoPage() {
       <header className="panel-header">
         <h2>Planejamento de objetivos</h2>
       </header>
-
-      <div className="inline-form" style={{ marginBottom: '1.5rem' }}>
-        <label htmlFor="plan-salary">Salário (referência)</label>
-        <input
-          id="plan-salary"
-          type="number"
-          step="0.01"
-          placeholder="Ex: 5000"
-          value={salary}
-          onChange={(e) => setSalary(e.target.value)}
-          style={{ maxWidth: 160 }}
-        />
-      </div>
 
       <h3>Novo objetivo</h3>
       <div className="inline-form">
