@@ -26,7 +26,7 @@ function ProgressBar({ value, max }: { value: number; max: number }) {
   );
 }
 
-export function SaudeFinanceiraPage({ plannedTotal }: { plannedTotal: number }) {
+export function SaudeFinanceiraPage({ monthId, salary }: { monthId: string | null; salary: number }) {
   const queryClient = useQueryClient();
   const [essentials, setEssentials] = useState('');
   const [saved, setSaved] = useState('');
@@ -39,14 +39,26 @@ export function SaudeFinanceiraPage({ plannedTotal }: { plannedTotal: number }) 
     queryFn: api.getHealthProfile
   });
 
+  const targetsQuery = useQuery({
+    queryKey: ['targets', monthId],
+    queryFn: () => api.getTargets(monthId!),
+    enabled: !!monthId
+  });
+
   useEffect(() => {
     if (profileLoaded || !profileQuery.data) return;
     const profile = profileQuery.data;
-    const essentialsDefault = profile.essentialExpenses > 0 ? profile.essentialExpenses : plannedTotal;
+
+    let essentialsDefault = profile.essentialExpenses;
+    if (essentialsDefault === 0 && salary > 0 && targetsQuery.data) {
+      const group = targetsQuery.data.items.find((g) => g.groupName === 'Essenciais');
+      if (group) essentialsDefault = salary * group.targetPercent;
+    }
+
     setEssentials(essentialsDefault > 0 ? String(essentialsDefault) : '');
     setSaved(profile.savedEmergencyFund > 0 ? String(profile.savedEmergencyFund) : '');
     setProfileLoaded(true);
-  }, [profileQuery.data, profileLoaded, plannedTotal]);
+  }, [profileQuery.data, targetsQuery.data, profileLoaded, salary]);
 
   const saveProfile = useMutation({
     mutationFn: api.updateHealthProfile,
