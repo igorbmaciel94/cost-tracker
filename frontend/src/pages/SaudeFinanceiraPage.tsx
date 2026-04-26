@@ -30,6 +30,8 @@ export function SaudeFinanceiraPage({ monthId, salary }: { monthId: string | nul
   const queryClient = useQueryClient();
   const [essentials, setEssentials] = useState('');
   const [saved, setSaved] = useState('');
+  const [committedEssentials, setCommittedEssentials] = useState(0);
+  const [committedSaved, setCommittedSaved] = useState(0);
   const [monthlyInvest, setMonthlyInvest] = useState('');
   const [rateIndex, setRateIndex] = useState(1);
   const [profileLoaded, setProfileLoaded] = useState(false);
@@ -55,8 +57,12 @@ export function SaudeFinanceiraPage({ monthId, salary }: { monthId: string | nul
       if (group) essentialsDefault = salary * group.targetPercent;
     }
 
-    setEssentials(essentialsDefault > 0 ? String(essentialsDefault) : '');
-    setSaved(profile.savedEmergencyFund > 0 ? String(profile.savedEmergencyFund) : '');
+    const ess = essentialsDefault > 0 ? essentialsDefault : 0;
+    const sav = profile.savedEmergencyFund > 0 ? profile.savedEmergencyFund : 0;
+    setEssentials(ess > 0 ? String(ess) : '');
+    setSaved(sav > 0 ? String(sav) : '');
+    setCommittedEssentials(ess);
+    setCommittedSaved(sav);
     setProfileLoaded(true);
   }, [profileQuery.data, targetsQuery.data, profileLoaded, salary]);
 
@@ -68,11 +74,13 @@ export function SaudeFinanceiraPage({ monthId, salary }: { monthId: string | nul
   function handleSave() {
     const essentialsVal = Number(essentials.replace(',', '.')) || 0;
     const savedVal = Number(saved.replace(',', '.')) || 0;
+    setCommittedEssentials(essentialsVal);
+    setCommittedSaved(savedVal);
     saveProfile.mutate({ essentialExpenses: essentialsVal, savedEmergencyFund: savedVal });
   }
 
-  const essentialsVal = Number(essentials.replace(',', '.')) || 0;
-  const savedVal = Number(saved.replace(',', '.')) || 0;
+  const essentialsVal = committedEssentials;
+  const savedVal = committedSaved;
   const monthlyVal = Number(monthlyInvest.replace(',', '.')) || 0;
   const rate = RATES[rateIndex].monthly;
 
