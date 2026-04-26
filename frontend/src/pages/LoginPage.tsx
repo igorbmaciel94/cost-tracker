@@ -68,10 +68,11 @@ export function LoginPage({ onLogin, loading, errorMessage }: LoginPageProps) {
               onChange={(e) => setUsername(e.target.value)}
             />
           </label>
-          <label>
+          <label htmlFor="password-input">
             Senha
             <div style={{ position: 'relative' }}>
               <input
+                id="password-input"
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="current-password"
                 placeholder="Sua senha"

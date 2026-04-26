@@ -64,10 +64,10 @@ describe('App auth flow', () => {
       </QueryClientProvider>
     );
 
-    expect(await screen.findByLabelText(/username/i)).toBeInTheDocument();
+    expect(await screen.findByLabelText(/usuário/i)).toBeInTheDocument();
 
-    await user.type(screen.getByLabelText(/username/i), 'igor');
-    await user.type(screen.getByLabelText(/password/i), 'senha-segura');
+    await user.type(screen.getByLabelText(/usuário/i), 'igor');
+    await user.type(screen.getByLabelText(/^senha$/i), 'senha-segura');
     await user.click(screen.getByRole('button', { name: /^entrar$/i }));
 
     await waitFor(() => {
@@ -77,10 +77,10 @@ describe('App auth flow', () => {
       });
     });
 
-    expect(await screen.findByRole('button', { name: /sair \(igor\)/i })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /sair da conta/i })).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /sair \(igor\)/i }));
+    await user.click(screen.getByRole('button', { name: /sair da conta/i }));
 
-    expect(await screen.findByLabelText(/username/i)).toBeInTheDocument();
+    expect(await screen.findByLabelText(/usuário/i)).toBeInTheDocument();
   });
 });
