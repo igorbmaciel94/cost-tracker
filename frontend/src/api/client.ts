@@ -4,13 +4,16 @@ import type {
   CreateCategoryRequest,
   CreateEntryRequest,
   CreateMonthRequest,
+  CreatePlanningGoalRequest,
   DashboardDto,
   EntriesResponseDto,
   LoginRequest,
   MonthSummaryDto,
+  PlanningGoalDto,
   TargetsResponseDto,
   UpdateCategoryRequest,
   UpdateEntryRequest,
+  UpdatePlanningGoalRequest,
   UpdateSalaryRequest,
   UpdateTargetsRequest
 } from './types';
@@ -100,5 +103,18 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify(request)
     }),
-  getDashboard: (monthId: string) => apiFetch<DashboardDto>(`/months/${monthId}/dashboard`)
+  getDashboard: (monthId: string) => apiFetch<DashboardDto>(`/months/${monthId}/dashboard`),
+  getPlanningGoals: () => apiFetch<PlanningGoalDto[]>('/planning/goals'),
+  createPlanningGoal: (request: CreatePlanningGoalRequest) =>
+    apiFetch<PlanningGoalDto[]>('/planning/goals', {
+      method: 'POST',
+      body: JSON.stringify(request)
+    }),
+  updatePlanningGoal: (id: string, request: UpdatePlanningGoalRequest) =>
+    apiFetch<PlanningGoalDto[]>(`/planning/goals/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(request)
+    }),
+  deletePlanningGoal: (id: string) =>
+    apiFetch<PlanningGoalDto[]>(`/planning/goals/${id}`, { method: 'DELETE' })
 };

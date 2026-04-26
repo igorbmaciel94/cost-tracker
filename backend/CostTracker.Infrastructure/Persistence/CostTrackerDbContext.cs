@@ -10,6 +10,7 @@ public class CostTrackerDbContext(DbContextOptions<CostTrackerDbContext> options
     public DbSet<CategoryBudget> CategoryBudgets => Set<CategoryBudget>();
     public DbSet<Entry> Entries => Set<Entry>();
     public DbSet<GroupTarget> GroupTargets => Set<GroupTarget>();
+    public DbSet<PlanningGoal> PlanningGoals => Set<PlanningGoal>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -107,6 +108,24 @@ public class CostTrackerDbContext(DbContextOptions<CostTrackerDbContext> options
             entity.Property(x => x.TargetPercent).HasColumnName("target_percent").HasColumnType("numeric(5,4)").IsRequired();
 
             entity.HasIndex(x => new { x.MonthId, x.GroupName }).IsUnique();
+        });
+
+        modelBuilder.Entity<PlanningGoal>(entity =>
+        {
+            entity.ToTable("planning_goals", tableBuilder =>
+            {
+                tableBuilder.HasCheckConstraint("ck_planning_goals_total_amount_non_negative", "total_amount >= 0");
+                tableBuilder.HasCheckConstraint("ck_planning_goals_saved_amount_non_negative", "saved_amount >= 0");
+                tableBuilder.HasCheckConstraint("ck_planning_goals_months_positive", "months >= 1");
+            });
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Id).HasColumnName("id");
+            entity.Property(x => x.Name).HasColumnName("name").HasMaxLength(128).IsRequired();
+            entity.Property(x => x.TotalAmount).HasColumnName("total_amount").HasColumnType("numeric(12,2)").IsRequired();
+            entity.Property(x => x.SavedAmount).HasColumnName("saved_amount").HasColumnType("numeric(12,2)").IsRequired();
+            entity.Property(x => x.Months).HasColumnName("months").IsRequired();
+            entity.Property(x => x.CreatedAt).HasColumnName("created_at").IsRequired();
         });
     }
 }
