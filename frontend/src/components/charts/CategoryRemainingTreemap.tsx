@@ -171,6 +171,8 @@ export function CategoryRemainingTreemap({ data }: CategoryRemainingTreemapProps
               formatter={(value: number) => [hidden ? '***' : formatCurrency(value), 'Saldo disponível']}
               labelFormatter={(_, payload) => payload?.[0]?.payload?.category ?? ''}
               contentStyle={tooltipStyle}
+              itemStyle={{ color: isDark ? '#f1f5f9' : '#111827' }}
+              labelStyle={{ color: isDark ? '#f1f5f9' : '#111827' }}
             />
           </Treemap>
         </ResponsiveContainer>
