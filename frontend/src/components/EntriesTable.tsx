@@ -231,6 +231,7 @@ export function EntriesTable({
         </button>
       </form>
 
+      <div className="table-scroll">
       <table className="data-table">
         <thead>
           <tr>
@@ -393,6 +394,7 @@ export function EntriesTable({
           })}
         </tbody>
       </table>
+      </div>
 
       <ConfirmModal
         open={deletingId !== null}

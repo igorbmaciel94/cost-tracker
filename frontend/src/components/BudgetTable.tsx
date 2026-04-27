@@ -228,6 +228,7 @@ export function BudgetTable({
         </form>
       </header>
 
+      <div className="table-scroll">
       <table className="data-table">
         <thead>
           <tr>
@@ -375,6 +376,7 @@ export function BudgetTable({
           </tr>
         </tbody>
       </table>
+      </div>
 
       <form
         className="inline-form"
