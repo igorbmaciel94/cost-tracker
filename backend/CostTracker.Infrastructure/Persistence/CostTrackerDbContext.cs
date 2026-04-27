@@ -1,10 +1,11 @@
+using CostTracker.Application.Interfaces;
 using CostTracker.Domain.Entities;
 using CostTracker.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace CostTracker.Infrastructure.Persistence;
 
-public class CostTrackerDbContext(DbContextOptions<CostTrackerDbContext> options) : DbContext(options)
+public class CostTrackerDbContext(DbContextOptions<CostTrackerDbContext> options) : DbContext(options), ICostTrackerDbContext
 {
     public DbSet<Month> Months => Set<Month>();
     public DbSet<CategoryBudget> CategoryBudgets => Set<CategoryBudget>();

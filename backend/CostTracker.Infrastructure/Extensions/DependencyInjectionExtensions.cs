@@ -1,3 +1,4 @@
+using CostTracker.Application.Interfaces;
 using CostTracker.Infrastructure.Persistence;
 using CostTracker.Infrastructure.Seed;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +20,7 @@ public static class DependencyInjectionExtensions
                 npgsql.MigrationsAssembly(typeof(CostTrackerDbContext).Assembly.FullName);
             }));
 
+        services.AddScoped<ICostTrackerDbContext>(sp => sp.GetRequiredService<CostTrackerDbContext>());
         services.AddScoped<DatabaseSeeder>();
         services.AddScoped<CanonicalDataBackfillService>();
 

@@ -1,7 +1,7 @@
 using CostTracker.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace CostTracker.Api.Services;
+namespace CostTracker.Application.Projections;
 
 public static class MonthQueryExtensions
 {
