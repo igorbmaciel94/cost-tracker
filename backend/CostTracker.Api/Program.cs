@@ -1,5 +1,8 @@
 using CostTracker.Api.Configuration;
+using CostTracker.Api.Middleware;
 using CostTracker.Api.Services;
+using CostTracker.Application.Projections;
+using CostTracker.Application.Services;
 using CostTracker.Infrastructure.Extensions;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc.Authorization;
@@ -57,6 +60,13 @@ builder.Services.AddCors(options =>
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<MonthProjectionService>();
 builder.Services.AddScoped<PasswordHashService>();
+builder.Services.AddScoped<MonthService>();
+builder.Services.AddScoped<BudgetService>();
+builder.Services.AddScoped<EntryService>();
+builder.Services.AddScoped<TargetsService>();
+builder.Services.AddScoped<DashboardService>();
+builder.Services.AddScoped<PlanningService>();
+builder.Services.AddScoped<FinancialHealthService>();
 
 var app = builder.Build();
 
@@ -66,6 +76,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("frontend");
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

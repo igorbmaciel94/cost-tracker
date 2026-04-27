@@ -1,6 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
-using CostTracker.Api.Contracts;
+using CostTracker.Application.Contracts;
 using CostTracker.Domain.Constants;
 
 namespace CostTracker.Tests.Integration;

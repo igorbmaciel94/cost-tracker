@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\CostTracker.Application\CostTracker.Application.csproj" />
     <ProjectReference Include="..\CostTracker.Domain\CostTracker.Domain.csproj" />
     <ProjectReference Include="..\CostTracker.Infrastructure\CostTracker.Infrastructure.csproj" />
   </ItemGroup>

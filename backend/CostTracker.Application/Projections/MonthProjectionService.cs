@@ -1,10 +1,10 @@
 using System.Globalization;
-using CostTracker.Api.Contracts;
+using CostTracker.Application.Contracts;
 using CostTracker.Domain.Calculations;
 using CostTracker.Domain.Entities;
 using CostTracker.Domain.Enums;
 
-namespace CostTracker.Api.Services;
+namespace CostTracker.Application.Projections;
 
 public class MonthProjectionService
 {

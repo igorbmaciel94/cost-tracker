@@ -1,4 +1,4 @@
-namespace CostTracker.Api.Contracts;
+namespace CostTracker.Application.Contracts;
 
 public sealed record MonthSummaryDto(
     Guid Id,

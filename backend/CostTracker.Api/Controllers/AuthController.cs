@@ -1,6 +1,6 @@
 using System.Security.Claims;
 using CostTracker.Api.Configuration;
-using CostTracker.Api.Contracts;
+using CostTracker.Application.Contracts;
 using CostTracker.Api.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
