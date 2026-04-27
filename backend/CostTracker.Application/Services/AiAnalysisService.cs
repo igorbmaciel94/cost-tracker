@@ -1,0 +1,73 @@
+using CostTracker.Application.Contracts;
+using CostTracker.Application.Exceptions;
+using CostTracker.Application.Integrations.Gemini;
+using CostTracker.Application.Interfaces;
+using CostTracker.Application.Pdf;
+using CostTracker.Application.Projections;
+using CostTracker.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+
+namespace CostTracker.Application.Services;
+
+public class AiAnalysisService(
+    ICostTrackerDbContext dbContext,
+    MonthProjectionService projections,
+    IGeminiClient gemini,
+    IPdfRenderer pdf)
+{
+    public async Task<byte[]> GenerateAsync(Guid monthId, CancellationToken ct)
+    {
+        var current = await dbContext.Months
+            .WithDetails()
+            .FirstOrDefaultAsync(m => m.Id == monthId, ct)
+            ?? throw new NotFoundException("Mês não encontrado.");
+
+        var history = await dbContext.Months
+            .WithDetails()
+            .Where(m => string.Compare(m.ReferenceMonth, current.ReferenceMonth) < 0)
+            .OrderByDescending(m => m.ReferenceMonth)
+            .Take(5)
+            .ToListAsync(ct);
+
+        var input = new AnalysisInput(
+            BuildSnapshot(current),
+            history.Select(BuildSnapshot).ToList()
+        );
+
+        var prompt = AnalysisPromptBuilder.Build(input);
+        var analysisMarkdown = await gemini.GenerateAnalysisAsync(prompt, ct);
+
+        return pdf.Render(current.ReferenceMonth, analysisMarkdown);
+    }
+
+    private AnalysisMonthSnapshot BuildSnapshot(Month month)
+    {
+        var budget = projections.ToBudgetResponse(month);
+        var targets = projections.ToTargetsResponse(month);
+
+        var categories = budget.Lines.Select(l => new AnalysisCategoryLine(
+            l.Name,
+            l.GroupName,
+            l.Planned,
+            l.Spent,
+            l.Difference
+        )).ToList();
+
+        var groupTargets = targets.Items.Select(t => new AnalysisGroupTarget(
+            t.GroupName,
+            t.TargetPercent * 100,
+            t.CurrentSpentPercent * 100,
+            t.SpentStatus
+        )).ToList();
+
+        return new AnalysisMonthSnapshot(
+            month.ReferenceMonth,
+            month.Salary,
+            budget.PlannedTotal,
+            budget.SpentTotal,
+            budget.DifferenceTotal,
+            categories,
+            groupTargets
+        );
+    }
+}

@@ -1,11 +1,17 @@
 using CostTracker.Api.Configuration;
 using CostTracker.Api.Middleware;
 using CostTracker.Api.Services;
+using CostTracker.Application.Integrations.Gemini;
+using CostTracker.Application.Options;
+using CostTracker.Application.Pdf;
 using CostTracker.Application.Projections;
 using CostTracker.Application.Services;
 using CostTracker.Infrastructure.Extensions;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using QuestPDF.Infrastructure;
+
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,6 +63,13 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddOptions<GeminiOptions>()
+    .Bind(builder.Configuration.GetSection("Gemini"))
+    .ValidateOnStart();
+
+builder.Services.AddHttpClient<IGeminiClient, GeminiClient>();
+builder.Services.AddSingleton<IPdfRenderer, AnalysisPdfRenderer>();
+
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<MonthProjectionService>();
 builder.Services.AddScoped<PasswordHashService>();
@@ -67,6 +80,7 @@ builder.Services.AddScoped<TargetsService>();
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<PlanningService>();
 builder.Services.AddScoped<FinancialHealthService>();
+builder.Services.AddScoped<AiAnalysisService>();
 
 var app = builder.Build();
 

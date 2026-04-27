@@ -27,6 +27,7 @@ services:
       ConnectionStrings__Default: Host=${DB_HOST:-host.docker.internal};Port=${DB_PORT:-5432};Database=${DB_NAME:-costtracker};Username=${DB_USER:-costtracker};Password=${DB_PASSWORD:?DB_PASSWORD is required};SSL Mode=${DB_SSL_MODE:-Disable}
       Auth__Username: ${AUTH_USERNAME:?AUTH_USERNAME is required}
       Auth__PasswordHash: ${AUTH_PASSWORD_HASH:?AUTH_PASSWORD_HASH is required}
+      Gemini__ApiKey: ${GEMINI_API_KEY:-}
     ports:
       - "${APP_API_BIND_ADDRESS:-0.0.0.0}:${APP_API_BIND_PORT:-18081}:8080"
     healthcheck:

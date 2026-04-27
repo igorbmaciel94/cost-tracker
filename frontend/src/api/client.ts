@@ -124,5 +124,17 @@ export const api = {
     apiFetch<HealthProfileDto>('/financial-health/profile', {
       method: 'PUT',
       body: JSON.stringify(request)
-    })
+    }),
+  generateAiAnalysis: async (monthId: string): Promise<Blob> => {
+    const normalizedBase = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+    const response = await fetch(`${normalizedBase}/months/${monthId}/ai-analysis`, {
+      method: 'POST',
+      credentials: 'include'
+    });
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(text || `Erro HTTP ${response.status}`);
+    }
+    return response.blob();
+  }
 };
