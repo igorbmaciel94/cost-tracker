@@ -64,6 +64,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background 0.2s ease, color 0.2s ease;
+  overflow-x: hidden;
 }
 
 #root {
@@ -437,7 +438,15 @@ main {
 
 .panel {
   padding: 1rem;
-  overflow: hidden;
+  overflow: clip;
+}
+
+/* ===== Table Scroll Wrapper ===== */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 -1rem;
+  padding: 0 1rem;
 }
 
 .panel-header {
@@ -822,9 +831,7 @@ input::placeholder {
   }
 
   .data-table {
-    display: block;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    min-width: 480px;
   }
 
   .charts-grid {
@@ -890,6 +897,19 @@ input::placeholder {
 
   .kpi-value {
     font-size: 1rem;
+  }
+
+  .icon-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  select,
+  input[type="date"],
+  input[type="number"],
+  input[type="text"],
+  input:not([type]) {
+    min-height: 44px;
   }
 
   /* Bottom navigation on mobile */
@@ -1009,6 +1029,17 @@ input::placeholder {
   .row-actions button {
     font-size: 0.78rem;
     padding: 0.35rem 0.5rem;
+    min-height: 44px;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .modal-actions button {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
   }
 }
 

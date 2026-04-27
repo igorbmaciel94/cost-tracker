@@ -98,6 +98,7 @@ export function TargetTable({ targets, readOnly, onSave }: TargetTableProps) {
         </button>
       </header>
 
+      <div className="table-scroll">
       <table className="data-table">
         <thead>
           <tr>
@@ -162,6 +163,7 @@ export function TargetTable({ targets, readOnly, onSave }: TargetTableProps) {
           ))}
         </tbody>
       </table>
+      </div>
     </section>
   );
 }
