@@ -14,18 +14,6 @@ export function DashboardPage({ monthId }: DashboardPageProps) {
     enabled: Boolean(monthId)
   });
 
-  if (!monthId) {
-    return <p>Selecione um mês para começar.</p>;
-  }
-
-  if (dashboardQuery.isLoading) {
-    return <p>Carregando dashboard...</p>;
-  }
-
-  if (dashboardQuery.isError || !dashboardQuery.data) {
-    return <p>Falha ao carregar dashboard.</p>;
-  }
-
   const analysisMutation = useMutation({
     mutationFn: () => api.generateAiAnalysis(monthId as string),
     onSuccess: (blob) => {
@@ -37,6 +25,18 @@ export function DashboardPage({ monthId }: DashboardPageProps) {
       URL.revokeObjectURL(url);
     }
   });
+
+  if (!monthId) {
+    return <p>Selecione um mês para começar.</p>;
+  }
+
+  if (dashboardQuery.isLoading) {
+    return <p>Carregando dashboard...</p>;
+  }
+
+  if (dashboardQuery.isError || !dashboardQuery.data) {
+    return <p>Falha ao carregar dashboard.</p>;
+  }
 
   return (
     <div className="page-stack">
