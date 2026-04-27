@@ -17,6 +17,9 @@ interface LayoutProps {
   username: string | null;
   onLogout: () => Promise<void>;
   loggingOut: boolean;
+  onGenerateAnalysis: () => void;
+  generatingAnalysis: boolean;
+  analysisError: boolean;
   children: ReactNode;
 }
 
@@ -115,6 +118,14 @@ function IconSun() {
   );
 }
 
+function IconSparkle() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
+    </svg>
+  );
+}
+
 function IconLogout() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -135,6 +146,9 @@ export function Layout({
   username,
   onLogout,
   loggingOut,
+  onGenerateAnalysis,
+  generatingAnalysis,
+  analysisError,
   children
 }: LayoutProps) {
   const { hidden, toggle } = usePrivacy();
@@ -185,6 +199,18 @@ export function Layout({
             loading={creatingMonth}
             onClick={onCreateMonth}
           />
+          {selectedMonthId && (
+            <button
+              type="button"
+              className={`icon-btn${analysisError ? ' icon-btn-error' : ''}`}
+              onClick={onGenerateAnalysis}
+              disabled={generatingAnalysis}
+              title={generatingAnalysis ? 'Gerando análise…' : 'Gerar análise inteligente (PDF)'}
+              aria-label="Gerar análise inteligente"
+            >
+              <IconSparkle />
+            </button>
+          )}
           <button
             type="button"
             className="icon-btn"

@@ -59,6 +59,18 @@ function AuthenticatedApp({ session, onLogout, loggingOut }: AuthenticatedAppPro
     }
   });
 
+  const analysisMutation = useMutation({
+    mutationFn: () => api.generateAiAnalysis(selectedMonthId as string),
+    onSuccess: (blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `analise-${selectedMonthId}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  });
+
   const months = monthsQuery.data ?? [];
 
   useEffect(() => {
@@ -102,6 +114,9 @@ function AuthenticatedApp({ session, onLogout, loggingOut }: AuthenticatedAppPro
         username={session.username}
         onLogout={onLogout}
         loggingOut={loggingOut}
+        onGenerateAnalysis={() => { analysisMutation.mutate(); }}
+        generatingAnalysis={analysisMutation.isPending}
+        analysisError={analysisMutation.isError}
       >
         <Suspense fallback={<p className="center-message">Carregando página...</p>}>
           <Routes>
