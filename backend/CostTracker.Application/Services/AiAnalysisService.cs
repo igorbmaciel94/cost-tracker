@@ -31,7 +31,8 @@ public class AiAnalysisService(
 
         var input = new AnalysisInput(
             BuildSnapshot(current),
-            history.Select(BuildSnapshot).ToList()
+            history.Select(BuildSnapshot).ToList(),
+            DateOnly.FromDateTime(DateTime.UtcNow)
         );
 
         var userPrompt = AnalysisPromptBuilder.BuildUser(input);

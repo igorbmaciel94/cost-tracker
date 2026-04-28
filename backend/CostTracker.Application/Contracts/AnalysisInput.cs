@@ -27,5 +27,6 @@ internal sealed record AnalysisGroupTarget(
 
 internal sealed record AnalysisInput(
     AnalysisMonthSnapshot CurrentMonth,
-    IReadOnlyList<AnalysisMonthSnapshot> History
+    IReadOnlyList<AnalysisMonthSnapshot> History,
+    DateOnly AnalysisDate
 );
