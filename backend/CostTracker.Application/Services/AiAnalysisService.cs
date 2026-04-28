@@ -1,6 +1,6 @@
 using CostTracker.Application.Contracts;
 using CostTracker.Application.Exceptions;
-using CostTracker.Application.Integrations.Gemini;
+using CostTracker.Application.Integrations.Ai;
 using CostTracker.Application.Interfaces;
 using CostTracker.Application.Pdf;
 using CostTracker.Application.Projections;
@@ -12,7 +12,7 @@ namespace CostTracker.Application.Services;
 public class AiAnalysisService(
     ICostTrackerDbContext dbContext,
     MonthProjectionService projections,
-    IGeminiClient gemini,
+    IAiAnalysisClient ai,
     IPdfRenderer pdf)
 {
     public async Task<byte[]> GenerateAsync(Guid monthId, CancellationToken ct)
@@ -34,8 +34,8 @@ public class AiAnalysisService(
             history.Select(BuildSnapshot).ToList()
         );
 
-        var prompt = AnalysisPromptBuilder.Build(input);
-        var analysisMarkdown = await gemini.GenerateAnalysisAsync(prompt, ct);
+        var userPrompt = AnalysisPromptBuilder.BuildUser(input);
+        var analysisMarkdown = await ai.GenerateAnalysisAsync(AnalysisPromptBuilder.System, userPrompt, ct);
 
         return pdf.Render(current.ReferenceMonth, analysisMarkdown);
     }
