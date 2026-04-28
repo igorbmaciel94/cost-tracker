@@ -8,6 +8,7 @@
     <ProjectReference Include="..\CostTracker.Domain\CostTracker.Domain.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Anthropic" Version="12.17.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.0" />

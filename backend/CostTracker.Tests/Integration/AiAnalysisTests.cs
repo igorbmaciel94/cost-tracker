@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using CostTracker.Application.Contracts;
-using CostTracker.Application.Integrations.Gemini;
+using CostTracker.Application.Integrations.Ai;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -63,15 +63,15 @@ public class AiAnalysisTestFactory : TestWebApplicationFactory
 
         builder.ConfigureServices(services =>
         {
-            services.RemoveAll<IGeminiClient>();
-            services.AddSingleton<IGeminiClient, FakeGeminiClient>();
+            services.RemoveAll<IAiAnalysisClient>();
+            services.AddSingleton<IAiAnalysisClient, FakeAiAnalysisClient>();
         });
     }
 }
 
-public class FakeGeminiClient : IGeminiClient
+public class FakeAiAnalysisClient : IAiAnalysisClient
 {
-    public Task<string> GenerateAnalysisAsync(string prompt, CancellationToken ct)
+    public Task<string> GenerateAnalysisAsync(string systemPrompt, string userPrompt, CancellationToken ct)
     {
         return Task.FromResult("""
             # Resumo Executivo

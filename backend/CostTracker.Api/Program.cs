@@ -1,7 +1,7 @@
 using CostTracker.Api.Configuration;
 using CostTracker.Api.Middleware;
 using CostTracker.Api.Services;
-using CostTracker.Application.Integrations.Gemini;
+using CostTracker.Application.Integrations.Ai;
 using CostTracker.Application.Options;
 using CostTracker.Application.Pdf;
 using CostTracker.Application.Projections;
@@ -63,11 +63,11 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddOptions<GeminiOptions>()
-    .Bind(builder.Configuration.GetSection("Gemini"))
+builder.Services.AddOptions<AnthropicOptions>()
+    .Bind(builder.Configuration.GetSection("Anthropic"))
     .ValidateOnStart();
 
-builder.Services.AddHttpClient<IGeminiClient, GeminiClient>();
+builder.Services.AddSingleton<IAiAnalysisClient, ClaudeAnalysisClient>();
 builder.Services.AddSingleton<IPdfRenderer, AnalysisPdfRenderer>();
 
 builder.Services.AddInfrastructure(builder.Configuration);
