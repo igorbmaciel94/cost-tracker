@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -24,12 +25,28 @@ public class GeminiClient(HttpClient http, IOptions<GeminiOptions> opts) : IGemi
             new GeminiGenerationConfig(0.7f)
         );
 
-        var response = await http.PostAsJsonAsync(url, requestBody, JsonOpts, ct);
+        HttpResponseMessage response = null!;
+        string lastError = "";
 
-        if (!response.IsSuccessStatusCode)
+        for (var attempt = 0; attempt <= options.MaxRetries; attempt++)
         {
-            var error = await response.Content.ReadAsStringAsync(ct);
-            throw new ConflictException($"Falha ao gerar análise (Gemini {response.StatusCode}): {error}");
+            response = await http.PostAsJsonAsync(url, requestBody, JsonOpts, ct);
+
+            if (response.IsSuccessStatusCode)
+            {
+                break;
+            }
+
+            lastError = await response.Content.ReadAsStringAsync(ct);
+
+            if (!IsTransient(response.StatusCode) || attempt == options.MaxRetries)
+            {
+                throw new ConflictException($"Falha ao gerar análise (Gemini {response.StatusCode}): {lastError}");
+            }
+
+            response.Dispose();
+            var delayMs = options.InitialBackoffMs * (1 << attempt);
+            await Task.Delay(delayMs, ct);
         }
 
         var result = await response.Content.ReadFromJsonAsync<GeminiResponse>(JsonOpts, ct)
@@ -38,6 +55,9 @@ public class GeminiClient(HttpClient http, IOptions<GeminiOptions> opts) : IGemi
         return result.Candidates?[0]?.Content?.Parts?[0]?.Text
             ?? throw new ConflictException("Gemini não retornou texto na resposta.");
     }
+
+    private static bool IsTransient(HttpStatusCode status) =>
+        status == HttpStatusCode.ServiceUnavailable || status == HttpStatusCode.TooManyRequests;
 
     private record GeminiRequest(
         [property: JsonPropertyName("contents")] List<GeminiContent> Contents,
