@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api/client';
+import { OverBudgetCategoriesCard } from '../components/OverBudgetCategoriesCard';
 import { CategoryRemainingTreemap } from '../components/charts/CategoryRemainingTreemap';
 import { GroupRemainingPieChart } from '../components/charts/GroupRemainingPieChart';
 
@@ -28,6 +29,7 @@ export function DashboardPage({ monthId }: DashboardPageProps) {
 
   return (
     <div className="page-stack">
+      <OverBudgetCategoriesCard items={dashboardQuery.data.overBudgetCategories} />
       <div className="charts-grid">
         <CategoryRemainingTreemap data={dashboardQuery.data.categoryChart} />
         <GroupRemainingPieChart data={dashboardQuery.data.groupPie} />

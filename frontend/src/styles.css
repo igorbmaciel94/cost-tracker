@@ -758,6 +758,26 @@ input::placeholder {
   font-size: 0.875rem;
 }
 
+.over-budget-panel {
+  border-left: 3px solid var(--danger);
+}
+
+.over-budget-total {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--radius-sm);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: 1rem;
+}
+
+.over-budget-table td:last-child {
+  font-weight: 700;
+}
+
 .center-message {
   text-align: center;
   margin-top: 3rem;

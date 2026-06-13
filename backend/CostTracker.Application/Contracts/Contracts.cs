@@ -67,6 +67,13 @@ public sealed record DashboardGroupPointDto(
     string GroupName,
     decimal Remaining);
 
+public sealed record DashboardOverBudgetCategoryDto(
+    string Category,
+    string GroupName,
+    decimal Planned,
+    decimal Spent,
+    decimal ExceededBy);
+
 public sealed record DashboardDto(
     Guid MonthId,
     string ReferenceMonth,
@@ -76,7 +83,8 @@ public sealed record DashboardDto(
     bool IsOverPlanned,
     bool IsOverSpent,
     IReadOnlyList<DashboardCategoryPointDto> CategoryChart,
-    IReadOnlyList<DashboardGroupPointDto> GroupPie);
+    IReadOnlyList<DashboardGroupPointDto> GroupPie,
+    IReadOnlyList<DashboardOverBudgetCategoryDto> OverBudgetCategories);
 
 public sealed record AuthSessionDto(
     bool IsAuthenticated,

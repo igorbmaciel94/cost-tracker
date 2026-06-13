@@ -76,6 +76,14 @@ export interface DashboardGroupPointDto {
   remaining: number;
 }
 
+export interface DashboardOverBudgetCategoryDto {
+  category: string;
+  groupName: string;
+  planned: number;
+  spent: number;
+  exceededBy: number;
+}
+
 export interface DashboardDto {
   monthId: string;
   referenceMonth: string;
@@ -86,6 +94,7 @@ export interface DashboardDto {
   isOverSpent: boolean;
   categoryChart: DashboardCategoryPointDto[];
   groupPie: DashboardGroupPointDto[];
+  overBudgetCategories: DashboardOverBudgetCategoryDto[];
 }
 
 export interface AuthSessionDto {

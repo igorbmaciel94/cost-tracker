@@ -112,6 +112,18 @@ public class MonthProjectionService
             .Select(group => new DashboardGroupPointDto(group.GroupName, group.RemainingAmount))
             .ToList();
 
+        var overBudgetCategories = budget
+            .Where(line => line.Difference < 0)
+            .OrderBy(line => line.Difference)
+            .ThenBy(line => line.CategoryName)
+            .Select(line => new DashboardOverBudgetCategoryDto(
+                line.CategoryName,
+                line.GroupName,
+                line.Planned,
+                line.Spent,
+                Math.Abs(line.Difference)))
+            .ToList();
+
         return new DashboardDto(
             month.Id,
             month.ReferenceMonth,
@@ -121,7 +133,8 @@ public class MonthProjectionService
             plannedTotal > month.Salary,
             spentTotal > month.Salary,
             categoryChart,
-            groupPie);
+            groupPie,
+            overBudgetCategories);
     }
 
     public static bool IsOpen(Month month) => month.Status == MonthStatus.Open;

@@ -162,6 +162,38 @@ public class ApiFlowTests
     }
 
     [Fact]
+    public async Task Dashboard_ShouldExposeOverBudgetCategories()
+    {
+        using var factory = new TestWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        await LoginAsync(client);
+
+        var months = await client.GetFromJsonAsync<List<MonthSummaryDto>>("/api/months");
+        var openMonth = Assert.Single(months!, x => x.Status == "OPEN");
+
+        var budget = await client.GetFromJsonAsync<BudgetResponseDto>($"/api/months/{openMonth.Id}/budget");
+        var category = budget!.Lines.First();
+
+        await client.PostAsJsonAsync($"/api/months/{openMonth.Id}/entries", new CreateEntryRequest
+        {
+            CategoryBudgetId = category.Id,
+            EntryDate = new DateOnly(2026, 3, 10),
+            Description = "Estouro teste",
+            Amount = category.Planned + 25m
+        });
+
+        var dashboard = await client.GetFromJsonAsync<DashboardDto>($"/api/months/{openMonth.Id}/dashboard");
+        var overBudget = Assert.Single(dashboard!.OverBudgetCategories);
+
+        Assert.Equal(category.Name, overBudget.Category);
+        Assert.Equal(category.GroupName, overBudget.GroupName);
+        Assert.Equal(category.Planned, overBudget.Planned);
+        Assert.Equal(category.Planned + 25m, overBudget.Spent);
+        Assert.Equal(25m, overBudget.ExceededBy);
+    }
+
+    [Fact]
     public async Task SeededData_ShouldExposeCanonicalGroupsAndCategories()
     {
         using var factory = new TestWebApplicationFactory();

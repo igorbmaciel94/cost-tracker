@@ -12,7 +12,8 @@ const dashboard: DashboardDto = {
   isOverPlanned: false,
   isOverSpent: false,
   categoryChart: [],
-  groupPie: []
+  groupPie: [],
+  overBudgetCategories: []
 };
 
 describe('MonthlySummaryCards', () => {
