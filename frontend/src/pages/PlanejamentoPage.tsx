@@ -118,48 +118,50 @@ export function PlanejamentoPage({ salary }: { salary: number }) {
 
       {goals.length > 0 && (
         <>
-          <table className="data-table" style={{ marginTop: '1.5rem' }}>
-            <thead>
-              <tr>
-                <th>Objetivo</th>
-                <th>Valor total</th>
-                <th>Já guardado</th>
-                <th>Falta</th>
-                <th>Prazo</th>
-                <th>Guardar/mês</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {goals.map((goal) => {
-                const monthly = calcMonthly(goal);
-                const remaining = Math.max(0, goal.totalAmount - goal.savedAmount);
-                return (
-                  <tr key={goal.id}>
-                    <td>{goal.name}</td>
-                    <td><PrivacyMask value={formatCurrency(goal.totalAmount)} /></td>
-                    <td><PrivacyMask value={formatCurrency(goal.savedAmount)} /></td>
-                    <td><PrivacyMask value={formatCurrency(remaining)} /></td>
-                    <td>{goal.months} {goal.months === 1 ? 'mês' : 'meses'}</td>
-                    <td>
-                      <PrivacyMask value={formatCurrency(monthly)} />
-                      <MonthlyImpact monthly={monthly} salary={parsedSalary} />
-                    </td>
-                    <td>
-                      <button
-                        type="button"
-                        className="button-secondary"
-                        onClick={() => { void deleteGoal.mutateAsync(goal.id); }}
-                        disabled={deleteGoal.isPending}
-                      >
-                        Remover
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="table-scroll planning-goals-scroll">
+            <table className="data-table planning-goals-table">
+              <thead>
+                <tr>
+                  <th>Objetivo</th>
+                  <th>Valor total</th>
+                  <th>Já guardado</th>
+                  <th>Falta</th>
+                  <th>Prazo</th>
+                  <th>Guardar/mês</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {goals.map((goal) => {
+                  const monthly = calcMonthly(goal);
+                  const remaining = Math.max(0, goal.totalAmount - goal.savedAmount);
+                  return (
+                    <tr key={goal.id}>
+                      <td>{goal.name}</td>
+                      <td><PrivacyMask value={formatCurrency(goal.totalAmount)} /></td>
+                      <td><PrivacyMask value={formatCurrency(goal.savedAmount)} /></td>
+                      <td><PrivacyMask value={formatCurrency(remaining)} /></td>
+                      <td>{goal.months} {goal.months === 1 ? 'mês' : 'meses'}</td>
+                      <td>
+                        <PrivacyMask value={formatCurrency(monthly)} />
+                        <MonthlyImpact monthly={monthly} salary={parsedSalary} />
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="button-secondary"
+                          onClick={() => { void deleteGoal.mutateAsync(goal.id); }}
+                          disabled={deleteGoal.isPending}
+                        >
+                          Remover
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
 
           <div className="panel-header" style={{ marginTop: '1rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
             <p>

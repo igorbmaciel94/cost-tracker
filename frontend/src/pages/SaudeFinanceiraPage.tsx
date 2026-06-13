@@ -150,38 +150,40 @@ export function SaudeFinanceiraPage({ monthId, salary }: { monthId: string | nul
         </div>
 
         {essentialsVal > 0 ? (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Cenário</th>
-                <th>Meta</th>
-                <th>Já reservado</th>
-                <th>Faltam</th>
-                <th>Progresso</th>
-              </tr>
-            </thead>
-            <tbody>
-              {targets.map(({ label, months }) => {
-                const target = essentialsVal * months;
-                const gap = Math.max(0, target - savedVal);
-                const pct = target > 0 ? Math.min(1, savedVal / target) : 0;
-                return (
-                  <tr key={months}>
-                    <td>{label}</td>
-                    <td><PrivacyMask value={formatCurrency(target)} /></td>
-                    <td><PrivacyMask value={formatCurrency(Math.min(savedVal, target))} /></td>
-                    <td className={gap > 0 ? 'negative' : ''}>
-                      <PrivacyMask value={gap > 0 ? formatCurrency(gap) : '✓ Atingido'} />
-                    </td>
-                    <td style={{ minWidth: 140 }}>
-                      <ProgressBar value={savedVal} max={target} />
-                      <small style={{ color: 'var(--text-secondary)' }}>{formatPercent(pct)}</small>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="table-scroll">
+            <table className="data-table health-table">
+              <thead>
+                <tr>
+                  <th>Cenário</th>
+                  <th>Meta</th>
+                  <th>Já reservado</th>
+                  <th>Faltam</th>
+                  <th>Progresso</th>
+                </tr>
+              </thead>
+              <tbody>
+                {targets.map(({ label, months }) => {
+                  const target = essentialsVal * months;
+                  const gap = Math.max(0, target - savedVal);
+                  const pct = target > 0 ? Math.min(1, savedVal / target) : 0;
+                  return (
+                    <tr key={months}>
+                      <td>{label}</td>
+                      <td><PrivacyMask value={formatCurrency(target)} /></td>
+                      <td><PrivacyMask value={formatCurrency(Math.min(savedVal, target))} /></td>
+                      <td className={gap > 0 ? 'negative' : ''}>
+                        <PrivacyMask value={gap > 0 ? formatCurrency(gap) : '✓ Atingido'} />
+                      </td>
+                      <td style={{ minWidth: 140 }}>
+                        <ProgressBar value={savedVal} max={target} />
+                        <small style={{ color: 'var(--text-secondary)' }}>{formatPercent(pct)}</small>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         ) : (
           <p style={{ color: 'var(--text-secondary)' }}>
             Informe seus gastos essenciais mensais para calcular o colchão ideal.
@@ -225,33 +227,35 @@ export function SaudeFinanceiraPage({ monthId, salary }: { monthId: string | nul
         </div>
 
         {monthlyVal > 0 ? (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Período</th>
-                <th>Total investido</th>
-                <th>Saldo estimado</th>
-                <th>Rendimento</th>
-              </tr>
-            </thead>
-            <tbody>
-              {projections.map(({ label, months }) => {
-                const invested = monthlyVal * months;
-                const fv = compoundFV(monthlyVal, rate, months);
-                const gain = fv - invested;
-                return (
-                  <tr key={months}>
-                    <td>{label}</td>
-                    <td><PrivacyMask value={formatCurrency(invested)} /></td>
-                    <td><PrivacyMask value={formatCurrency(fv)} /></td>
-                    <td style={{ color: '#0f766e' }}>
-                      <PrivacyMask value={`+${formatCurrency(gain)}`} />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="table-scroll">
+            <table className="data-table health-table">
+              <thead>
+                <tr>
+                  <th>Período</th>
+                  <th>Total investido</th>
+                  <th>Saldo estimado</th>
+                  <th>Rendimento</th>
+                </tr>
+              </thead>
+              <tbody>
+                {projections.map(({ label, months }) => {
+                  const invested = monthlyVal * months;
+                  const fv = compoundFV(monthlyVal, rate, months);
+                  const gain = fv - invested;
+                  return (
+                    <tr key={months}>
+                      <td>{label}</td>
+                      <td><PrivacyMask value={formatCurrency(invested)} /></td>
+                      <td><PrivacyMask value={formatCurrency(fv)} /></td>
+                      <td style={{ color: '#0f766e' }}>
+                        <PrivacyMask value={`+${formatCurrency(gain)}`} />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         ) : (
           <p style={{ color: 'var(--text-secondary)' }}>
             Informe o aporte mensal para ver a projeção de crescimento.
@@ -270,31 +274,33 @@ export function SaudeFinanceiraPage({ monthId, salary }: { monthId: string | nul
         </p>
 
         {monthlyVal > 0 ? (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Período</th>
-                <th>Total investido</th>
-                <th>Cenário conservador <small>(~5% a.a.)</small></th>
-                <th>Cenário otimista <small>(~10% a.a.)</small></th>
-              </tr>
-            </thead>
-            <tbody>
-              {projections.map(({ label, months }) => {
-                const invested = monthlyVal * months;
-                const conservative = compoundFV(monthlyVal, 0.05 / 12, months);
-                const optimistic = compoundFV(monthlyVal, 0.10 / 12, months);
-                return (
-                  <tr key={months}>
-                    <td>{label}</td>
-                    <td><PrivacyMask value={formatCurrency(invested)} /></td>
-                    <td><PrivacyMask value={formatCurrency(conservative)} /></td>
-                    <td><PrivacyMask value={formatCurrency(optimistic)} /></td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="table-scroll">
+            <table className="data-table health-table health-table-wide">
+              <thead>
+                <tr>
+                  <th>Período</th>
+                  <th>Total investido</th>
+                  <th>Cenário conservador <small>(~5% a.a.)</small></th>
+                  <th>Cenário otimista <small>(~10% a.a.)</small></th>
+                </tr>
+              </thead>
+              <tbody>
+                {projections.map(({ label, months }) => {
+                  const invested = monthlyVal * months;
+                  const conservative = compoundFV(monthlyVal, 0.05 / 12, months);
+                  const optimistic = compoundFV(monthlyVal, 0.10 / 12, months);
+                  return (
+                    <tr key={months}>
+                      <td>{label}</td>
+                      <td><PrivacyMask value={formatCurrency(invested)} /></td>
+                      <td><PrivacyMask value={formatCurrency(conservative)} /></td>
+                      <td><PrivacyMask value={formatCurrency(optimistic)} /></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         ) : (
           <p style={{ color: 'var(--text-secondary)' }}>
             Informe o aporte mensal no simulador acima para ver as estimativas de renda variável.

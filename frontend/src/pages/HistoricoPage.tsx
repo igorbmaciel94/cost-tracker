@@ -93,48 +93,50 @@ export function HistoricoPage({ months }: HistoricoPageProps) {
         <header className="panel-header">
           <h2>Histórico de meses fechados</h2>
         </header>
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>
-                <button type="button" className="sort-header" onClick={() => sortBy('referenceMonth')}>
-                  Mês <span>{sortIndicator(sortState, 'referenceMonth')}</span>
-                </button>
-              </th>
-              <th>
-                <button type="button" className="sort-header" onClick={() => sortBy('salary')}>
-                  Salário <span>{sortIndicator(sortState, 'salary')}</span>
-                </button>
-              </th>
-              <th>
-                <button type="button" className="sort-header" onClick={() => sortBy('plannedTotal')}>
-                  Previsto <span>{sortIndicator(sortState, 'plannedTotal')}</span>
-                </button>
-              </th>
-              <th>
-                <button type="button" className="sort-header" onClick={() => sortBy('spentTotal')}>
-                  Gasto <span>{sortIndicator(sortState, 'spentTotal')}</span>
-                </button>
-              </th>
-              <th>Ação</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sortedClosedMonths.map((month) => (
-              <tr key={month.id}>
-                <td>{month.referenceMonth}</td>
-                <td><PrivacyMask value={formatCurrency(month.salary)} /></td>
-                <td><PrivacyMask value={formatCurrency(month.plannedTotal)} /></td>
-                <td><PrivacyMask value={formatCurrency(month.spentTotal)} /></td>
-                <td>
-                  <button type="button" onClick={() => setSelectedMonthId(month.id)}>
-                    Ver detalhes
+        <div className="table-scroll">
+          <table className="data-table history-table">
+            <thead>
+              <tr>
+                <th>
+                  <button type="button" className="sort-header" onClick={() => sortBy('referenceMonth')}>
+                    Mês <span>{sortIndicator(sortState, 'referenceMonth')}</span>
                   </button>
-                </td>
+                </th>
+                <th>
+                  <button type="button" className="sort-header" onClick={() => sortBy('salary')}>
+                    Salário <span>{sortIndicator(sortState, 'salary')}</span>
+                  </button>
+                </th>
+                <th>
+                  <button type="button" className="sort-header" onClick={() => sortBy('plannedTotal')}>
+                    Previsto <span>{sortIndicator(sortState, 'plannedTotal')}</span>
+                  </button>
+                </th>
+                <th>
+                  <button type="button" className="sort-header" onClick={() => sortBy('spentTotal')}>
+                    Gasto <span>{sortIndicator(sortState, 'spentTotal')}</span>
+                  </button>
+                </th>
+                <th>Ação</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {sortedClosedMonths.map((month) => (
+                <tr key={month.id}>
+                  <td>{month.referenceMonth}</td>
+                  <td><PrivacyMask value={formatCurrency(month.salary)} /></td>
+                  <td><PrivacyMask value={formatCurrency(month.plannedTotal)} /></td>
+                  <td><PrivacyMask value={formatCurrency(month.spentTotal)} /></td>
+                  <td>
+                    <button type="button" onClick={() => setSelectedMonthId(month.id)}>
+                      Ver detalhes
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       {dashboardQuery.data && <MonthlySummaryCards dashboard={dashboardQuery.data} />}

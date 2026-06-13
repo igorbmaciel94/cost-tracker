@@ -54,6 +54,13 @@
   box-sizing: border-box;
 }
 
+html,
+body,
+#root {
+  width: 100%;
+  min-width: 0;
+}
+
 body {
   margin: 0;
   font-family: 'Inter', system-ui, sans-serif;
@@ -69,6 +76,7 @@ body {
 
 #root {
   min-height: 100vh;
+  overflow-x: clip;
 }
 
 /* ===== Auth / Login ===== */
@@ -156,14 +164,18 @@ body {
 
 /* ===== App Shell ===== */
 .app-shell {
+  width: min(100%, 1280px);
   max-width: 1280px;
   margin: 0 auto;
   padding: 1rem;
   padding-bottom: 1.5rem;
+  min-width: 0;
 }
 
 /* ===== Topbar ===== */
 .topbar {
+  width: 100%;
+  min-width: 0;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -226,6 +238,7 @@ body {
   gap: 0.5rem;
   align-items: center;
   flex-shrink: 0;
+  min-width: 0;
 }
 
 /* ===== Badges ===== */
@@ -308,6 +321,7 @@ body {
   display: flex;
   gap: 0.4rem;
   align-items: center;
+  min-width: 0;
 }
 
 .month-selector select {
@@ -317,13 +331,16 @@ body {
 
 /* ===== KPI Cards ===== */
 .month-kpis {
+  width: 100%;
+  min-width: 0;
   margin-top: 0.75rem;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.5rem;
 }
 
 .kpi-card {
+  min-width: 0;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -372,6 +389,8 @@ body {
 
 /* ===== Navigation ===== */
 .main-nav {
+  width: 100%;
+  min-width: 0;
   display: flex;
   gap: 0.25rem;
   margin: 0.75rem 0;
@@ -419,18 +438,29 @@ body {
 
 main {
   animation: fade-in 180ms ease-out;
+  width: 100%;
+  min-width: 0;
 }
 
 /* ===== Page Stack ===== */
 .page-stack {
   display: grid;
   gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.page-stack > *,
+main > * {
+  min-width: 0;
 }
 
 /* ===== Panels ===== */
 .panel,
 .chart-card,
 .summary-card {
+  max-width: 100%;
+  min-width: 0;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -438,13 +468,16 @@ main {
 
 .panel {
   padding: 1rem;
-  overflow: clip;
+  overflow: hidden;
 }
 
 /* ===== Table Scroll Wrapper ===== */
 .table-scroll {
+  max-width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
   margin: 0 -1rem;
   padding: 0 1rem;
 }
@@ -473,6 +506,7 @@ main {
 
 /* ===== Buttons ===== */
 button {
+  max-width: 100%;
   background: var(--brand);
   color: #ffffff;
   border: 1px solid var(--brand);
@@ -559,6 +593,7 @@ button:disabled {
 
 input,
 select {
+  max-width: 100%;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 0.5rem 0.65rem;
@@ -584,6 +619,26 @@ input::placeholder {
 .data-table {
   width: 100%;
   border-collapse: collapse;
+}
+
+.history-table {
+  min-width: 620px;
+}
+
+.health-table {
+  min-width: 560px;
+}
+
+.health-table-wide {
+  min-width: 680px;
+}
+
+.planning-goals-scroll {
+  margin-top: 1.5rem;
+}
+
+.planning-goals-table {
+  min-width: 760px;
 }
 
 .data-table th,
@@ -672,8 +727,15 @@ input::placeholder {
 /* ===== Summary Grid ===== */
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
   gap: 0.5rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.summary-grid > *,
+.charts-grid > * {
+  min-width: 0;
 }
 
 .summary-card {
@@ -729,8 +791,10 @@ input::placeholder {
 /* ===== Charts ===== */
 .charts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
   gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
 }
 
 .chart-card {
@@ -841,7 +905,7 @@ input::placeholder {
   }
 
   .month-kpis {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .panel-header {
@@ -879,7 +943,17 @@ input::placeholder {
   }
 
   .topbar-main {
+    width: 100%;
     flex-wrap: wrap;
+  }
+
+  .topbar-brand {
+    min-width: 0;
+  }
+
+  .topbar-brand-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .topbar-divider {
@@ -895,10 +969,15 @@ input::placeholder {
 
   .topbar-actions > * {
     flex: 1 1 auto;
+    min-width: 0;
   }
 
   .month-selector {
     flex: 1 1 100%;
+  }
+
+  .month-selector label {
+    flex: 0 0 auto;
   }
 
   .month-selector select {
@@ -906,8 +985,18 @@ input::placeholder {
     width: 100%;
   }
 
+  .topbar-actions .cta-new-month {
+    flex: 1.4 1 118px;
+    justify-content: center;
+  }
+
+  .topbar-actions .icon-btn {
+    flex: 1 1 44px;
+    min-width: 44px;
+  }
+
   .month-kpis {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.4rem;
   }
 
@@ -992,6 +1081,11 @@ input::placeholder {
     border-radius: var(--radius-sm);
   }
 
+  .table-scroll {
+    margin-inline: -0.75rem;
+    padding-inline: 0.75rem;
+  }
+
   .panel-header h2 {
     font-size: 0.9rem;
   }
@@ -1008,7 +1102,7 @@ input::placeholder {
   }
 
   .summary-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.4rem;
   }
 
@@ -1066,11 +1160,11 @@ input::placeholder {
 /* ===== Very small screens (max-width: 380px) ===== */
 @media (max-width: 380px) {
   .month-kpis {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .summary-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .main-nav a {
