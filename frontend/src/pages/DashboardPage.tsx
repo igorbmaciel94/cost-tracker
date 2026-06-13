@@ -29,11 +29,11 @@ export function DashboardPage({ monthId }: DashboardPageProps) {
 
   return (
     <div className="page-stack">
-      <OverBudgetCategoriesCard items={dashboardQuery.data.overBudgetCategories} />
       <div className="charts-grid">
         <CategoryRemainingTreemap data={dashboardQuery.data.categoryChart} />
         <GroupRemainingPieChart data={dashboardQuery.data.groupPie} />
       </div>
+      <OverBudgetCategoriesCard items={dashboardQuery.data.overBudgetCategories} />
     </div>
   );
 }
