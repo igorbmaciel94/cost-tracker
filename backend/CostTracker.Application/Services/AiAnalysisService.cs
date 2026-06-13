@@ -4,6 +4,7 @@ using CostTracker.Application.Integrations.Ai;
 using CostTracker.Application.Interfaces;
 using CostTracker.Application.Pdf;
 using CostTracker.Application.Projections;
+using CostTracker.Domain.Calculations;
 using CostTracker.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -54,6 +55,27 @@ public class AiAnalysisService(
             l.Difference
         )).ToList();
 
+        var categoryOverflows = budget.Lines
+            .Where(l => l.Difference < 0)
+            .OrderBy(l => l.Difference)
+            .Select(l => new AnalysisCategoryOverflow(
+                l.Name,
+                l.GroupName,
+                Math.Abs(l.Difference)
+            ))
+            .ToList();
+
+        var availableBalances = MonthCalculations
+            .ComputeAvailableBalanceByCategory(month.CategoryBudgets, month.Entries)
+            .Where(l => l.RemainingAmount > 0)
+            .OrderByDescending(l => l.RemainingAmount)
+            .Select(l => new AnalysisAvailableBalance(
+                l.CategoryName,
+                l.GroupName,
+                l.RemainingAmount
+            ))
+            .ToList();
+
         var groupTargets = targets.Items.Select(t => new AnalysisGroupTarget(
             t.GroupName,
             t.TargetPercent * 100,
@@ -68,6 +90,8 @@ public class AiAnalysisService(
             budget.SpentTotal,
             budget.DifferenceTotal,
             categories,
+            categoryOverflows,
+            availableBalances,
             groupTargets
         );
     }

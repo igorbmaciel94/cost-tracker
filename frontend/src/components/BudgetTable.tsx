@@ -71,7 +71,7 @@ export function BudgetTable({
     resolver: zodResolver(categorySchema),
     defaultValues: {
       name: '',
-      groupName: 'Essenciais',
+      groupName: 'Custos Fixos',
       plannedAmount: 0
     }
   });

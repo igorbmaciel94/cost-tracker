@@ -59,12 +59,12 @@ export function SaudeFinanceiraPage({ monthId, salary }: { monthId: string | nul
     };
 
     let ess = profile.essentialExpenses;
-    if (ess === 0) ess = targetPct('Essenciais');
+    if (ess === 0) ess = targetPct('Custos Fixos');
 
     let sav = profile.savedEmergencyFund;
-    if (sav === 0) sav = targetPct('Saving');
+    if (sav === 0) sav = targetPct('Liberdade Financeira');
 
-    let inv = targetPct('Investimento');
+    let inv = targetPct('Conhecimento');
 
     const round2 = (n: number) => Math.round(n * 100) / 100;
     setEssentials(ess > 0 ? String(round2(ess)) : '');

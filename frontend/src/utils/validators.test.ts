@@ -10,7 +10,7 @@ describe('validators', () => {
   it('should reject negative category amount', () => {
     const result = categorySchema.safeParse({
       name: 'Mercado',
-      groupName: 'Essenciais',
+      groupName: 'Custos Fixos',
       plannedAmount: -10
     });
 
@@ -30,7 +30,7 @@ describe('validators', () => {
 
   it('should reject target percentages above 100', () => {
     const result = targetSchema.safeParse({
-      groupName: 'Buffer',
+      groupName: 'Metas',
       targetPercent: 101
     });
 

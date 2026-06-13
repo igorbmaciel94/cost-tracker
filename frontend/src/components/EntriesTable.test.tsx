@@ -8,7 +8,7 @@ const categories: BudgetLineDto[] = [
   {
     id: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
     name: 'Mercado',
-    groupName: 'Essenciais',
+    groupName: 'Custos Fixos',
     planned: 600,
     spent: 500,
     difference: 100,

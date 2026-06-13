@@ -145,19 +145,20 @@ public class ApiFlowTests
         {
             Items =
             [
-                new UpdateTargetGroupRequest { GroupName = GroupNames.Essenciais, TargetPercent = 0.65m },
-                new UpdateTargetGroupRequest { GroupName = GroupNames.Desejos, TargetPercent = 0.25m }
+                new UpdateTargetGroupRequest { GroupName = GroupNames.CustosFixos, TargetPercent = 0.65m },
+                new UpdateTargetGroupRequest { GroupName = GroupNames.Prazeres, TargetPercent = 0.25m }
             ]
         });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         var targets = await client.GetFromJsonAsync<TargetsResponseDto>($"/api/months/{openMonth.Id}/targets");
-        Assert.Equal(0.65m, targets!.Items.Single(x => x.GroupName == GroupNames.Essenciais).TargetPercent);
-        Assert.Equal(0.25m, targets.Items.Single(x => x.GroupName == GroupNames.Desejos).TargetPercent);
-        Assert.Contains(targets.Items, x => x.GroupName == GroupNames.Investimento && x.TargetPercent == 0m);
-        Assert.Contains(targets.Items, x => x.GroupName == GroupNames.Saving && x.TargetPercent == 0.1m);
-        Assert.Contains(targets.Items, x => x.GroupName == GroupNames.Buffer && x.TargetPercent == 0m);
+        Assert.Equal(0.65m, targets!.Items.Single(x => x.GroupName == GroupNames.CustosFixos).TargetPercent);
+        Assert.Equal(0.25m, targets.Items.Single(x => x.GroupName == GroupNames.Prazeres).TargetPercent);
+        Assert.Contains(targets.Items, x => x.GroupName == GroupNames.Conhecimento && x.TargetPercent == 0m);
+        Assert.Contains(targets.Items, x => x.GroupName == GroupNames.LiberdadeFinanceira && x.TargetPercent == 0.1m);
+        Assert.Contains(targets.Items, x => x.GroupName == GroupNames.Metas && x.TargetPercent == 0m);
+        Assert.Contains(targets.Items, x => x.GroupName == GroupNames.Conforto && x.TargetPercent == 0m);
     }
 
     [Fact]
@@ -172,10 +173,11 @@ public class ApiFlowTests
         var openMonth = Assert.Single(months!, x => x.Status == "OPEN");
 
         var budget = await client.GetFromJsonAsync<BudgetResponseDto>($"/api/months/{openMonth.Id}/budget");
-        Assert.Contains(budget!.Lines, line => line.Name == "Investimento" && line.GroupName == GroupNames.Investimento);
-        Assert.Contains(budget.Lines, line => line.Name == "Saving" && line.GroupName == GroupNames.Saving);
+        Assert.Contains(budget!.Lines, line => line.Name == "Investimento" && line.GroupName == GroupNames.Conhecimento);
+        Assert.Contains(budget.Lines, line => line.Name == "Saving" && line.GroupName == GroupNames.LiberdadeFinanceira);
 
         var targets = await client.GetFromJsonAsync<TargetsResponseDto>($"/api/months/{openMonth.Id}/targets");
-        Assert.Contains(targets!.Items, item => item.GroupName == GroupNames.Buffer && item.TargetPercent == 0m);
+        Assert.Contains(targets!.Items, item => item.GroupName == GroupNames.Metas && item.TargetPercent == 0m);
+        Assert.Contains(targets.Items, item => item.GroupName == GroupNames.Conforto && item.TargetPercent == 0m);
     }
 }

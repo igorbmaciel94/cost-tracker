@@ -15,7 +15,7 @@ const budget: BudgetResponseDto = {
     {
       id: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
       name: 'Mercado',
-      groupName: 'Essenciais',
+      groupName: 'Custos Fixos',
       planned: 600,
       spent: 500,
       difference: 100,
@@ -40,7 +40,7 @@ describe('BudgetTable', () => {
     expect(screen.getByRole('button', { name: /categoria/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /grupo/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /previsto/i })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'Buffer' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Conforto' })).toBeInTheDocument();
   });
 
   it('edits a category inline and saves', async () => {
@@ -69,7 +69,7 @@ describe('BudgetTable', () => {
     await waitFor(() => {
       expect(onUpdateCategory).toHaveBeenCalledWith('c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', {
         name: 'Mercado Premium',
-        groupName: 'Essenciais',
+        groupName: 'Custos Fixos',
         plannedAmount: 600,
         displayOrder: 1
       });

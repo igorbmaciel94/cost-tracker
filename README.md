@@ -15,7 +15,7 @@ Nota: o ambiente local de geração deste projeto só possui SDK .NET 9, então 
 - Orçamento por categoria com previsto, gasto e diferença
 - Lançamentos com data, categoria, descrição e valor
 - Login obrigatório com cookie de sessão e credenciais vindas do ambiente
-- Metas por grupo (`Essenciais`, `Desejos`, `Investimento`, `Saving`, `Buffer`)
+- Metas por grupo (`Custos Fixos`, `Conforto`, `Prazeres`, `Conhecimento`, `Liberdade Financeira`, `Metas`)
 - Dashboard com gráficos simples
   - treemap: saldo por categoria
   - rosca: saldo por grupo

@@ -7,6 +7,8 @@ internal sealed record AnalysisMonthSnapshot(
     decimal SpentTotal,
     decimal Difference,
     IReadOnlyList<AnalysisCategoryLine> Categories,
+    IReadOnlyList<AnalysisCategoryOverflow> CategoryOverflows,
+    IReadOnlyList<AnalysisAvailableBalance> AvailableBalances,
     IReadOnlyList<AnalysisGroupTarget> GroupTargets
 );
 
@@ -16,6 +18,18 @@ internal sealed record AnalysisCategoryLine(
     decimal Planned,
     decimal Spent,
     decimal Difference
+);
+
+internal sealed record AnalysisCategoryOverflow(
+    string Name,
+    string GroupName,
+    decimal Amount
+);
+
+internal sealed record AnalysisAvailableBalance(
+    string Name,
+    string GroupName,
+    decimal Remaining
 );
 
 internal sealed record AnalysisGroupTarget(

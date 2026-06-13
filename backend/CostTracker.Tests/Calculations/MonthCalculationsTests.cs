@@ -12,7 +12,7 @@ public class MonthCalculationsTests
         {
             Id = Guid.NewGuid(),
             Name = "Mercado",
-            GroupName = "Essenciais",
+            GroupName = "Custos Fixos",
             PlannedAmount = 400m,
             DisplayOrder = 1
         };
@@ -37,7 +37,7 @@ public class MonthCalculationsTests
         {
             Id = Guid.NewGuid(),
             Name = "Arrendamento",
-            GroupName = "Essenciais",
+            GroupName = "Custos Fixos",
             PlannedAmount = 600m,
             DisplayOrder = 1
         };
@@ -46,7 +46,7 @@ public class MonthCalculationsTests
         {
             Id = Guid.NewGuid(),
             Name = "Lazer",
-            GroupName = "Desejos",
+            GroupName = "Prazeres",
             PlannedAmount = 400m,
             DisplayOrder = 2
         };
@@ -59,18 +59,18 @@ public class MonthCalculationsTests
 
         var targets = new List<GroupTarget>
         {
-            new() { GroupName = "Essenciais", TargetPercent = 0.6m },
-            new() { GroupName = "Desejos", TargetPercent = 0.4m }
+            new() { GroupName = "Custos Fixos", TargetPercent = 0.6m },
+            new() { GroupName = "Prazeres", TargetPercent = 0.4m }
         };
 
         var metrics = MonthCalculations.ComputeGroupMetrics([essenciais, desejos], entries, targets)
             .ToDictionary(x => x.GroupName, x => x);
 
-        Assert.Equal(0.6m, metrics["Essenciais"].CurrentPlannedPercent);
-        Assert.Equal(0.75m, metrics["Essenciais"].CurrentSpentPercent);
-        Assert.Equal("OK", metrics["Essenciais"].PlannedStatus);
-        Assert.Equal("Acima", metrics["Essenciais"].SpentStatus);
-        Assert.Equal("Abaixo", metrics["Desejos"].SpentStatus);
+        Assert.Equal(0.6m, metrics["Custos Fixos"].CurrentPlannedPercent);
+        Assert.Equal(0.75m, metrics["Custos Fixos"].CurrentSpentPercent);
+        Assert.Equal("OK", metrics["Custos Fixos"].PlannedStatus);
+        Assert.Equal("Acima", metrics["Custos Fixos"].SpentStatus);
+        Assert.Equal("Abaixo", metrics["Prazeres"].SpentStatus);
     }
 
     [Fact]
@@ -80,7 +80,7 @@ public class MonthCalculationsTests
         {
             Id = Guid.NewGuid(),
             Name = "Mercado",
-            GroupName = "Essenciais",
+            GroupName = "Custos Fixos",
             PlannedAmount = 400m,
             DisplayOrder = 1
         };
@@ -98,7 +98,7 @@ public class MonthCalculationsTests
         {
             Id = Guid.NewGuid(),
             Name = "Farmácia",
-            GroupName = "Essenciais",
+            GroupName = "Custos Fixos",
             PlannedAmount = 100m,
             DisplayOrder = 3
         };
@@ -115,8 +115,111 @@ public class MonthCalculationsTests
                 entries)
             .ToDictionary(x => x.GroupName, x => x.RemainingAmount);
 
-        Assert.Equal(325m, remainingByGroup["Essenciais"]);
-        Assert.Equal(-50m, remainingByGroup["Saving"]);
+        Assert.Equal(325m, remainingByGroup["Custos Fixos"]);
+        Assert.Equal(-50m, remainingByGroup["Liberdade Financeira"]);
+    }
+
+    [Fact]
+    public void ComputeAvailableBalanceByCategory_ShouldSubtractOverflowsFromLargestRemainingBalances()
+    {
+        var saving = new CategoryBudget
+        {
+            Id = Guid.NewGuid(),
+            Name = "Saving",
+            GroupName = "Liberdade Financeira",
+            PlannedAmount = 552m,
+            DisplayOrder = 1
+        };
+
+        var credito = new CategoryBudget
+        {
+            Id = Guid.NewGuid(),
+            Name = "Credito",
+            GroupName = "Custos Fixos",
+            PlannedAmount = 75m,
+            DisplayOrder = 2
+        };
+
+        var comprasOnline = new CategoryBudget
+        {
+            Id = Guid.NewGuid(),
+            Name = "Compras online",
+            GroupName = "Prazeres",
+            PlannedAmount = 172m,
+            DisplayOrder = 3
+        };
+
+        var mercado = new CategoryBudget
+        {
+            Id = Guid.NewGuid(),
+            Name = "Mercado",
+            GroupName = "Custos Fixos",
+            PlannedAmount = 100m,
+            DisplayOrder = 4
+        };
+
+        var entries = new List<Entry>
+        {
+            new() { CategoryBudgetId = credito.Id, Amount = 384m },
+            new() { CategoryBudgetId = comprasOnline.Id, Amount = 305m }
+        };
+
+        var available = MonthCalculations.ComputeAvailableBalanceByCategory(
+                [saving, credito, comprasOnline, mercado],
+                entries)
+            .ToDictionary(x => x.CategoryName, x => x.RemainingAmount);
+
+        Assert.Equal(110m, available["Saving"]);
+        Assert.Equal(0m, available["Credito"]);
+        Assert.Equal(0m, available["Compras online"]);
+        Assert.Equal(100m, available["Mercado"]);
+        Assert.Equal(210m, available.Values.Sum());
+    }
+
+    [Fact]
+    public void ComputeAvailableBalanceByGroup_ShouldUseAdjustedCategoryBalances()
+    {
+        var saving = new CategoryBudget
+        {
+            Id = Guid.NewGuid(),
+            Name = "Saving",
+            GroupName = "Liberdade Financeira",
+            PlannedAmount = 552m,
+            DisplayOrder = 1
+        };
+
+        var credito = new CategoryBudget
+        {
+            Id = Guid.NewGuid(),
+            Name = "Credito",
+            GroupName = "Custos Fixos",
+            PlannedAmount = 75m,
+            DisplayOrder = 2
+        };
+
+        var comprasOnline = new CategoryBudget
+        {
+            Id = Guid.NewGuid(),
+            Name = "Compras online",
+            GroupName = "Prazeres",
+            PlannedAmount = 172m,
+            DisplayOrder = 3
+        };
+
+        var entries = new List<Entry>
+        {
+            new() { CategoryBudgetId = credito.Id, Amount = 384m },
+            new() { CategoryBudgetId = comprasOnline.Id, Amount = 305m }
+        };
+
+        var availableByGroup = MonthCalculations.ComputeAvailableBalanceByGroup(
+                [saving, credito, comprasOnline],
+                entries)
+            .ToDictionary(x => x.GroupName, x => x.RemainingAmount);
+
+        Assert.Equal(110m, availableByGroup["Liberdade Financeira"]);
+        Assert.Equal(0m, availableByGroup["Custos Fixos"]);
+        Assert.Equal(0m, availableByGroup["Prazeres"]);
     }
 
     [Fact]

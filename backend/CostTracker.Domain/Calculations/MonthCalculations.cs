@@ -107,6 +107,60 @@ public static class MonthCalculations
             .ToList();
     }
 
+    public static IReadOnlyList<CategoryAvailableBalanceComputation> ComputeAvailableBalanceByCategory(
+        IEnumerable<CategoryBudget> categories,
+        IEnumerable<Entry> entries)
+    {
+        var budgetLines = ComputeBudgetLines(categories, entries);
+        var remainingOverflow = budgetLines
+            .Where(line => line.Difference < 0)
+            .Sum(line => Math.Abs(line.Difference));
+
+        var adjustedByCategoryId = budgetLines.ToDictionary(
+            line => line.CategoryId,
+            line => Math.Max(0, line.Difference));
+
+        foreach (var line in budgetLines
+                     .Where(line => line.Difference > 0)
+                     .OrderByDescending(line => line.Difference)
+                     .ThenBy(line => line.DisplayOrder)
+                     .ThenBy(line => line.CategoryName))
+        {
+            if (remainingOverflow <= 0)
+            {
+                break;
+            }
+
+            var absorbed = Math.Min(adjustedByCategoryId[line.CategoryId], remainingOverflow);
+            adjustedByCategoryId[line.CategoryId] -= absorbed;
+            remainingOverflow -= absorbed;
+        }
+
+        return budgetLines
+            .OrderBy(line => line.DisplayOrder)
+            .ThenBy(line => line.CategoryName)
+            .Select(line => new CategoryAvailableBalanceComputation(
+                line.CategoryId,
+                line.CategoryName,
+                line.GroupName,
+                adjustedByCategoryId[line.CategoryId],
+                line.DisplayOrder))
+            .ToList();
+    }
+
+    public static IReadOnlyList<GroupRemainingComputation> ComputeAvailableBalanceByGroup(
+        IEnumerable<CategoryBudget> categories,
+        IEnumerable<Entry> entries)
+    {
+        return ComputeAvailableBalanceByCategory(categories, entries)
+            .GroupBy(x => GroupNames.Normalize(x.GroupName), StringComparer.OrdinalIgnoreCase)
+            .Select(group => new GroupRemainingComputation(
+                GroupNames.Normalize(group.Key),
+                group.Sum(x => x.RemainingAmount)))
+            .OrderBy(x => x.GroupName)
+            .ToList();
+    }
+
     public static string ResolveStatus(decimal difference)
     {
         if (Math.Abs(difference) <= 0.005m)
@@ -141,3 +195,10 @@ public sealed record GroupMetricComputation(
 public sealed record GroupRemainingComputation(
     string GroupName,
     decimal RemainingAmount);
+
+public sealed record CategoryAvailableBalanceComputation(
+    Guid CategoryId,
+    string CategoryName,
+    string GroupName,
+    decimal RemainingAmount,
+    int DisplayOrder);

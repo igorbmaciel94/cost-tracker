@@ -20,30 +20,31 @@ public sealed class InitialMonthSeedModel
             Currency = "EUR",
             Categories =
             [
-                new("Arrendamento", GroupNames.Essenciais, 335m, 1),
-                new("Agua", GroupNames.Essenciais, 29m, 2),
-                new("Luz", GroupNames.Essenciais, 100m, 3),
-                new("Internet", GroupNames.Essenciais, 106m, 4),
-                new("Mercado", GroupNames.Essenciais, 400m, 5),
-                new("Transporte", GroupNames.Essenciais, 0m, 6),
-                new("Lavanderia", GroupNames.Essenciais, 40m, 7),
-                new("Saude", GroupNames.Essenciais, 60m, 8),
-                new("Credito", GroupNames.Essenciais, 75m, 9),
-                new("Dividas", GroupNames.Essenciais, 511m, 10),
-                new("Lazer", GroupNames.Desejos, 315m, 11),
-                new("Compras online", GroupNames.Desejos, 315m, 12),
-                new("Viagem", GroupNames.Desejos, 138m, 13),
-                new("Assinaturas", GroupNames.Desejos, 60m, 14),
-                new("Saving", GroupNames.Saving, 276m, 15),
-                new("Investimento", GroupNames.Investimento, 0m, 16)
+                new("Arrendamento", GroupNames.CustosFixos, 335m, 1),
+                new("Agua", GroupNames.CustosFixos, 29m, 2),
+                new("Luz", GroupNames.CustosFixos, 100m, 3),
+                new("Internet", GroupNames.CustosFixos, 106m, 4),
+                new("Mercado", GroupNames.CustosFixos, 400m, 5),
+                new("Transporte", GroupNames.CustosFixos, 0m, 6),
+                new("Lavanderia", GroupNames.CustosFixos, 40m, 7),
+                new("Saude", GroupNames.CustosFixos, 60m, 8),
+                new("Credito", GroupNames.CustosFixos, 75m, 9),
+                new("Dividas", GroupNames.CustosFixos, 511m, 10),
+                new("Lazer", GroupNames.Prazeres, 315m, 11),
+                new("Compras online", GroupNames.Prazeres, 315m, 12),
+                new("Viagem", GroupNames.Prazeres, 138m, 13),
+                new("Assinaturas", GroupNames.Prazeres, 60m, 14),
+                new("Saving", GroupNames.LiberdadeFinanceira, 276m, 15),
+                new("Investimento", GroupNames.Conhecimento, 0m, 16)
             ],
             Targets =
             [
-                new(GroupNames.Essenciais, 0.6m),
-                new(GroupNames.Desejos, 0.3m),
-                new(GroupNames.Investimento, 0.0m),
-                new(GroupNames.Saving, 0.1m),
-                new(GroupNames.Buffer, 0.0m)
+                new(GroupNames.CustosFixos, 0.6m),
+                new(GroupNames.Prazeres, 0.3m),
+                new(GroupNames.Conhecimento, 0.0m),
+                new(GroupNames.LiberdadeFinanceira, 0.1m),
+                new(GroupNames.Metas, 0.0m),
+                new(GroupNames.Conforto, 0.0m)
             ],
             Entries =
             [

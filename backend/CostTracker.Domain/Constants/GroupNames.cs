@@ -2,33 +2,56 @@ namespace CostTracker.Domain.Constants;
 
 public static class GroupNames
 {
-    public const string Essenciais = "Essenciais";
-    public const string Desejos = "Desejos";
-    public const string Investimento = "Investimento";
-    public const string Saving = "Saving";
-    public const string Buffer = "Buffer";
+    public const string CustosFixos = "Custos Fixos";
+    public const string Prazeres = "Prazeres";
+    public const string Conhecimento = "Conhecimento";
+    public const string LiberdadeFinanceira = "Liberdade Financeira";
+    public const string Metas = "Metas";
+    public const string Conforto = "Conforto";
 
     public static readonly string[] All =
     [
-        Essenciais,
-        Desejos,
-        Investimento,
-        Saving,
-        Buffer
+        CustosFixos,
+        Prazeres,
+        Conhecimento,
+        LiberdadeFinanceira,
+        Metas,
+        Conforto
     ];
 
     public static string Normalize(string? value)
     {
         var normalized = value?.Trim() ?? string.Empty;
 
-        if (string.Equals(normalized, "Estudos", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(normalized, "Essenciais", StringComparison.OrdinalIgnoreCase))
         {
-            return Investimento;
+            return CustosFixos;
         }
 
-        if (string.Equals(normalized, "Investimentos", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(normalized, "Desejos", StringComparison.OrdinalIgnoreCase))
         {
-            return Saving;
+            return Prazeres;
+        }
+
+        if (string.Equals(normalized, "Investimento", StringComparison.OrdinalIgnoreCase))
+        {
+            return Conhecimento;
+        }
+
+        if (string.Equals(normalized, "Estudos", StringComparison.OrdinalIgnoreCase))
+        {
+            return Conhecimento;
+        }
+
+        if (string.Equals(normalized, "Saving", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(normalized, "Investimentos", StringComparison.OrdinalIgnoreCase))
+        {
+            return LiberdadeFinanceira;
+        }
+
+        if (string.Equals(normalized, "Buffer", StringComparison.OrdinalIgnoreCase))
+        {
+            return Metas;
         }
 
         var canonical = All.FirstOrDefault(groupName =>

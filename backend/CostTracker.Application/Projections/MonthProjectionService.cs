@@ -97,16 +97,17 @@ public class MonthProjectionService
     public DashboardDto ToDashboard(Month month)
     {
         var budget = MonthCalculations.ComputeBudgetLines(month.CategoryBudgets, month.Entries);
+        var availableBalances = MonthCalculations.ComputeAvailableBalanceByCategory(month.CategoryBudgets, month.Entries);
         var plannedTotal = budget.Sum(x => x.Planned);
         var spentTotal = budget.Sum(x => x.Spent);
 
-        var categoryChart = budget
-            .Where(line => line.Difference > 0)
-            .Select(line => new DashboardCategoryPointDto(line.CategoryName, line.Difference))
+        var categoryChart = availableBalances
+            .Where(line => line.RemainingAmount > 0)
+            .Select(line => new DashboardCategoryPointDto(line.CategoryName, line.RemainingAmount))
             .ToList();
 
         var groupPie = MonthCalculations
-            .ComputeRemainingByGroup(month.CategoryBudgets, month.Entries)
+            .ComputeAvailableBalanceByGroup(month.CategoryBudgets, month.Entries)
             .Where(group => group.RemainingAmount > 0)
             .Select(group => new DashboardGroupPointDto(group.GroupName, group.RemainingAmount))
             .ToList();

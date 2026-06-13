@@ -82,6 +82,8 @@ internal static class AnalysisPromptBuilder
         - projected savings rate (ONGOING) = (salario − run-rate total ou média histórica) / salario, % with one decimal — state the method used
         - € values: round to whole Euros unless precision is meaningful
         - Cite specific numbers from the data (categories, percentages, deviations); never generalize without evidence in the snapshot or `historico`
+        - Use saldosDisponiveisAjustados when discussing available balance. This field subtracts category budget overflows from the categories with the largest remaining balances.
+        - Use excessosOrcamento to call out categories that exceeded their budget and by how much.
         """;
 
     public static string BuildUser(AnalysisInput input)
@@ -104,6 +106,18 @@ internal static class AnalysisPromptBuilder
                     gasto = c.Spent,
                     diferenca = c.Difference,
                 }),
+                excessosOrcamento = input.CurrentMonth.CategoryOverflows.Select(c => new
+                {
+                    nome = c.Name,
+                    grupo = c.GroupName,
+                    excesso = c.Amount,
+                }),
+                saldosDisponiveisAjustados = input.CurrentMonth.AvailableBalances.Select(c => new
+                {
+                    nome = c.Name,
+                    grupo = c.GroupName,
+                    saldoDisponivel = c.Remaining,
+                }),
                 metasPorGrupo = input.CurrentMonth.GroupTargets.Select(g => new
                 {
                     grupo = g.GroupName,
@@ -125,6 +139,12 @@ internal static class AnalysisPromptBuilder
                     grupo = c.GroupName,
                     previsto = c.Planned,
                     gasto = c.Spent,
+                }),
+                excessosOrcamento = m.CategoryOverflows.Select(c => new
+                {
+                    nome = c.Name,
+                    grupo = c.GroupName,
+                    excesso = c.Amount,
                 }),
             }),
         }, JsonOpts);

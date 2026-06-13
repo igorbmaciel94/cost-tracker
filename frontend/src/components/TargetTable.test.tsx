@@ -9,7 +9,7 @@ const targets: TargetsResponseDto = {
   referenceMonth: '2026-03',
   items: [
     {
-      groupName: 'Essenciais',
+      groupName: 'Custos Fixos',
       targetPercent: 0.6,
       currentPlannedPercent: 0.55,
       currentSpentPercent: 0.5,
@@ -19,7 +19,7 @@ const targets: TargetsResponseDto = {
       spentStatus: 'Abaixo'
     },
     {
-      groupName: 'Buffer',
+      groupName: 'Metas',
       targetPercent: 0,
       currentPlannedPercent: 0,
       currentSpentPercent: 0,
@@ -38,20 +38,20 @@ describe('TargetTable', () => {
 
     render(<TargetTable targets={targets} readOnly={false} onSave={onSave} />);
 
-    const [bufferInput, essenciaisInput] = screen.getAllByRole('spinbutton');
-    await user.clear(essenciaisInput);
-    await user.type(essenciaisInput, '75');
+    const [custosInput, metasInput] = screen.getAllByRole('spinbutton');
+    await user.clear(custosInput);
+    await user.type(custosInput, '75');
 
-    await user.clear(bufferInput);
-    await user.type(bufferInput, '120');
+    await user.clear(metasInput);
+    await user.type(metasInput, '120');
 
     await user.click(screen.getByRole('button', { name: /salvar metas/i }));
 
     await waitFor(() => {
       expect(onSave).toHaveBeenCalledWith({
         items: [
-          { groupName: 'Essenciais', targetPercent: 0.75 },
-          { groupName: 'Buffer', targetPercent: 1 }
+          { groupName: 'Custos Fixos', targetPercent: 0.75 },
+          { groupName: 'Metas', targetPercent: 1 }
         ]
       });
     });
