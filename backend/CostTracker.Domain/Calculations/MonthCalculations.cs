@@ -5,6 +5,13 @@ namespace CostTracker.Domain.Calculations;
 
 public static class MonthCalculations
 {
+    private static readonly string[] OverflowAbsorptionCategoryPriority =
+    [
+        CategoryNames.Lazer,
+        CategoryNames.ComprasOnline,
+        CategoryNames.Saving
+    ];
+
     public static IReadOnlyList<BudgetLineComputation> ComputeBudgetLines(
         IEnumerable<CategoryBudget> categories,
         IEnumerable<Entry> entries)
@@ -120,11 +127,7 @@ public static class MonthCalculations
             line => line.CategoryId,
             line => Math.Max(0, line.Difference));
 
-        foreach (var line in budgetLines
-                     .Where(line => line.Difference > 0)
-                     .OrderByDescending(line => line.Difference)
-                     .ThenBy(line => line.DisplayOrder)
-                     .ThenBy(line => line.CategoryName))
+        foreach (var line in GetOverflowAbsorptionCandidates(budgetLines))
         {
             if (remainingOverflow <= 0)
             {
@@ -146,6 +149,21 @@ public static class MonthCalculations
                 adjustedByCategoryId[line.CategoryId],
                 line.DisplayOrder))
             .ToList();
+    }
+
+    private static IEnumerable<BudgetLineComputation> GetOverflowAbsorptionCandidates(
+        IReadOnlyList<BudgetLineComputation> budgetLines)
+    {
+        return OverflowAbsorptionCategoryPriority.SelectMany(categoryName =>
+            budgetLines
+                .Where(line =>
+                    line.Difference > 0 &&
+                    string.Equals(
+                        CategoryNames.Normalize(line.CategoryName),
+                        categoryName,
+                        StringComparison.OrdinalIgnoreCase))
+                .OrderBy(line => line.DisplayOrder)
+                .ThenBy(line => line.CategoryName));
     }
 
     public static IReadOnlyList<GroupRemainingComputation> ComputeAvailableBalanceByGroup(

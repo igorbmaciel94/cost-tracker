@@ -120,7 +120,7 @@ public class MonthCalculationsTests
     }
 
     [Fact]
-    public void ComputeAvailableBalanceByCategory_ShouldSubtractOverflowsFromLargestRemainingBalances()
+    public void ComputeAvailableBalanceByCategory_ShouldSubtractOverflowsFromLazerBeforeComprasOnlineAndSaving()
     {
         var saving = new CategoryBudget
         {
@@ -140,13 +140,22 @@ public class MonthCalculationsTests
             DisplayOrder = 2
         };
 
+        var lazer = new CategoryBudget
+        {
+            Id = Guid.NewGuid(),
+            Name = "Lazer",
+            GroupName = "Prazeres",
+            PlannedAmount = 315m,
+            DisplayOrder = 3
+        };
+
         var comprasOnline = new CategoryBudget
         {
             Id = Guid.NewGuid(),
             Name = "Compras online",
             GroupName = "Prazeres",
             PlannedAmount = 172m,
-            DisplayOrder = 3
+            DisplayOrder = 4
         };
 
         var mercado = new CategoryBudget
@@ -155,25 +164,91 @@ public class MonthCalculationsTests
             Name = "Mercado",
             GroupName = "Custos Fixos",
             PlannedAmount = 100m,
-            DisplayOrder = 4
+            DisplayOrder = 5
         };
 
         var entries = new List<Entry>
         {
-            new() { CategoryBudgetId = credito.Id, Amount = 384m },
-            new() { CategoryBudgetId = comprasOnline.Id, Amount = 305m }
+            new() { CategoryBudgetId = credito.Id, Amount = 425m }
         };
 
         var available = MonthCalculations.ComputeAvailableBalanceByCategory(
-                [saving, credito, comprasOnline, mercado],
+                [saving, credito, lazer, comprasOnline, mercado],
                 entries)
             .ToDictionary(x => x.CategoryName, x => x.RemainingAmount);
 
-        Assert.Equal(110m, available["Saving"]);
+        Assert.Equal(552m, available["Saving"]);
         Assert.Equal(0m, available["Credito"]);
+        Assert.Equal(0m, available["Lazer"]);
+        Assert.Equal(137m, available["Compras online"]);
+        Assert.Equal(100m, available["Mercado"]);
+        Assert.Equal(789m, available.Values.Sum());
+    }
+
+    [Fact]
+    public void ComputeAvailableBalanceByCategory_ShouldUseSavingOnlyAfterLazerAndComprasOnlineReachZero()
+    {
+        var saving = new CategoryBudget
+        {
+            Id = Guid.NewGuid(),
+            Name = "Saving",
+            GroupName = "Liberdade Financeira",
+            PlannedAmount = 552m,
+            DisplayOrder = 1
+        };
+
+        var credito = new CategoryBudget
+        {
+            Id = Guid.NewGuid(),
+            Name = "Credito",
+            GroupName = "Custos Fixos",
+            PlannedAmount = 75m,
+            DisplayOrder = 2
+        };
+
+        var lazer = new CategoryBudget
+        {
+            Id = Guid.NewGuid(),
+            Name = "Lazer",
+            GroupName = "Prazeres",
+            PlannedAmount = 315m,
+            DisplayOrder = 3
+        };
+
+        var comprasOnline = new CategoryBudget
+        {
+            Id = Guid.NewGuid(),
+            Name = "Compras online",
+            GroupName = "Prazeres",
+            PlannedAmount = 172m,
+            DisplayOrder = 4
+        };
+
+        var mercado = new CategoryBudget
+        {
+            Id = Guid.NewGuid(),
+            Name = "Mercado",
+            GroupName = "Custos Fixos",
+            PlannedAmount = 100m,
+            DisplayOrder = 5
+        };
+
+        var entries = new List<Entry>
+        {
+            new() { CategoryBudgetId = credito.Id, Amount = 650m }
+        };
+
+        var available = MonthCalculations.ComputeAvailableBalanceByCategory(
+                [saving, credito, lazer, comprasOnline, mercado],
+                entries)
+            .ToDictionary(x => x.CategoryName, x => x.RemainingAmount);
+
+        Assert.Equal(464m, available["Saving"]);
+        Assert.Equal(0m, available["Credito"]);
+        Assert.Equal(0m, available["Lazer"]);
         Assert.Equal(0m, available["Compras online"]);
         Assert.Equal(100m, available["Mercado"]);
-        Assert.Equal(210m, available.Values.Sum());
+        Assert.Equal(564m, available.Values.Sum());
     }
 
     [Fact]

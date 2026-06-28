@@ -82,7 +82,7 @@ internal static class AnalysisPromptBuilder
         - projected savings rate (ONGOING) = (salario − run-rate total ou média histórica) / salario, % with one decimal — state the method used
         - € values: round to whole Euros unless precision is meaningful
         - Cite specific numbers from the data (categories, percentages, deviations); never generalize without evidence in the snapshot or `historico`
-        - Use saldosDisponiveisAjustados when discussing available balance. This field subtracts category budget overflows from the categories with the largest remaining balances.
+        - Use saldosDisponiveisAjustados when discussing available balance. This field subtracts category budget overflows from Lazer first, then Compras online, then Saving.
         - Use excessosOrcamento to call out categories that exceeded their budget and by how much.
         """;
 
