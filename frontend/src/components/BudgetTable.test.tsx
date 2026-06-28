@@ -1,7 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { BudgetResponseDto } from '../api/types';
+import { PrivacyProvider } from '../contexts/PrivacyContext';
 import { BudgetTable } from './BudgetTable';
 
 const budget: BudgetResponseDto = {
@@ -25,6 +26,28 @@ const budget: BudgetResponseDto = {
 };
 
 describe('BudgetTable', () => {
+  beforeEach(() => {
+    const store: Record<string, string> = {};
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => store[key] ?? null,
+      setItem: (key: string, value: string) => {
+        store[key] = value;
+      },
+      removeItem: (key: string) => {
+        delete store[key];
+      },
+      clear: () => {
+        Object.keys(store).forEach((key) => {
+          delete store[key];
+        });
+      }
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('renders sortable headers', () => {
     render(
       <BudgetTable
@@ -74,5 +97,27 @@ describe('BudgetTable', () => {
         displayOrder: 1
       });
     });
+  });
+
+  it('masks planned line amounts when privacy mode is enabled', () => {
+    localStorage.setItem('privacy-mode', '1');
+
+    render(
+      <PrivacyProvider>
+        <BudgetTable
+          budget={budget}
+          readOnly={false}
+          onUpdateSalary={async () => {}}
+          onCreateCategory={async () => {}}
+          onUpdateCategory={async () => {}}
+          onDeleteCategory={async () => {}}
+        />
+      </PrivacyProvider>
+    );
+
+    expect(screen.queryByText(/600,00/)).not.toBeInTheDocument();
+    expect(screen.getAllByText('***').length).toBeGreaterThan(0);
+
+    localStorage.removeItem('privacy-mode');
   });
 });

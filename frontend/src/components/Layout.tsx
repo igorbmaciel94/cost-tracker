@@ -274,8 +274,8 @@ export function Layout({
         <NavLink to="/"><IconDashboard /><span>Dashboard</span></NavLink>
         <NavLink to="/orcamento"><IconBudget /><span>Orçamento</span></NavLink>
         <NavLink to="/lancamentos"><IconEntries /><span>Lançamentos</span></NavLink>
-        <NavLink to="/metas"><IconGoals /><span>Metas</span></NavLink>
         <NavLink to="/planejamento"><IconPlanning /><span>Planejamento</span></NavLink>
+        <NavLink to="/metas"><IconGoals /><span>Metas</span></NavLink>
         <NavLink to="/saude-financeira"><IconHealth /><span>Saúde</span></NavLink>
         <NavLink to="/historico"><IconHistory /><span>Histórico</span></NavLink>
       </nav>

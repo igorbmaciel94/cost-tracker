@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { TargetsResponseDto } from '../api/types';
@@ -32,26 +32,29 @@ const targets: TargetsResponseDto = {
 };
 
 describe('TargetTable', () => {
-  it('edits target percentages as 0 to 100 and persists fractions', async () => {
+  it('enables saving only when target percentages total 100 and persists fractions', async () => {
     const user = userEvent.setup();
     const onSave = vi.fn(async () => {});
 
     render(<TargetTable targets={targets} readOnly={false} onSave={onSave} />);
 
-    const [custosInput, metasInput] = screen.getAllByRole('spinbutton');
-    await user.clear(custosInput);
-    await user.type(custosInput, '75');
+    const saveButton = screen.getByRole('button', { name: /salvar planejamento/i });
+    expect(saveButton).toBeDisabled();
 
-    await user.clear(metasInput);
-    await user.type(metasInput, '120');
+    const [custosSlider, metasSlider] = screen.getAllByRole('slider');
+    fireEvent.change(custosSlider, { target: { value: '75' } });
+    fireEvent.change(metasSlider, { target: { value: '25' } });
 
-    await user.click(screen.getByRole('button', { name: /salvar metas/i }));
+    expect(screen.getByText(/Total: 100%/i)).toBeInTheDocument();
+    expect(saveButton).toBeEnabled();
+
+    await user.click(saveButton);
 
     await waitFor(() => {
       expect(onSave).toHaveBeenCalledWith({
         items: [
           { groupName: 'Custos Fixos', targetPercent: 0.75 },
-          { groupName: 'Metas', targetPercent: 1 }
+          { groupName: 'Metas', targetPercent: 0.25 }
         ]
       });
     });

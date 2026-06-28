@@ -328,7 +328,7 @@ export function BudgetTable({
                       }
                     />
                   ) : (
-                    formatCurrency(line.planned)
+                    <PrivacyMask value={formatCurrency(line.planned)} />
                   )}
                 </td>
                 <td><PrivacyMask value={formatCurrency(line.spent)} /></td>

@@ -4,18 +4,6 @@ import { api } from '../api/client';
 import { formatCurrency, formatPercent } from '../utils/format';
 import { PrivacyMask } from '../contexts/PrivacyContext';
 
-const RATES = [
-  { label: 'Conta remunerada (~2% a.a.)', monthly: 0.02 / 12 },
-  { label: 'Depósito a prazo (~3.5% a.a.)', monthly: 0.035 / 12 },
-  { label: 'ETF obrigações (~4.5% a.a.)', monthly: 0.045 / 12 },
-  { label: 'ETF ações globais (~7% a.a.)', monthly: 0.07 / 12 },
-];
-
-function compoundFV(monthly: number, rate: number, months: number): number {
-  if (rate === 0) return monthly * months;
-  return monthly * ((Math.pow(1 + rate, months) - 1) / rate);
-}
-
 function ProgressBar({ value, max }: { value: number; max: number }) {
   const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
   const color = pct >= 100 ? '#0f766e' : pct >= 50 ? '#f59e0b' : '#ef4444';
@@ -32,9 +20,6 @@ export function SaudeFinanceiraPage({ monthId, salary }: { monthId: string | nul
   const [saved, setSaved] = useState('');
   const [committedEssentials, setCommittedEssentials] = useState(0);
   const [committedSaved, setCommittedSaved] = useState(0);
-  const [monthlyInvest, setMonthlyInvest] = useState('');
-  const [committedMonthly, setCommittedMonthly] = useState(0);
-  const [rateIndex, setRateIndex] = useState(1);
   const [profileLoaded, setProfileLoaded] = useState(false);
 
   const profileQuery = useQuery({
@@ -61,21 +46,13 @@ export function SaudeFinanceiraPage({ monthId, salary }: { monthId: string | nul
     let ess = profile.essentialExpenses;
     if (ess === 0) ess = targetPct('Custos Fixos');
 
-    let sav = profile.savedEmergencyFund;
-    if (sav === 0) sav = targetPct('Liberdade Financeira');
-
-    let inv = targetPct('Conhecimento');
-
     const round2 = (n: number) => Math.round(n * 100) / 100;
-    setEssentials(ess > 0 ? String(round2(ess)) : '');
-    setSaved(sav > 0 ? String(round2(sav)) : '');
-    setCommittedEssentials(round2(ess));
-    setCommittedSaved(round2(sav));
+    const savedFund = round2(profile.savedEmergencyFund);
 
-    if (inv > 0) {
-      setMonthlyInvest(String(round2(inv)));
-      setCommittedMonthly(round2(inv));
-    }
+    setEssentials(ess > 0 ? String(round2(ess)) : '');
+    setSaved(savedFund > 0 ? String(savedFund) : '');
+    setCommittedEssentials(round2(ess));
+    setCommittedSaved(savedFund);
 
     setProfileLoaded(true);
   }, [profileQuery.data, targetsQuery.data, profileLoaded, salary, monthId]);
@@ -95,19 +72,11 @@ export function SaudeFinanceiraPage({ monthId, salary }: { monthId: string | nul
 
   const essentialsVal = committedEssentials;
   const savedVal = committedSaved;
-  const monthlyVal = committedMonthly;
-  const rate = RATES[rateIndex].monthly;
 
   const targets = [
     { label: '3 meses (mínimo)', months: 3 },
     { label: '6 meses (recomendado)', months: 6 },
     { label: '12 meses (ideal)', months: 12 },
-  ];
-
-  const projections = [
-    { label: '1 ano', months: 12 },
-    { label: '2 anos', months: 24 },
-    { label: '5 anos', months: 60 },
   ];
 
   return (
@@ -170,7 +139,7 @@ export function SaudeFinanceiraPage({ monthId, salary }: { monthId: string | nul
                     <tr key={months}>
                       <td>{label}</td>
                       <td><PrivacyMask value={formatCurrency(target)} /></td>
-                      <td><PrivacyMask value={formatCurrency(Math.min(savedVal, target))} /></td>
+                      <td><PrivacyMask value={formatCurrency(savedVal)} /></td>
                       <td className={gap > 0 ? 'negative' : ''}>
                         <PrivacyMask value={gap > 0 ? formatCurrency(gap) : '✓ Atingido'} />
                       </td>
@@ -187,123 +156,6 @@ export function SaudeFinanceiraPage({ monthId, salary }: { monthId: string | nul
         ) : (
           <p style={{ color: 'var(--text-secondary)' }}>
             Informe seus gastos essenciais mensais para calcular o colchão ideal.
-          </p>
-        )}
-      </section>
-
-      {/* Simulador de Investimento */}
-      <section className="panel">
-        <header className="panel-header">
-          <h2>Simulador de investimento</h2>
-        </header>
-
-        <div className="inline-form" style={{ marginBottom: '1.5rem' }}>
-          <label htmlFor="monthly-invest">Aporte mensal (€)</label>
-          <input
-            id="monthly-invest"
-            type="number"
-            step="0.01"
-            placeholder="Ex: 500"
-            value={monthlyInvest}
-            onChange={(e) => setMonthlyInvest(e.target.value)}
-            style={{ maxWidth: 160 }}
-          />
-          <label htmlFor="rate-select">Produto</label>
-          <select
-            id="rate-select"
-            value={rateIndex}
-            onChange={(e) => setRateIndex(Number(e.target.value))}
-          >
-            {RATES.map((r, i) => (
-              <option key={r.label} value={i}>{r.label}</option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={() => setCommittedMonthly(Number(monthlyInvest.replace(',', '.')) || 0)}
-          >
-            Simular
-          </button>
-        </div>
-
-        {monthlyVal > 0 ? (
-          <div className="table-scroll">
-            <table className="data-table health-table">
-              <thead>
-                <tr>
-                  <th>Período</th>
-                  <th>Total investido</th>
-                  <th>Saldo estimado</th>
-                  <th>Rendimento</th>
-                </tr>
-              </thead>
-              <tbody>
-                {projections.map(({ label, months }) => {
-                  const invested = monthlyVal * months;
-                  const fv = compoundFV(monthlyVal, rate, months);
-                  const gain = fv - invested;
-                  return (
-                    <tr key={months}>
-                      <td>{label}</td>
-                      <td><PrivacyMask value={formatCurrency(invested)} /></td>
-                      <td><PrivacyMask value={formatCurrency(fv)} /></td>
-                      <td style={{ color: '#0f766e' }}>
-                        <PrivacyMask value={`+${formatCurrency(gain)}`} />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p style={{ color: 'var(--text-secondary)' }}>
-            Informe o aporte mensal para ver a projeção de crescimento.
-          </p>
-        )}
-      </section>
-
-      {/* Simulador de ETFs/Ações */}
-      <section className="panel">
-        <header className="panel-header">
-          <h2>Estimativa ETFs / ações</h2>
-        </header>
-
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '1rem' }}>
-          ⚠️ Valores estimados com base em históricos. Renda variável não garante retorno. Use como referência educativa.
-        </p>
-
-        {monthlyVal > 0 ? (
-          <div className="table-scroll">
-            <table className="data-table health-table health-table-wide">
-              <thead>
-                <tr>
-                  <th>Período</th>
-                  <th>Total investido</th>
-                  <th>Cenário conservador <small>(~5% a.a.)</small></th>
-                  <th>Cenário otimista <small>(~10% a.a.)</small></th>
-                </tr>
-              </thead>
-              <tbody>
-                {projections.map(({ label, months }) => {
-                  const invested = monthlyVal * months;
-                  const conservative = compoundFV(monthlyVal, 0.05 / 12, months);
-                  const optimistic = compoundFV(monthlyVal, 0.10 / 12, months);
-                  return (
-                    <tr key={months}>
-                      <td>{label}</td>
-                      <td><PrivacyMask value={formatCurrency(invested)} /></td>
-                      <td><PrivacyMask value={formatCurrency(conservative)} /></td>
-                      <td><PrivacyMask value={formatCurrency(optimistic)} /></td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p style={{ color: 'var(--text-secondary)' }}>
-            Informe o aporte mensal no simulador acima para ver as estimativas de renda variável.
           </p>
         )}
       </section>

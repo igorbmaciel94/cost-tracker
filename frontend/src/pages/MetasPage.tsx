@@ -26,15 +26,15 @@ export function MetasPage({ monthId, readOnly }: MetasPageProps) {
   });
 
   if (!monthId) {
-    return <p>Selecione um mês para gerenciar metas.</p>;
+    return <p>Selecione um mês para gerenciar planejamento.</p>;
   }
 
   if (targetsQuery.isLoading) {
-    return <p>Carregando metas...</p>;
+    return <p>Carregando planejamento...</p>;
   }
 
   if (targetsQuery.isError || !targetsQuery.data) {
-    return <p>Falha ao carregar metas.</p>;
+    return <p>Falha ao carregar planejamento.</p>;
   }
 
   return (

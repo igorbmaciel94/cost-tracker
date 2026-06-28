@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import type { TargetGroupDto, TargetsResponseDto, UpdateTargetsRequest } from '../api/types';
-import { formatPercent } from '../utils/format';
-import { applyDirection, compareNumbers, compareStrings, sortIndicator, toggleSort, type SortState } from '../utils/sorting';
+import { CANONICAL_GROUP_NAMES } from '../constants/groups';
 
 interface TargetTableProps {
   targets: TargetsResponseDto;
@@ -9,29 +8,64 @@ interface TargetTableProps {
   onSave: (request: UpdateTargetsRequest) => Promise<void>;
 }
 
-type TargetSortKey =
-  | 'groupName'
-  | 'targetPercent'
-  | 'currentPlannedPercent'
-  | 'plannedStatus'
-  | 'currentSpentPercent'
-  | 'spentStatus';
-
-const initialSortState: SortState<TargetSortKey> = {
-  key: 'groupName',
-  direction: 'asc'
+const groupColors: Record<string, string> = {
+  'Custos Fixos': '#38bdf8',
+  Conforto: '#5eead4',
+  Metas: '#facc15',
+  Prazeres: '#e879f9',
+  'Liberdade Financeira': '#60a5fa',
+  Conhecimento: '#fb923c'
 };
 
 function toDraftMap(items: TargetGroupDto[]): Record<string, number> {
   return items.reduce<Record<string, number>>((acc, item) => {
-    acc[item.groupName] = Number((item.targetPercent * 100).toFixed(2));
+    acc[item.groupName] = clampPercent(Number((item.targetPercent * 100).toFixed(0)));
     return acc;
   }, {});
 }
 
+function clampPercent(value: number) {
+  if (!Number.isFinite(value)) return 0;
+  return Math.min(100, Math.max(0, Math.round(value)));
+}
+
+function formatPercentValue(value: number) {
+  return `${value.toLocaleString('pt-PT', { maximumFractionDigits: 0 })}%`;
+}
+
+function getGroupColor(groupName: string, index: number) {
+  return groupColors[groupName] ?? `hsl(${(index * 57) % 360} 82% 64%)`;
+}
+
+function getGroupOrder(groupName: string) {
+  const index = CANONICAL_GROUP_NAMES.findIndex((name) => name === groupName);
+  return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+}
+
+function buildDonutGradient(items: TargetGroupDto[], draft: Record<string, number>) {
+  const total = items.reduce((sum, item) => sum + (draft[item.groupName] ?? 0), 0);
+  const denominator = Math.max(100, total);
+  let cursor = 0;
+  const segments = items.flatMap((item, index) => {
+    const value = draft[item.groupName] ?? 0;
+    if (value <= 0) return [];
+
+    const start = (cursor / denominator) * 100;
+    cursor += value;
+    const end = (cursor / denominator) * 100;
+    return `${getGroupColor(item.groupName, index)} ${start}% ${end}%`;
+  });
+
+  if (cursor < 100) {
+    segments.push(`var(--border) ${(cursor / denominator) * 100}% 100%`);
+  }
+
+  return `conic-gradient(${segments.length > 0 ? segments.join(', ') : 'var(--border) 0 100%'})`;
+}
+
 export function TargetTable({ targets, readOnly, onSave }: TargetTableProps) {
   const [draft, setDraft] = useState<Record<string, number>>(toDraftMap(targets.items));
-  const [sortState, setSortState] = useState<SortState<TargetSortKey>>(initialSortState);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     setDraft(toDraftMap(targets.items));
@@ -41,128 +75,121 @@ export function TargetTable({ targets, readOnly, onSave }: TargetTableProps) {
     const items = [...targets.items];
 
     items.sort((left, right) => {
-      let comparison = 0;
-
-      switch (sortState.key) {
-        case 'groupName':
-          comparison = compareStrings(left.groupName, right.groupName);
-          break;
-        case 'targetPercent':
-          comparison = compareNumbers(left.targetPercent, right.targetPercent);
-          break;
-        case 'currentPlannedPercent':
-          comparison = compareNumbers(left.currentPlannedPercent, right.currentPlannedPercent);
-          break;
-        case 'plannedStatus':
-          comparison = compareStrings(left.plannedStatus, right.plannedStatus);
-          break;
-        case 'currentSpentPercent':
-          comparison = compareNumbers(left.currentSpentPercent, right.currentSpentPercent);
-          break;
-        case 'spentStatus':
-          comparison = compareStrings(left.spentStatus, right.spentStatus);
-          break;
+      const orderComparison = getGroupOrder(left.groupName) - getGroupOrder(right.groupName);
+      if (orderComparison !== 0) {
+        return orderComparison;
       }
 
-      if (comparison === 0) {
-        return compareStrings(left.groupName, right.groupName);
-      }
-
-      return applyDirection(comparison, sortState.direction);
+      return left.groupName.localeCompare(right.groupName, 'pt-PT');
     });
 
     return items;
-  }, [targets.items, sortState]);
+  }, [targets.items]);
 
-  function sortBy(key: TargetSortKey) {
-    setSortState((current) => toggleSort(current, key));
+  const totalPercent = sortedItems.reduce((sum, item) => sum + (draft[item.groupName] ?? 0), 0);
+  const isBalanced = totalPercent === 100;
+  const totalDelta = 100 - totalPercent;
+  const donutGradient = buildDonutGradient(sortedItems, draft);
+  const canSave = !readOnly && isBalanced && !isSaving;
+
+  async function saveTargets() {
+    if (!canSave) return;
+
+    setIsSaving(true);
+    try {
+      await onSave({
+        items: sortedItems.map((item) => ({
+          groupName: item.groupName,
+          targetPercent: Number(((draft[item.groupName] ?? 0) / 100).toFixed(4))
+        }))
+      });
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
     <section className="panel">
       <header className="panel-header">
-        <h2>Metas por grupo ({targets.referenceMonth})</h2>
+        <h2>Planejamento mensal por grupo ({targets.referenceMonth})</h2>
         <button
           type="button"
-          disabled={readOnly}
-          onClick={async () => {
-            await onSave({
-              items: Object.entries(draft).map(([groupName, targetPercent]) => ({
-                groupName,
-                targetPercent: Number((targetPercent / 100).toFixed(4))
-              }))
-            });
-          }}
+          disabled={!canSave}
+          onClick={() => { void saveTargets(); }}
         >
-          Salvar metas
+          {isSaving ? 'Salvando...' : 'Salvar planejamento'}
         </button>
       </header>
 
-      <div className="table-scroll">
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>
-              <button type="button" className="sort-header" onClick={() => sortBy('groupName')}>
-                Grupo <span>{sortIndicator(sortState, 'groupName')}</span>
-              </button>
-            </th>
-            <th>
-              <button type="button" className="sort-header" onClick={() => sortBy('targetPercent')}>
-                % alvo <span>{sortIndicator(sortState, 'targetPercent')}</span>
-              </button>
-            </th>
-            <th>
-              <button type="button" className="sort-header" onClick={() => sortBy('currentPlannedPercent')}>
-                % atual (previsto) <span>{sortIndicator(sortState, 'currentPlannedPercent')}</span>
-              </button>
-            </th>
-            <th>
-              <button type="button" className="sort-header" onClick={() => sortBy('plannedStatus')}>
-                Status previsto <span>{sortIndicator(sortState, 'plannedStatus')}</span>
-              </button>
-            </th>
-            <th>
-              <button type="button" className="sort-header" onClick={() => sortBy('currentSpentPercent')}>
-                % atual (gasto) <span>{sortIndicator(sortState, 'currentSpentPercent')}</span>
-              </button>
-            </th>
-            <th>
-              <button type="button" className="sort-header" onClick={() => sortBy('spentStatus')}>
-                Status gasto <span>{sortIndicator(sortState, 'spentStatus')}</span>
-              </button>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {sortedItems.map((item) => (
-            <tr key={item.groupName}>
-              <td>{item.groupName}</td>
-              <td>
+      <div className="target-total-banner" data-balanced={isBalanced}>
+        <strong>Total: {formatPercentValue(totalPercent)}</strong>
+        <span>
+          {isBalanced
+            ? 'Distribuição fechada em 100%.'
+            : totalDelta > 0
+              ? `Ainda faltam ${formatPercentValue(totalDelta)} para liberar o salvamento.`
+              : `Reduza ${formatPercentValue(Math.abs(totalDelta))} para liberar o salvamento.`}
+        </span>
+      </div>
+
+      <div className="target-planner">
+        <aside className="target-summary" aria-label="Resumo do planejamento">
+          <div className="target-donut" style={{ background: donutGradient }} aria-hidden="true" />
+          <div className="target-legend">
+            {sortedItems.map((item, index) => {
+              const percent = draft[item.groupName] ?? 0;
+              const color = getGroupColor(item.groupName, index);
+              return (
+                <div className="target-legend-item" key={item.groupName}>
+                  <span className="target-legend-dot" style={{ background: color }} />
+                  <span>{item.groupName}</span>
+                  <strong>{formatPercentValue(percent)}</strong>
+                </div>
+              );
+            })}
+          </div>
+        </aside>
+
+        <div className="target-slider-list">
+          {sortedItems.map((item, index) => {
+            const percent = draft[item.groupName] ?? 0;
+            const color = getGroupColor(item.groupName, index);
+            const sliderStyle = {
+              '--target-color': color,
+              '--target-progress': `${percent}%`
+            } as CSSProperties;
+
+            return (
+              <label className="target-slider-row" key={item.groupName}>
+                <span className="target-slider-header">
+                  <span>{item.groupName}</span>
+                  <strong>{formatPercentValue(percent)}</strong>
+                </span>
                 <input
-                  type="number"
+                  className="target-slider"
+                  type="range"
                   min={0}
                   max={100}
-                  step={0.1}
+                  step={1}
                   disabled={readOnly}
-                  value={draft[item.groupName] ?? Number((item.targetPercent * 100).toFixed(2))}
+                  value={percent}
+                  style={sliderStyle}
                   onChange={(event) => {
-                    const parsed = Number(event.target.value);
+                    const parsed = clampPercent(Number(event.target.value));
                     setDraft((current) => ({
                       ...current,
-                      [item.groupName]: Number.isNaN(parsed) ? 0 : Math.min(100, Math.max(0, parsed))
+                      [item.groupName]: parsed
                     }));
                   }}
                 />
-              </td>
-              <td>{formatPercent(item.currentPlannedPercent)}</td>
-              <td>{item.plannedStatus}</td>
-              <td>{formatPercent(item.currentSpentPercent)}</td>
-              <td>{item.spentStatus}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                <span className="target-slider-scale" aria-hidden="true">
+                  <span>0%</span>
+                  <span>100%</span>
+                </span>
+              </label>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
