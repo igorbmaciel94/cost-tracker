@@ -6,9 +6,11 @@ import type { UpdateTargetsRequest } from '../api/types';
 interface MetasPageProps {
   monthId: string | null;
   readOnly: boolean;
+  plannedTotal: number;
+  spentTotal: number;
 }
 
-export function MetasPage({ monthId, readOnly }: MetasPageProps) {
+export function MetasPage({ monthId, readOnly, plannedTotal, spentTotal }: MetasPageProps) {
   const queryClient = useQueryClient();
 
   const targetsQuery = useQuery({
@@ -41,6 +43,8 @@ export function MetasPage({ monthId, readOnly }: MetasPageProps) {
     <TargetTable
       targets={targetsQuery.data}
       readOnly={readOnly}
+      plannedTotal={plannedTotal}
+      spentTotal={spentTotal}
       onSave={async (payload) => {
         await updateTargets.mutateAsync(payload);
       }}

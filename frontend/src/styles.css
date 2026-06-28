@@ -916,6 +916,84 @@ input::placeholder {
   box-shadow: var(--shadow-sm);
 }
 
+.target-checklist {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.target-checklist-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.target-checklist-header h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.target-checklist-header p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  text-align: right;
+}
+
+.target-checklist-scroll {
+  margin-top: 0;
+}
+
+.target-checklist-table {
+  min-width: 780px;
+}
+
+.target-checklist-table td strong,
+.target-checklist-table td small {
+  display: block;
+}
+
+.target-checklist-table td small {
+  margin-top: 0.1rem;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
+.target-sector-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 600;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 4.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.status-pill[data-status="OK"] {
+  color: var(--positive);
+  background: var(--positive-soft);
+}
+
+.status-pill[data-status="Acima"] {
+  color: var(--warning);
+  background: var(--warning-soft);
+}
+
+.status-pill[data-status="Abaixo"] {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
 .totals-row td {
   font-weight: 700;
   border-top: 2px solid var(--border-strong);
@@ -1134,6 +1212,15 @@ input::placeholder {
   }
 
   .target-total-banner span {
+    text-align: left;
+  }
+
+  .target-checklist-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .target-checklist-header p {
     text-align: left;
   }
 }

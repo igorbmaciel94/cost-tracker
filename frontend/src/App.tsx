@@ -139,7 +139,14 @@ function AuthenticatedApp({ session, onLogout, loggingOut }: AuthenticatedAppPro
             />
             <Route
               path="/planejamento"
-              element={<MetasPage monthId={selectedMonthId} readOnly={selectedMonth?.status === 'CLOSED'} />}
+              element={
+                <MetasPage
+                  monthId={selectedMonthId}
+                  readOnly={selectedMonth?.status === 'CLOSED'}
+                  plannedTotal={selectedMonth?.plannedTotal ?? 0}
+                  spentTotal={selectedMonth?.spentTotal ?? 0}
+                />
+              }
             />
             <Route path="/saude-financeira" element={<SaudeFinanceiraPage monthId={selectedMonthId} salary={selectedMonth?.salary ?? 0} />} />
             <Route path="/historico" element={<HistoricoPage months={months} />} />

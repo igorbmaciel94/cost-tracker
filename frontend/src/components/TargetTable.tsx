@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import type { TargetGroupDto, TargetsResponseDto, UpdateTargetsRequest } from '../api/types';
 import { CANONICAL_GROUP_NAMES } from '../constants/groups';
+import { PrivacyMask } from '../contexts/PrivacyContext';
+import { formatCurrency } from '../utils/format';
 
 interface TargetTableProps {
   targets: TargetsResponseDto;
   readOnly: boolean;
+  plannedTotal: number;
+  spentTotal: number;
   onSave: (request: UpdateTargetsRequest) => Promise<void>;
 }
 
@@ -63,7 +67,15 @@ function buildDonutGradient(items: TargetGroupDto[], draft: Record<string, numbe
   return `conic-gradient(${segments.length > 0 ? segments.join(', ') : 'var(--border) 0 100%'})`;
 }
 
-export function TargetTable({ targets, readOnly, onSave }: TargetTableProps) {
+function resolveStatus(difference: number) {
+  if (Math.abs(difference) <= 0.005) {
+    return 'OK';
+  }
+
+  return difference > 0 ? 'Acima' : 'Abaixo';
+}
+
+export function TargetTable({ targets, readOnly, plannedTotal, spentTotal, onSave }: TargetTableProps) {
   const [draft, setDraft] = useState<Record<string, number>>(toDraftMap(targets.items));
   const [isSaving, setIsSaving] = useState(false);
 
@@ -191,6 +203,74 @@ export function TargetTable({ targets, readOnly, onSave }: TargetTableProps) {
           })}
         </div>
       </div>
+
+      <section className="target-checklist" aria-label="Valores planejados por grupo">
+        <header className="target-checklist-header">
+          <h3>Leitura do planejamento</h3>
+          <p>Valores calculados a partir do total previsto e gasto do mês.</p>
+        </header>
+
+        <div className="table-scroll target-checklist-scroll">
+          <table className="data-table target-checklist-table">
+            <thead>
+              <tr>
+                <th>Setor</th>
+                <th>Meta</th>
+                <th>Planejado atual</th>
+                <th>Status planejado</th>
+                <th>Gasto atual</th>
+                <th>Status gasto</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedItems.map((item, index) => {
+                const targetPercent = (draft[item.groupName] ?? 0) / 100;
+                const plannedDifference = item.currentPlannedPercent - targetPercent;
+                const spentDifference = item.currentSpentPercent - targetPercent;
+                const plannedStatus = resolveStatus(plannedDifference);
+                const spentStatus = resolveStatus(spentDifference);
+                const targetAmount = plannedTotal * targetPercent;
+                const plannedAmount = plannedTotal * item.currentPlannedPercent;
+                const spentAmount = spentTotal * item.currentSpentPercent;
+                const color = getGroupColor(item.groupName, index);
+
+                return (
+                  <tr key={item.groupName}>
+                    <td>
+                      <span className="target-sector-cell">
+                        <span className="target-legend-dot" style={{ background: color }} />
+                        {item.groupName}
+                      </span>
+                    </td>
+                    <td>
+                      <strong>{formatPercentValue(Math.round(targetPercent * 100))}</strong>
+                      <small><PrivacyMask value={formatCurrency(targetAmount)} /></small>
+                    </td>
+                    <td>
+                      <strong>{formatPercentValue(Math.round(item.currentPlannedPercent * 100))}</strong>
+                      <small><PrivacyMask value={formatCurrency(plannedAmount)} /></small>
+                    </td>
+                    <td>
+                      <span className="status-pill" data-status={plannedStatus}>
+                        {plannedStatus}
+                      </span>
+                    </td>
+                    <td>
+                      <strong>{formatPercentValue(Math.round(item.currentSpentPercent * 100))}</strong>
+                      <small><PrivacyMask value={formatCurrency(spentAmount)} /></small>
+                    </td>
+                    <td>
+                      <span className="status-pill" data-status={spentStatus}>
+                        {spentStatus}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </section>
   );
 }

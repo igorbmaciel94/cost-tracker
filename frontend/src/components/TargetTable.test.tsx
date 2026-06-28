@@ -36,10 +36,12 @@ describe('TargetTable', () => {
     const user = userEvent.setup();
     const onSave = vi.fn(async () => {});
 
-    render(<TargetTable targets={targets} readOnly={false} onSave={onSave} />);
+    render(<TargetTable targets={targets} readOnly={false} plannedTotal={2000} spentTotal={1000} onSave={onSave} />);
 
     const saveButton = screen.getByRole('button', { name: /salvar planejamento/i });
     expect(saveButton).toBeDisabled();
+    expect(screen.getByText('Leitura do planejamento')).toBeInTheDocument();
+    expect(screen.getByText(/1200,00/)).toBeInTheDocument();
 
     const [custosSlider, metasSlider] = screen.getAllByRole('slider');
     fireEvent.change(custosSlider, { target: { value: '75' } });
