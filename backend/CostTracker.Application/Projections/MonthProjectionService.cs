@@ -85,6 +85,8 @@ public class MonthProjectionService
                 metric.TargetPercent,
                 metric.CurrentPlannedPercent,
                 metric.CurrentSpentPercent,
+                metric.PlannedAmount,
+                metric.SpentAmount,
                 metric.PlannedDifference,
                 metric.PlannedStatus,
                 metric.SpentDifference,

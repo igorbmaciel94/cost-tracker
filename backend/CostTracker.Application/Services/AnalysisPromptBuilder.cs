@@ -46,9 +46,9 @@ internal static class AnalysisPromptBuilder
         - FUTURE: skip detailed category analysis; instead summarize the planned distribution.
 
         # Status das Metas por Grupo
-        For each group with a defined target: state below / at / above target.
+        For each group with a defined target: state below / at / above target using monetary values.
         - CLOSED: explain the cause based on actuals.
-        - ONGOING: state whether the current run-rate keeps the group within target. Use `metasPorGrupo[].gastoPercent` directly when meaningful, but always relate it to month progress.
+        - ONGOING: state whether the current run-rate keeps the group within target. Use `metasPorGrupo[].gastoValor` versus `metasPorGrupo[].metaValor` for status; use `metasPorGrupo[].gastoPercent` only as context and always relate it to month progress.
         - If a group has no target, omit it.
 
         # Tendências Históricas
@@ -122,6 +122,8 @@ internal static class AnalysisPromptBuilder
                 {
                     grupo = g.GroupName,
                     metaPercent = g.TargetPercent,
+                    metaValor = g.TargetAmount,
+                    gastoValor = g.CurrentSpentAmount,
                     gastoPercent = g.CurrentSpentPercent,
                     status = g.Status,
                 }),

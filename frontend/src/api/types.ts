@@ -54,6 +54,8 @@ export interface TargetGroupDto {
   targetPercent: number;
   currentPlannedPercent: number;
   currentSpentPercent: number;
+  currentPlannedAmount: number;
+  currentSpentAmount: number;
   plannedDifference: number;
   plannedStatus: string;
   spentDifference: number;

@@ -83,15 +83,18 @@ public static class MonthCalculations
 
                 var currentPlannedPercent = plannedTotal == 0 ? 0 : plannedGroup / plannedTotal;
                 var currentSpentPercent = spentTotal == 0 ? 0 : spentGroup / spentTotal;
+                var targetAmount = plannedTotal * target.TargetPercent;
+                var spentAmountDiff = spentGroup - targetAmount;
 
                 var plannedDiff = currentPlannedPercent - target.TargetPercent;
-                var spentDiff = currentSpentPercent - target.TargetPercent;
+                var spentDiff = spentAmountDiff;
 
                 return new GroupMetricComputation(
                     normalizedTargetGroup,
                     target.TargetPercent,
                     currentPlannedPercent,
                     currentSpentPercent,
+                    plannedGroup,
                     plannedDiff,
                     ResolveStatus(plannedDiff),
                     spentDiff,
@@ -204,6 +207,7 @@ public sealed record GroupMetricComputation(
     decimal TargetPercent,
     decimal CurrentPlannedPercent,
     decimal CurrentSpentPercent,
+    decimal PlannedAmount,
     decimal PlannedDifference,
     string PlannedStatus,
     decimal SpentDifference,

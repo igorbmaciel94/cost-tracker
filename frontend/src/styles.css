@@ -994,6 +994,17 @@ input::placeholder {
   background: var(--danger-soft);
 }
 
+.status-pill-spent[data-status="Abaixo"],
+.status-pill-spent[data-status="OK"] {
+  color: var(--positive);
+  background: var(--positive-soft);
+}
+
+.status-pill-spent[data-status="Acima"] {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
 .totals-row td {
   font-weight: 700;
   border-top: 2px solid var(--border-strong);

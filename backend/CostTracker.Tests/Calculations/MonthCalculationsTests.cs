@@ -31,7 +31,7 @@ public class MonthCalculationsTests
     }
 
     [Fact]
-    public void ComputeGroupMetrics_ShouldCalculatePercentagesAndStatus()
+    public void ComputeGroupMetrics_ShouldCalculateAmountsPercentagesAndStatus()
     {
         var essenciais = new CategoryBudget
         {
@@ -68,8 +68,11 @@ public class MonthCalculationsTests
 
         Assert.Equal(0.6m, metrics["Custos Fixos"].CurrentPlannedPercent);
         Assert.Equal(0.75m, metrics["Custos Fixos"].CurrentSpentPercent);
+        Assert.Equal(600m, metrics["Custos Fixos"].PlannedAmount);
+        Assert.Equal(300m, metrics["Custos Fixos"].SpentAmount);
         Assert.Equal("OK", metrics["Custos Fixos"].PlannedStatus);
-        Assert.Equal("Acima", metrics["Custos Fixos"].SpentStatus);
+        Assert.Equal(-300m, metrics["Custos Fixos"].SpentDifference);
+        Assert.Equal("Abaixo", metrics["Custos Fixos"].SpentStatus);
         Assert.Equal("Abaixo", metrics["Prazeres"].SpentStatus);
     }
 

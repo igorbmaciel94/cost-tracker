@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { TargetsResponseDto } from '../api/types';
@@ -13,9 +13,11 @@ const targets: TargetsResponseDto = {
       targetPercent: 0.6,
       currentPlannedPercent: 0.55,
       currentSpentPercent: 0.5,
+      currentPlannedAmount: 1100,
+      currentSpentAmount: 500,
       plannedDifference: -0.05,
       plannedStatus: 'Abaixo',
-      spentDifference: -0.1,
+      spentDifference: -700,
       spentStatus: 'Abaixo'
     },
     {
@@ -23,6 +25,8 @@ const targets: TargetsResponseDto = {
       targetPercent: 0,
       currentPlannedPercent: 0,
       currentSpentPercent: 0,
+      currentPlannedAmount: 0,
+      currentSpentAmount: 0,
       plannedDifference: 0,
       plannedStatus: 'OK',
       spentDifference: 0,
@@ -41,7 +45,8 @@ describe('TargetTable', () => {
     const saveButton = screen.getByRole('button', { name: /salvar planejamento/i });
     expect(saveButton).toBeDisabled();
     expect(screen.getByText('Leitura do planejamento')).toBeInTheDocument();
-    expect(screen.getByText(/1200,00/)).toBeInTheDocument();
+    expect(screen.getByText(/500,00.*(?:1\s?)?200,00/)).toBeInTheDocument();
+    expect(screen.getByText(/Restam.*700,00/)).toBeInTheDocument();
 
     const [custosSlider, metasSlider] = screen.getAllByRole('slider');
     fireEvent.change(custosSlider, { target: { value: '75' } });
@@ -60,5 +65,44 @@ describe('TargetTable', () => {
         ]
       });
     });
+  });
+
+  it('compares current spending with the fixed target amount instead of spent percentage share', () => {
+    const skewedTargets: TargetsResponseDto = {
+      ...targets,
+      items: [
+        {
+          ...targets.items[0],
+          targetPercent: 0.6,
+          currentPlannedPercent: 0.6,
+          currentSpentPercent: 0.75,
+          currentPlannedAmount: 600,
+          currentSpentAmount: 300,
+          plannedDifference: 0,
+          plannedStatus: 'OK',
+          spentDifference: -300,
+          spentStatus: 'Abaixo'
+        },
+        {
+          ...targets.items[1],
+          targetPercent: 0.4,
+          currentPlannedPercent: 0.4,
+          currentSpentPercent: 0.25,
+          currentPlannedAmount: 400,
+          currentSpentAmount: 100
+        }
+      ]
+    };
+
+    render(<TargetTable targets={skewedTargets} readOnly={false} plannedTotal={1000} spentTotal={400} onSave={vi.fn()} />);
+
+    const spentCell = screen.getByText(/300,00.*600,00/);
+    const row = spentCell.closest('tr');
+
+    expect(spentCell).toBeInTheDocument();
+    expect(row).not.toBeNull();
+    expect(within(row as HTMLTableRowElement).getByText(/Restam.*300,00/)).toBeInTheDocument();
+    expect(within(row as HTMLTableRowElement).getByText('Abaixo')).toBeInTheDocument();
+    expect(within(row as HTMLTableRowElement).queryByText('Acima')).not.toBeInTheDocument();
   });
 });

@@ -49,6 +49,8 @@ public sealed record TargetGroupDto(
     decimal TargetPercent,
     decimal CurrentPlannedPercent,
     decimal CurrentSpentPercent,
+    decimal CurrentPlannedAmount,
+    decimal CurrentSpentAmount,
     decimal PlannedDifference,
     string PlannedStatus,
     decimal SpentDifference,

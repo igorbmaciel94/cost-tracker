@@ -79,6 +79,8 @@ public class AiAnalysisService(
         var groupTargets = targets.Items.Select(t => new AnalysisGroupTarget(
             t.GroupName,
             t.TargetPercent * 100,
+            budget.PlannedTotal * t.TargetPercent,
+            t.CurrentSpentAmount,
             t.CurrentSpentPercent * 100,
             t.SpentStatus
         )).ToList();

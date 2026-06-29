@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import type { TargetGroupDto, TargetsResponseDto, UpdateTargetsRequest } from '../api/types';
 import { CANONICAL_GROUP_NAMES } from '../constants/groups';
 import { PrivacyMask } from '../contexts/PrivacyContext';
-import { formatCurrency } from '../utils/format';
+import { formatCurrency, formatPercent } from '../utils/format';
 
 interface TargetTableProps {
   targets: TargetsResponseDto;
@@ -73,6 +73,28 @@ function resolveStatus(difference: number) {
   }
 
   return difference > 0 ? 'Acima' : 'Abaixo';
+}
+
+function getFiniteAmount(value: number | undefined, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+}
+
+function getSpentUsagePercent(spentAmount: number, targetAmount: number) {
+  if (targetAmount <= 0) {
+    return spentAmount > 0 ? 1 : 0;
+  }
+
+  return spentAmount / targetAmount;
+}
+
+function formatSpentBalance(spentDifference: number, targetAmount: number) {
+  if (Math.abs(spentDifference) <= 0.005) {
+    return targetAmount > 0 ? 'Limite fechado' : 'Sem gasto previsto';
+  }
+
+  return spentDifference > 0
+    ? `Excedeu ${formatCurrency(spentDifference)}`
+    : `Restam ${formatCurrency(Math.abs(spentDifference))}`;
 }
 
 export function TargetTable({ targets, readOnly, plannedTotal, spentTotal, onSave }: TargetTableProps) {
@@ -207,7 +229,7 @@ export function TargetTable({ targets, readOnly, plannedTotal, spentTotal, onSav
       <section className="target-checklist" aria-label="Valores planejados por grupo">
         <header className="target-checklist-header">
           <h3>Leitura do planejamento</h3>
-          <p>Valores calculados a partir do total previsto e gasto do mês.</p>
+          <p>Previsto em percentuais; gasto contra o limite em valor.</p>
         </header>
 
         <div className="table-scroll target-checklist-scroll">
@@ -226,12 +248,19 @@ export function TargetTable({ targets, readOnly, plannedTotal, spentTotal, onSav
               {sortedItems.map((item, index) => {
                 const targetPercent = (draft[item.groupName] ?? 0) / 100;
                 const plannedDifference = item.currentPlannedPercent - targetPercent;
-                const spentDifference = item.currentSpentPercent - targetPercent;
                 const plannedStatus = resolveStatus(plannedDifference);
-                const spentStatus = resolveStatus(spentDifference);
                 const targetAmount = plannedTotal * targetPercent;
-                const plannedAmount = plannedTotal * item.currentPlannedPercent;
-                const spentAmount = spentTotal * item.currentSpentPercent;
+                const plannedAmount = getFiniteAmount(
+                  item.currentPlannedAmount,
+                  plannedTotal * item.currentPlannedPercent
+                );
+                const spentAmount = getFiniteAmount(
+                  item.currentSpentAmount,
+                  spentTotal * item.currentSpentPercent
+                );
+                const spentDifference = spentAmount - targetAmount;
+                const spentStatus = resolveStatus(spentDifference);
+                const spentUsagePercent = getSpentUsagePercent(spentAmount, targetAmount);
                 const color = getGroupColor(item.groupName, index);
 
                 return (
@@ -256,11 +285,16 @@ export function TargetTable({ targets, readOnly, plannedTotal, spentTotal, onSav
                       </span>
                     </td>
                     <td>
-                      <strong>{formatPercentValue(Math.round(item.currentSpentPercent * 100))}</strong>
-                      <small><PrivacyMask value={formatCurrency(spentAmount)} /></small>
+                      <strong>
+                        <PrivacyMask value={`${formatCurrency(spentAmount)} de ${formatCurrency(targetAmount)}`} />
+                      </strong>
+                      <small>
+                        <PrivacyMask value={formatSpentBalance(spentDifference, targetAmount)} />
+                        {targetAmount > 0 ? ` - ${formatPercent(spentUsagePercent)} do limite` : null}
+                      </small>
                     </td>
                     <td>
-                      <span className="status-pill" data-status={spentStatus}>
+                      <span className="status-pill status-pill-spent" data-status={spentStatus}>
                         {spentStatus}
                       </span>
                     </td>

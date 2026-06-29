@@ -35,6 +35,8 @@ internal sealed record AnalysisAvailableBalance(
 internal sealed record AnalysisGroupTarget(
     string GroupName,
     decimal TargetPercent,
+    decimal TargetAmount,
+    decimal CurrentSpentAmount,
     decimal CurrentSpentPercent,
     string Status
 );
