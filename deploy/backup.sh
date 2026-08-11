@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+umask 077
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE=""
@@ -33,6 +34,7 @@ DB_SSL_MODE="$(printf '%s' "${DB_SSL_MODE}" | tr '[:upper:]' '[:lower:]')"
 BACKUP_DB_HOST="${BACKUP_DB_HOST:-${DB_HOST}}"
 
 mkdir -p "${BACKUP_DIR}"
+chmod 700 "${BACKUP_DIR}"
 TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
 BACKUP_FILE="${BACKUP_DIR}/costtracker_${TIMESTAMP}.sql.gz"
 
