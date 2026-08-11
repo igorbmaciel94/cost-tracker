@@ -7,6 +7,8 @@ namespace CostTracker.Infrastructure.Investments.MarketData;
 
 public sealed class BcbPtaxExchangeRateProvider(HttpClient httpClient, TimeProvider timeProvider) : IExchangeRateProvider
 {
+    private static readonly DateOnly FirstAvailablePtaxDate = new(1984, 1, 1);
+
     public string ProviderCode => MarketDataProviderCodes.BcbPtax;
 
     public async Task<ProviderBatchResult<ExchangeRateResult>> GetLatestRatesAsync(
@@ -113,7 +115,7 @@ public sealed class BcbPtaxExchangeRateProvider(HttpClient httpClient, TimeProvi
         DateOnly asOf,
         CancellationToken cancellationToken)
     {
-        var initialDate = asOf.AddDays(-10).ToString("MM-dd-yyyy", CultureInfo.InvariantCulture);
+        var initialDate = FirstAvailablePtaxDate.ToString("MM-dd-yyyy", CultureInfo.InvariantCulture);
         var finalDate = asOf.ToString("MM-dd-yyyy", CultureInfo.InvariantCulture);
         var uri = "CotacaoMoedaPeriodo(moeda=@moeda,dataInicial=@dataInicial,dataFinalCotacao=@dataFinalCotacao)" +
                   $"?@moeda='{Uri.EscapeDataString(currency)}'" +

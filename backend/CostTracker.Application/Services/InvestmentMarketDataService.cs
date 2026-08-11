@@ -25,6 +25,7 @@ public sealed class InvestmentMarketDataService(
     TimeProvider timeProvider)
 {
     private static readonly SemaphoreSlim RefreshGate = new(1, 1);
+    private static readonly string[] BaselineFxCurrencies = ["BRL", "USD", "GBP", "GBX"];
     private readonly IReadOnlyList<IMarketQuoteProvider> _quoteProviders = quoteProviders.ToList();
     private readonly IReadOnlyList<IExchangeRateProvider> _exchangeRateProviders = exchangeRateProviders.ToList();
 
@@ -537,8 +538,8 @@ public sealed class InvestmentMarketDataService(
         List<ProviderFailure> failures,
         CancellationToken cancellationToken)
     {
-        var unresolved = instruments
-            .Select(item => item.NativeCurrency.Value)
+        var unresolved = BaselineFxCurrencies
+            .Concat(instruments.Select(item => item.NativeCurrency.Value))
             .Where(currency => currency != "EUR")
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);

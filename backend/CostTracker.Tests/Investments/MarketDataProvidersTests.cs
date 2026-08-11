@@ -91,6 +91,37 @@ public class MarketDataProvidersTests
     }
 
     [Fact]
+    public async Task Ecb_ShouldUseLatestObservationWithoutAnArbitraryLookbackWindow()
+    {
+        const string csv = """
+            KEY,FREQ,CURRENCY,CURRENCY_DENOM,EXR_TYPE,EXR_SUFFIX,TIME_PERIOD,OBS_VALUE,OBS_STATUS
+            EXR.D.BRL.EUR.SP00.A,D,BRL,EUR,SP00,A,2025-12-31,6.4251,A
+            """;
+        Uri? requestedUri = null;
+        var provider = new EcbExchangeRateProvider(
+            new HttpClient(new StubHttpMessageHandler(request =>
+            {
+                requestedUri = request.RequestUri;
+                return TextResponse(csv);
+            }))
+            {
+                BaseAddress = new Uri("https://data-api.ecb.europa.eu/")
+            },
+            new FixedTimeProvider(FixedNow));
+
+        var result = await provider.GetLatestRatesAsync(
+            ["BRL"],
+            new DateOnly(2026, 8, 11),
+            CancellationToken.None);
+
+        var rate = Assert.Single(result.Items);
+        Assert.Empty(result.Failures);
+        Assert.Equal(new DateOnly(2025, 12, 31), rate.AsOf);
+        Assert.DoesNotContain("startPeriod", requestedUri!.Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("endPeriod=2026-08-11", requestedUri.Query, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task Bcb_ShouldDeriveEurBasedRatesFromClosingPtax()
     {
         const string eurPayload = """
@@ -122,6 +153,36 @@ public class MarketDataProvidersTests
             decimal.Round(5.88720m / 5.09630m, 10),
             decimal.Round(result.Items.Single(rate => rate.QuoteCurrency == "USD").Rate, 10));
         Assert.All(result.Items, rate => Assert.True(rate.IsFallback));
+    }
+
+    [Fact]
+    public async Task Bcb_ShouldUseLatestClosingPtaxFromAllAvailableHistory()
+    {
+        const string eurPayload = """
+            {"value":[{"cotacaoVenda":6.12340,"dataHoraCotacao":"2025-12-31 13:10:22.642754","tipoBoletim":"Fechamento"}]}
+            """;
+        Uri? requestedUri = null;
+        var provider = new BcbPtaxExchangeRateProvider(
+            new HttpClient(new StubHttpMessageHandler(request =>
+            {
+                requestedUri = request.RequestUri;
+                return JsonResponse(eurPayload);
+            }))
+            {
+                BaseAddress = new Uri("https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/")
+            },
+            new FixedTimeProvider(FixedNow));
+
+        var result = await provider.GetLatestRatesAsync(
+            ["BRL"],
+            new DateOnly(2026, 8, 11),
+            CancellationToken.None);
+
+        var rate = Assert.Single(result.Items);
+        Assert.Empty(result.Failures);
+        Assert.Equal(new DateOnly(2025, 12, 31), rate.AsOf);
+        Assert.Contains("01-01-1984", requestedUri!.Query, StringComparison.Ordinal);
+        Assert.Contains("08-11-2026", requestedUri.Query, StringComparison.Ordinal);
     }
 
     [Fact]
