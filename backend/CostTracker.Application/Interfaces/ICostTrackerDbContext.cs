@@ -11,5 +11,13 @@ public interface ICostTrackerDbContext
     DbSet<GroupTarget> GroupTargets { get; }
     DbSet<PlanningGoal> PlanningGoals { get; }
     DbSet<HealthProfile> HealthProfiles { get; }
+    DbSet<InvestmentPortfolio> InvestmentPortfolios { get; }
+    DbSet<AllocationTarget> InvestmentAllocationTargets { get; }
+    DbSet<InvestmentInstrument> InvestmentInstruments { get; }
+    DbSet<InvestmentTransaction> InvestmentTransactions { get; }
+    DbSet<ManualValuation> ManualValuations { get; }
+    DbSet<MarketInstrumentMapping> MarketInstrumentMappings { get; }
+    DbSet<MarketQuoteSnapshot> MarketQuoteSnapshots { get; }
+    DbSet<FxRateSnapshot> FxRateSnapshots { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

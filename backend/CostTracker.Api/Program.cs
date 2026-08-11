@@ -7,9 +7,12 @@ using CostTracker.Application.Pdf;
 using CostTracker.Application.Projections;
 using CostTracker.Application.Services;
 using CostTracker.Infrastructure.Extensions;
+using CostTracker.Infrastructure.Investments.MarketData;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 using QuestPDF.Infrastructure;
+using System.Threading.RateLimiting;
 
 QuestPDF.Settings.License = LicenseType.Community;
 
@@ -31,8 +34,10 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     {
         options.Cookie.Name = "costtracker.auth";
         options.Cookie.HttpOnly = true;
-        options.Cookie.SameSite = SameSiteMode.Lax;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.Cookie.SameSite = SameSiteMode.Strict;
+        options.Cookie.SecurePolicy = builder.Environment.IsProduction()
+            ? CookieSecurePolicy.Always
+            : CookieSecurePolicy.SameAsRequest;
         options.Events = new CookieAuthenticationEvents
         {
             OnRedirectToLogin = context =>
@@ -48,6 +53,19 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         };
     });
 builder.Services.AddAuthorization();
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy("authentication", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 8,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+            AutoReplenishment = true
+        }));
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
 
 builder.Services.AddCors(options =>
 {
@@ -71,6 +89,13 @@ builder.Services.AddSingleton<IAiAnalysisClient, ClaudeAnalysisClient>();
 builder.Services.AddSingleton<IPdfRenderer, AnalysisPdfRenderer>();
 
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddInvestmentMarketData(builder.Configuration);
+builder.Services.AddScoped<PortfolioProjectionService>();
+builder.Services.AddScoped<PortfolioManagementService>();
+builder.Services.AddScoped<InvestmentMarketDataService>();
+builder.Services.AddScoped<ContributionPlanningService>();
+builder.Services.AddHostedService<InvestmentMarketDataRefreshWorker>();
 builder.Services.AddScoped<MonthProjectionService>();
 builder.Services.AddScoped<PasswordHashService>();
 builder.Services.AddScoped<MonthService>();
@@ -91,6 +116,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("frontend");
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

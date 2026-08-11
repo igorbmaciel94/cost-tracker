@@ -49,6 +49,7 @@ Com shell env, o minimo e:
 export DB_PASSWORD='<senha do postgres>'
 export AUTH_USERNAME='<username do app>'
 export AUTH_PASSWORD_HASH='<hash gerado pelo utilitario>'
+export ANTHROPIC_API_KEY='<chave existente do Claude>'
 export GHCR_USERNAME='<usuario do ghcr>'
 export GHCR_TOKEN='<token do ghcr>'
 ```
@@ -145,6 +146,7 @@ curl -sS https://cost.lighthousedev.uk/api/health
 
 ```bash
 cd /opt/cost-tracker
+./deploy/backup.sh
 ./deploy/deploy.sh main
 # ou
 ./deploy/deploy.sh sha-abcdef1
@@ -158,24 +160,28 @@ Secrets necessários:
 - `DEPLOY_HOST=46.225.216.71`
 - `DEPLOY_USER`
 - `DEPLOY_SSH_KEY`
-- `DB_PASSWORD`
-- `AUTH_USERNAME`
-- `AUTH_PASSWORD_HASH`
-- `GHCR_USERNAME`
-- `GHCR_TOKEN`
+- `GHCR_USERNAME` e `GHCR_TOKEN` apenas se o servidor ainda não tiver acesso ao GHCR
 
-## 8) Backup (opcional)
+`DB_PASSWORD`, `AUTH_USERNAME`, `AUTH_PASSWORD_HASH`, `ANTHROPIC_API_KEY` e as
+configurações de market data ficam somente no arquivo de ambiente do servidor;
+não precisam ser duplicadas como secrets do workflow.
 
-Sem backup por enquanto:
-- nao configure cron
-- nao rode `backup.sh`
-- pode ignorar as variaveis `BACKUP_*`
+O workflow cria e valida um backup antes de atualizar, espera os healthchecks dos
+containers e só termina quando `/api/health` responde com sucesso. As credenciais
+da aplicação e do banco são lidas de `deploy/.env.prod` ou, por compatibilidade
+com a instalação atual, de `.env` na raiz do projeto.
 
-Com backup diário:
+## 8) Backup
+
+Backup manual ou diário:
 
 ```bash
 /opt/cost-tracker/deploy/backup.sh
 ```
+
+O script aceita `deploy/.env.prod` ou `.env` na raiz, configura o SSL via
+`PGSSLMODE`, compacta o dump e valida o arquivo com `gzip -t` antes de aplicar a
+retenção.
 
 Cron:
 

@@ -22,6 +22,38 @@ namespace CostTracker.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("CostTracker.Domain.Entities.AllocationTarget", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AssetClass")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("asset_class");
+
+                    b.Property<Guid>("PortfolioId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("portfolio_id");
+
+                    b.Property<decimal>("Weight")
+                        .HasColumnType("numeric(9,8)")
+                        .HasColumnName("weight");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PortfolioId", "AssetClass")
+                        .IsUnique();
+
+                    b.ToTable("investment_allocation_targets", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_investment_allocation_targets_weight", "weight >= 0 AND weight <= 1");
+                        });
+                });
+
             modelBuilder.Entity("CostTracker.Domain.Entities.CategoryBudget", b =>
                 {
                     b.Property<Guid>("Id")
@@ -61,6 +93,209 @@ namespace CostTracker.Infrastructure.Persistence.Migrations
                     b.ToTable("category_budgets", null, t =>
                         {
                             t.HasCheckConstraint("ck_category_budgets_planned_amount_non_negative", "planned_amount >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("CostTracker.Domain.Entities.ContributionPlan", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("AllowedStaleData")
+                        .HasColumnType("boolean")
+                        .HasColumnName("allowed_stale_data");
+
+                    b.Property<string>("ConfirmationIdempotencyKey")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("confirmation_idempotency_key");
+
+                    b.Property<DateTimeOffset?>("ConfirmedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("confirmed_at");
+
+                    b.Property<decimal>("ContributionAmountEur")
+                        .HasColumnType("numeric(20,8)")
+                        .HasColumnName("contribution_amount_eur");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("PolicyVersion")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("policy_version");
+
+                    b.Property<Guid>("PortfolioId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("portfolio_id");
+
+                    b.Property<long>("PortfolioVersion")
+                        .HasColumnType("bigint")
+                        .HasColumnName("portfolio_version");
+
+                    b.Property<decimal>("ResidualAmountEur")
+                        .HasColumnType("numeric(20,8)")
+                        .HasColumnName("residual_amount_eur");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("StrategyVersion")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("strategy_version");
+
+                    b.Property<decimal>("TotalSuggestedEur")
+                        .HasColumnType("numeric(20,8)")
+                        .HasColumnName("total_suggested_eur");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConfirmationIdempotencyKey")
+                        .IsUnique()
+                        .HasFilter("confirmation_idempotency_key IS NOT NULL");
+
+                    b.HasIndex("PortfolioId", "CreatedAt");
+
+                    b.ToTable("investment_contribution_plans", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_investment_contribution_plans_amount_positive", "contribution_amount_eur > 0");
+
+                            t.HasCheckConstraint("ck_investment_contribution_plans_expiration", "expires_at > created_at");
+
+                            t.HasCheckConstraint("ck_investment_contribution_plans_totals", "total_suggested_eur >= 0 AND residual_amount_eur >= 0 AND total_suggested_eur + residual_amount_eur = contribution_amount_eur");
+                        });
+                });
+
+            modelBuilder.Entity("CostTracker.Domain.Entities.ContributionPlanLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int?>("AllocationScore")
+                        .HasColumnType("integer")
+                        .HasColumnName("allocation_score");
+
+                    b.Property<string>("AssetClass")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("asset_class");
+
+                    b.Property<Guid>("ContributionPlanId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("contribution_plan_id");
+
+                    b.Property<decimal>("CurrentValueEur")
+                        .HasColumnType("numeric(20,8)")
+                        .HasColumnName("current_value_eur");
+
+                    b.Property<string>("Explanation")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)")
+                        .HasColumnName("explanation");
+
+                    b.Property<string>("Freshness")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("freshness");
+
+                    b.Property<DateOnly?>("FxAsOf")
+                        .HasColumnType("date")
+                        .HasColumnName("fx_as_of");
+
+                    b.Property<Guid?>("FxSnapshotId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("fx_snapshot_id");
+
+                    b.Property<Guid?>("InstrumentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("instrument_id");
+
+                    b.Property<string>("InstrumentName")
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)")
+                        .HasColumnName("instrument_name");
+
+                    b.Property<string>("NativeCurrency")
+                        .HasMaxLength(3)
+                        .HasColumnType("character(3)")
+                        .HasColumnName("native_currency")
+                        .IsFixedLength();
+
+                    b.Property<decimal?>("NativeCurrencyPerEur")
+                        .HasColumnType("numeric(24,12)")
+                        .HasColumnName("native_currency_per_eur");
+
+                    b.Property<DateOnly?>("QuoteAsOf")
+                        .HasColumnType("date")
+                        .HasColumnName("quote_as_of");
+
+                    b.Property<Guid?>("QuoteSnapshotId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("quote_snapshot_id");
+
+                    b.Property<decimal>("RecommendedAmountEur")
+                        .HasColumnType("numeric(20,8)")
+                        .HasColumnName("recommended_amount_eur");
+
+                    b.Property<decimal?>("RecommendedNativeAmount")
+                        .HasColumnType("numeric(20,8)")
+                        .HasColumnName("recommended_native_amount");
+
+                    b.Property<decimal?>("SuggestedQuantity")
+                        .HasColumnType("numeric(24,12)")
+                        .HasColumnName("suggested_quantity");
+
+                    b.Property<decimal>("TargetWeight")
+                        .HasColumnType("numeric(9,8)")
+                        .HasColumnName("target_weight");
+
+                    b.Property<string>("Ticker")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("ticker");
+
+                    b.Property<decimal?>("UnitPrice")
+                        .HasColumnType("numeric(24,12)")
+                        .HasColumnName("unit_price");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InstrumentId");
+
+                    b.HasIndex("ContributionPlanId", "AssetClass");
+
+                    b.ToTable("investment_contribution_plan_lines", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_investment_contribution_plan_lines_amounts", "current_value_eur >= 0 AND recommended_amount_eur >= 0");
+
+                            t.HasCheckConstraint("ck_investment_contribution_plan_lines_fx", "native_currency_per_eur IS NULL OR native_currency_per_eur > 0");
+
+                            t.HasCheckConstraint("ck_investment_contribution_plan_lines_native_amount", "recommended_native_amount IS NULL OR recommended_native_amount >= 0");
+
+                            t.HasCheckConstraint("ck_investment_contribution_plan_lines_price", "unit_price IS NULL OR unit_price > 0");
+
+                            t.HasCheckConstraint("ck_investment_contribution_plan_lines_quantity", "suggested_quantity IS NULL OR suggested_quantity >= 0");
+
+                            t.HasCheckConstraint("ck_investment_contribution_plan_lines_target", "target_weight >= 0 AND target_weight <= 1");
                         });
                 });
 
@@ -106,6 +341,75 @@ namespace CostTracker.Infrastructure.Persistence.Migrations
                     b.ToTable("entries", null, t =>
                         {
                             t.HasCheckConstraint("ck_entries_amount_non_negative", "amount >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("CostTracker.Domain.Entities.FxRateSnapshot", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateOnly>("AsOf")
+                        .HasColumnType("date")
+                        .HasColumnName("as_of");
+
+                    b.Property<string>("BaseCurrency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character(3)")
+                        .HasColumnName("base_currency")
+                        .IsFixedLength();
+
+                    b.Property<DateTimeOffset>("FetchedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fetched_at");
+
+                    b.Property<bool>("IsFallback")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_fallback");
+
+                    b.Property<string>("ProviderCode")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("provider_code");
+
+                    b.Property<string>("QuoteCurrency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character(3)")
+                        .HasColumnName("quote_currency")
+                        .IsFixedLength();
+
+                    b.Property<decimal>("Rate")
+                        .HasColumnType("numeric(24,12)")
+                        .HasColumnName("rate");
+
+                    b.Property<string>("RateKind")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("rate_kind");
+
+                    b.Property<string>("RawPayloadHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("raw_payload_hash");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BaseCurrency", "QuoteCurrency", "AsOf");
+
+                    b.HasIndex("BaseCurrency", "QuoteCurrency", "AsOf", "ProviderCode");
+
+                    b.ToTable("fx_rate_snapshots", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_fx_rate_snapshots_distinct_currencies", "base_currency <> quote_currency");
+
+                            t.HasCheckConstraint("ck_fx_rate_snapshots_rate", "rate > 0");
                         });
                 });
 
@@ -160,6 +464,443 @@ namespace CostTracker.Infrastructure.Persistence.Migrations
                             t.HasCheckConstraint("ck_health_profiles_essential_expenses", "essential_expenses >= 0");
 
                             t.HasCheckConstraint("ck_health_profiles_saved_emergency_fund", "saved_emergency_fund >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("CostTracker.Domain.Entities.InvestmentInstrument", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("AllocationScore")
+                        .HasColumnType("integer")
+                        .HasColumnName("allocation_score");
+
+                    b.Property<DateTimeOffset?>("ArchivedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("archived_at");
+
+                    b.Property<string>("AssetClass")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("asset_class");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("IdentityKey")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("identity_key");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_archived");
+
+                    b.Property<string>("Isin")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("isin");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("Mic")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("mic");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("NativeCurrency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character(3)")
+                        .HasColumnName("native_currency")
+                        .IsFixedLength();
+
+                    b.Property<Guid>("PortfolioId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("portfolio_id");
+
+                    b.Property<string>("PublicIdentifier")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("public_identifier");
+
+                    b.Property<decimal?>("QuantityStep")
+                        .HasColumnType("numeric(24,12)")
+                        .HasColumnName("quantity_step");
+
+                    b.Property<string>("Ticker")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("ticker");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("ValuationMode")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("valuation_mode");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PortfolioId", "IdentityKey")
+                        .IsUnique()
+                        .HasFilter("is_archived = FALSE");
+
+                    b.HasIndex("PortfolioId", "AssetClass", "IsArchived");
+
+                    b.ToTable("investment_instruments", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_investment_instruments_allocation_score", "allocation_score >= 0");
+
+                            t.HasCheckConstraint("ck_investment_instruments_quantity_step", "quantity_step IS NULL OR quantity_step > 0");
+
+                            t.HasCheckConstraint("ck_investment_instruments_version_positive", "version >= 1");
+                        });
+                });
+
+            modelBuilder.Entity("CostTracker.Domain.Entities.InvestmentPortfolio", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("BaseCurrency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character(3)")
+                        .HasColumnName("base_currency")
+                        .IsFixedLength();
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<byte>("SingletonKey")
+                        .HasColumnType("smallint")
+                        .HasColumnName("singleton_key");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SingletonKey")
+                        .IsUnique();
+
+                    b.ToTable("investment_portfolios", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_investment_portfolios_base_currency_eur", "base_currency = 'EUR'");
+
+                            t.HasCheckConstraint("ck_investment_portfolios_singleton_key", "singleton_key = 1");
+
+                            t.HasCheckConstraint("ck_investment_portfolios_version_positive", "version >= 1");
+                        });
+                });
+
+            modelBuilder.Entity("CostTracker.Domain.Entities.InvestmentTransaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal?>("Amount")
+                        .HasColumnType("numeric(20,8)")
+                        .HasColumnName("amount");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character(3)")
+                        .HasColumnName("currency")
+                        .IsFixedLength();
+
+                    b.Property<decimal?>("CurrencyPerEurRate")
+                        .HasColumnType("numeric(20,10)")
+                        .HasColumnName("currency_per_eur_rate");
+
+                    b.Property<decimal>("FeeAmount")
+                        .HasColumnType("numeric(20,8)")
+                        .HasColumnName("fee_amount");
+
+                    b.Property<string>("IdempotencyKey")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("idempotency_key");
+
+                    b.Property<Guid>("InstrumentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("instrument_id");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("notes");
+
+                    b.Property<decimal?>("Quantity")
+                        .HasColumnType("numeric(24,12)")
+                        .HasColumnName("quantity");
+
+                    b.Property<DateOnly>("TransactionDate")
+                        .HasColumnType("date")
+                        .HasColumnName("transaction_date");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("character varying(24)")
+                        .HasColumnName("transaction_type");
+
+                    b.Property<decimal?>("UnitPrice")
+                        .HasColumnType("numeric(20,8)")
+                        .HasColumnName("unit_price");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InstrumentId", "IdempotencyKey")
+                        .IsUnique();
+
+                    b.HasIndex("InstrumentId", "TransactionDate");
+
+                    b.ToTable("investment_transactions", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_investment_transactions_fee_non_negative", "fee_amount >= 0");
+
+                            t.HasCheckConstraint("ck_investment_transactions_fx_positive", "currency_per_eur_rate IS NULL OR currency_per_eur_rate > 0");
+                        });
+                });
+
+            modelBuilder.Entity("CostTracker.Domain.Entities.ManualValuation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric(20,8)")
+                        .HasColumnName("amount");
+
+                    b.Property<DateOnly>("AsOf")
+                        .HasColumnType("date")
+                        .HasColumnName("as_of");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character(3)")
+                        .HasColumnName("currency")
+                        .IsFixedLength();
+
+                    b.Property<string>("IdempotencyKey")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("idempotency_key");
+
+                    b.Property<Guid>("InstrumentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("instrument_id");
+
+                    b.Property<DateTimeOffset>("RecordedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("recorded_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InstrumentId", "AsOf");
+
+                    b.HasIndex("InstrumentId", "IdempotencyKey")
+                        .IsUnique();
+
+                    b.ToTable("investment_manual_valuations", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_investment_manual_valuations_amount", "amount >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("CostTracker.Domain.Entities.MarketInstrumentMapping", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Exchange")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("exchange");
+
+                    b.Property<Guid>("InstrumentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("instrument_id");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_enabled");
+
+                    b.Property<string>("Mic")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("mic");
+
+                    b.Property<decimal>("PriceMultiplier")
+                        .HasColumnType("numeric(24,12)")
+                        .HasColumnName("price_multiplier");
+
+                    b.Property<string>("ProviderCode")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("provider_code");
+
+                    b.Property<string>("ProviderSymbol")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("provider_symbol");
+
+                    b.Property<string>("QuoteCurrency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character(3)")
+                        .HasColumnName("quote_currency")
+                        .IsFixedLength();
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InstrumentId", "ProviderCode")
+                        .IsUnique();
+
+                    b.HasIndex("ProviderCode", "ProviderSymbol", "Exchange");
+
+                    b.ToTable("market_instrument_mappings", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_market_instrument_mappings_price_multiplier", "price_multiplier > 0");
+                        });
+                });
+
+            modelBuilder.Entity("CostTracker.Domain.Entities.MarketQuoteSnapshot", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateOnly>("AsOf")
+                        .HasColumnType("date")
+                        .HasColumnName("as_of");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character(3)")
+                        .HasColumnName("currency")
+                        .IsFixedLength();
+
+                    b.Property<string>("Exchange")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("exchange");
+
+                    b.Property<DateTimeOffset>("FetchedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fetched_at");
+
+                    b.Property<Guid>("InstrumentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("instrument_id");
+
+                    b.Property<bool>("IsFallback")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_fallback");
+
+                    b.Property<string>("Mic")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("mic");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("numeric(24,12)")
+                        .HasColumnName("price");
+
+                    b.Property<string>("PriceKind")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("price_kind");
+
+                    b.Property<string>("ProviderCode")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("provider_code");
+
+                    b.Property<string>("ProviderSymbol")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("provider_symbol");
+
+                    b.Property<string>("RawPayloadHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("raw_payload_hash");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InstrumentId", "AsOf");
+
+                    b.HasIndex("InstrumentId", "AsOf", "ProviderCode");
+
+                    b.ToTable("market_quote_snapshots", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_market_quote_snapshots_price", "price > 0");
                         });
                 });
 
@@ -257,6 +998,17 @@ namespace CostTracker.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("CostTracker.Domain.Entities.AllocationTarget", b =>
+                {
+                    b.HasOne("CostTracker.Domain.Entities.InvestmentPortfolio", "Portfolio")
+                        .WithMany("AllocationTargets")
+                        .HasForeignKey("PortfolioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Portfolio");
+                });
+
             modelBuilder.Entity("CostTracker.Domain.Entities.CategoryBudget", b =>
                 {
                     b.HasOne("CostTracker.Domain.Entities.Month", "Month")
@@ -266,6 +1018,35 @@ namespace CostTracker.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Month");
+                });
+
+            modelBuilder.Entity("CostTracker.Domain.Entities.ContributionPlan", b =>
+                {
+                    b.HasOne("CostTracker.Domain.Entities.InvestmentPortfolio", "Portfolio")
+                        .WithMany()
+                        .HasForeignKey("PortfolioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Portfolio");
+                });
+
+            modelBuilder.Entity("CostTracker.Domain.Entities.ContributionPlanLine", b =>
+                {
+                    b.HasOne("CostTracker.Domain.Entities.ContributionPlan", "ContributionPlan")
+                        .WithMany("Lines")
+                        .HasForeignKey("ContributionPlanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CostTracker.Domain.Entities.InvestmentInstrument", "Instrument")
+                        .WithMany()
+                        .HasForeignKey("InstrumentId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("ContributionPlan");
+
+                    b.Navigation("Instrument");
                 });
 
             modelBuilder.Entity("CostTracker.Domain.Entities.Entry", b =>
@@ -298,9 +1079,83 @@ namespace CostTracker.Infrastructure.Persistence.Migrations
                     b.Navigation("Month");
                 });
 
+            modelBuilder.Entity("CostTracker.Domain.Entities.InvestmentInstrument", b =>
+                {
+                    b.HasOne("CostTracker.Domain.Entities.InvestmentPortfolio", "Portfolio")
+                        .WithMany("Instruments")
+                        .HasForeignKey("PortfolioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Portfolio");
+                });
+
+            modelBuilder.Entity("CostTracker.Domain.Entities.InvestmentTransaction", b =>
+                {
+                    b.HasOne("CostTracker.Domain.Entities.InvestmentInstrument", "Instrument")
+                        .WithMany("Transactions")
+                        .HasForeignKey("InstrumentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Instrument");
+                });
+
+            modelBuilder.Entity("CostTracker.Domain.Entities.ManualValuation", b =>
+                {
+                    b.HasOne("CostTracker.Domain.Entities.InvestmentInstrument", "Instrument")
+                        .WithMany("ManualValuations")
+                        .HasForeignKey("InstrumentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Instrument");
+                });
+
+            modelBuilder.Entity("CostTracker.Domain.Entities.MarketInstrumentMapping", b =>
+                {
+                    b.HasOne("CostTracker.Domain.Entities.InvestmentInstrument", "Instrument")
+                        .WithMany()
+                        .HasForeignKey("InstrumentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Instrument");
+                });
+
+            modelBuilder.Entity("CostTracker.Domain.Entities.MarketQuoteSnapshot", b =>
+                {
+                    b.HasOne("CostTracker.Domain.Entities.InvestmentInstrument", "Instrument")
+                        .WithMany()
+                        .HasForeignKey("InstrumentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Instrument");
+                });
+
             modelBuilder.Entity("CostTracker.Domain.Entities.CategoryBudget", b =>
                 {
                     b.Navigation("Entries");
+                });
+
+            modelBuilder.Entity("CostTracker.Domain.Entities.ContributionPlan", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("CostTracker.Domain.Entities.InvestmentInstrument", b =>
+                {
+                    b.Navigation("ManualValuations");
+
+                    b.Navigation("Transactions");
+                });
+
+            modelBuilder.Entity("CostTracker.Domain.Entities.InvestmentPortfolio", b =>
+                {
+                    b.Navigation("AllocationTargets");
+
+                    b.Navigation("Instruments");
                 });
 
             modelBuilder.Entity("CostTracker.Domain.Entities.Month", b =>

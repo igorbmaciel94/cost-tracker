@@ -431,6 +431,10 @@ body {
   font-weight: 600;
 }
 
+.more-nav {
+  display: none;
+}
+
 [data-theme="dark"] .main-nav a.active {
   background: var(--brand-soft);
   color: var(--brand);
@@ -1365,6 +1369,66 @@ input::placeholder {
     font-size: 0.65rem;
     font-weight: 600;
     min-width: 0;
+  }
+
+  .main-nav > .nav-secondary {
+    display: none;
+  }
+
+  .more-nav {
+    position: relative;
+    display: block;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .more-nav summary {
+    list-style: none;
+    min-height: 100%;
+    padding: 0.4rem 0.25rem;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0.15rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+  }
+
+  .more-nav summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .more-nav.active summary,
+  .more-nav[open] summary {
+    background: var(--brand-soft);
+    color: var(--brand);
+  }
+
+  .more-nav-menu {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 0.55rem);
+    width: min(240px, calc(100vw - 1rem));
+    padding: 0.4rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow);
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  .more-nav-menu a {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.65rem 0.75rem;
+    flex-direction: row;
+    justify-content: flex-start;
+    font-size: 0.8rem;
   }
 
   .main-nav a svg {

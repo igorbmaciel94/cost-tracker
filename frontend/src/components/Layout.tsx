@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import type { MonthSummaryDto } from '../api/types';
 import { MonthSelector } from './MonthSelector';
@@ -80,6 +80,22 @@ function IconHistory() {
   );
 }
 
+function IconInvestments() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-7"/>
+    </svg>
+  );
+}
+
+function IconMore() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/>
+    </svg>
+  );
+}
+
 function IconEye() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -153,6 +169,9 @@ export function Layout({
 }: LayoutProps) {
   const { hidden, toggle } = usePrivacy();
   const { theme, toggleTheme } = useTheme();
+  const location = useLocation();
+  const isInvestmentsRoute = location.pathname.startsWith('/investimentos');
+  const isMoreActive = ['/orcamento', '/metas', '/historico'].some((path) => location.pathname.startsWith(path));
 
   const plannedRatio = selectedMonth && selectedMonth.salary > 0
     ? selectedMonth.plannedTotal / selectedMonth.salary
@@ -175,7 +194,7 @@ export function Layout({
             <span className="topbar-brand-name">Painel Financeiro</span>
           </div>
 
-          {selectedMonth && (
+          {!isInvestmentsRoute && selectedMonth && (
             <>
               <div className="topbar-divider" />
               <div className="topbar-meta">
@@ -189,27 +208,31 @@ export function Layout({
         </div>
 
         <div className="topbar-actions">
-          <MonthSelector
-            months={months}
-            selectedMonthId={selectedMonthId}
-            onChange={onSelectMonth}
-          />
-          <NewMonthButton
-            disabled={months.length === 0}
-            loading={creatingMonth}
-            onClick={onCreateMonth}
-          />
-          {selectedMonthId && (
-            <button
-              type="button"
-              className={`icon-btn${analysisError ? ' icon-btn-error' : ''}`}
-              onClick={onGenerateAnalysis}
-              disabled={generatingAnalysis}
-              title={generatingAnalysis ? 'Gerando análise…' : 'Gerar análise inteligente (PDF)'}
-              aria-label="Gerar análise inteligente"
-            >
-              <IconSparkle />
-            </button>
+          {!isInvestmentsRoute && (
+            <>
+              <MonthSelector
+                months={months}
+                selectedMonthId={selectedMonthId}
+                onChange={onSelectMonth}
+              />
+              <NewMonthButton
+                disabled={months.length === 0}
+                loading={creatingMonth}
+                onClick={onCreateMonth}
+              />
+              {selectedMonthId && (
+                <button
+                  type="button"
+                  className={`icon-btn${analysisError ? ' icon-btn-error' : ''}`}
+                  onClick={onGenerateAnalysis}
+                  disabled={generatingAnalysis}
+                  title={generatingAnalysis ? 'Gerando análise…' : 'Gerar análise inteligente (PDF)'}
+                  aria-label="Gerar análise inteligente"
+                >
+                  <IconSparkle />
+                </button>
+              )}
+            </>
           )}
           <button
             type="button"
@@ -242,7 +265,7 @@ export function Layout({
         </div>
       </header>
 
-      {selectedMonth && (
+      {!isInvestmentsRoute && selectedMonth && (
         <section className="month-kpis">
           <article className="kpi-card">
             <p className="kpi-label">Salário base</p>
@@ -271,13 +294,22 @@ export function Layout({
       )}
 
       <nav className="main-nav">
-        <NavLink to="/"><IconDashboard /><span>Dashboard</span></NavLink>
-        <NavLink to="/orcamento"><IconBudget /><span>Orçamento</span></NavLink>
-        <NavLink to="/lancamentos"><IconEntries /><span>Lançamentos</span></NavLink>
-        <NavLink to="/planejamento"><IconPlanning /><span>Planejamento</span></NavLink>
-        <NavLink to="/metas"><IconGoals /><span>Metas</span></NavLink>
-        <NavLink to="/saude-financeira"><IconHealth /><span>Saúde</span></NavLink>
-        <NavLink to="/historico"><IconHistory /><span>Histórico</span></NavLink>
+        <NavLink className="nav-primary" end to="/"><IconDashboard /><span>Dashboard</span></NavLink>
+        <NavLink className="nav-secondary" to="/orcamento"><IconBudget /><span>Orçamento</span></NavLink>
+        <NavLink className="nav-primary" to="/lancamentos"><IconEntries /><span>Lançamentos</span></NavLink>
+        <NavLink className="nav-primary" to="/planejamento"><IconPlanning /><span>Planejamento</span></NavLink>
+        <NavLink className="nav-secondary" to="/metas"><IconGoals /><span>Metas</span></NavLink>
+        <NavLink className="nav-primary" to="/saude-financeira"><IconHealth /><span>Saúde</span></NavLink>
+        <NavLink className="nav-secondary" to="/historico"><IconHistory /><span>Histórico</span></NavLink>
+        <NavLink className="nav-primary" to="/investimentos"><IconInvestments /><span>Investimentos</span></NavLink>
+        <details className={`more-nav${isMoreActive ? ' active' : ''}`}>
+          <summary><IconMore /><span>Mais</span></summary>
+          <div className="more-nav-menu">
+            <NavLink to="/orcamento"><IconBudget /><span>Orçamento</span></NavLink>
+            <NavLink to="/metas"><IconGoals /><span>Metas</span></NavLink>
+            <NavLink to="/historico"><IconHistory /><span>Histórico</span></NavLink>
+          </div>
+        </details>
       </nav>
 
       <main>{children}</main>
