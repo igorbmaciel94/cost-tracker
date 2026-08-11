@@ -1,11 +1,12 @@
 using CostTracker.Application.Interfaces;
+using CostTracker.Application.Investments.Contributions;
 using CostTracker.Domain.Entities;
 using CostTracker.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace CostTracker.Infrastructure.Persistence;
 
-public class CostTrackerDbContext(DbContextOptions<CostTrackerDbContext> options) : DbContext(options), ICostTrackerDbContext
+public class CostTrackerDbContext(DbContextOptions<CostTrackerDbContext> options) : DbContext(options), ICostTrackerDbContext, IContributionPlanningDbContext
 {
     public DbSet<Month> Months => Set<Month>();
     public DbSet<CategoryBudget> CategoryBudgets => Set<CategoryBudget>();
@@ -13,10 +14,22 @@ public class CostTrackerDbContext(DbContextOptions<CostTrackerDbContext> options
     public DbSet<GroupTarget> GroupTargets => Set<GroupTarget>();
     public DbSet<PlanningGoal> PlanningGoals => Set<PlanningGoal>();
     public DbSet<HealthProfile> HealthProfiles => Set<HealthProfile>();
+    public DbSet<InvestmentPortfolio> InvestmentPortfolios => Set<InvestmentPortfolio>();
+    public DbSet<AllocationTarget> InvestmentAllocationTargets => Set<AllocationTarget>();
+    public DbSet<InvestmentInstrument> InvestmentInstruments => Set<InvestmentInstrument>();
+    public DbSet<InvestmentTransaction> InvestmentTransactions => Set<InvestmentTransaction>();
+    public DbSet<ManualValuation> ManualValuations => Set<ManualValuation>();
+    public DbSet<MarketInstrumentMapping> MarketInstrumentMappings => Set<MarketInstrumentMapping>();
+    public DbSet<MarketQuoteSnapshot> MarketQuoteSnapshots => Set<MarketQuoteSnapshot>();
+    public DbSet<FxRateSnapshot> FxRateSnapshots => Set<FxRateSnapshot>();
+    public DbSet<ContributionPlan> ContributionPlans => Set<ContributionPlan>();
+    public DbSet<ContributionPlanLine> ContributionPlanLines => Set<ContributionPlanLine>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(CostTrackerDbContext).Assembly);
 
         modelBuilder.Entity<Month>(entity =>
         {

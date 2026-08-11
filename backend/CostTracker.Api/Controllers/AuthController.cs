@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 
 namespace CostTracker.Api.Controllers;
@@ -29,6 +30,7 @@ public class AuthController(
     }
 
     [HttpPost("login")]
+    [EnableRateLimiting("authentication")]
     public async Task<ActionResult<AuthSessionDto>> Login([FromBody] LoginRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))

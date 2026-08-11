@@ -1,4 +1,5 @@
 using CostTracker.Application.Interfaces;
+using CostTracker.Application.Investments.Contributions;
 using CostTracker.Infrastructure.Persistence;
 using CostTracker.Infrastructure.Seed;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +22,7 @@ public static class DependencyInjectionExtensions
             }));
 
         services.AddScoped<ICostTrackerDbContext>(sp => sp.GetRequiredService<CostTrackerDbContext>());
+        services.AddScoped<IContributionPlanningDbContext>(sp => sp.GetRequiredService<CostTrackerDbContext>());
         services.AddScoped<DatabaseSeeder>();
         services.AddScoped<CanonicalDataBackfillService>();
 

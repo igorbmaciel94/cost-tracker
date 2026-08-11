@@ -2,10 +2,16 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ENV_FILE="${ROOT_DIR}/deploy/.env.prod"
+ENV_FILE=""
+for candidate in "${ROOT_DIR}/deploy/.env.prod" "${ROOT_DIR}/.env"; do
+  if [[ -f "${candidate}" ]]; then
+    ENV_FILE="${candidate}"
+    break
+  fi
+done
 
-if [[ ! -f "${ENV_FILE}" ]]; then
-  echo "Missing ${ENV_FILE}." >&2
+if [[ -z "${ENV_FILE}" ]]; then
+  echo "Missing deploy/.env.prod or .env under ${ROOT_DIR}." >&2
   exit 1
 fi
 
@@ -23,6 +29,7 @@ set +a
 BACKUP_DIR="${BACKUP_DIR:-/opt/cost-tracker/backups}"
 RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-14}"
 DB_SSL_MODE="${DB_SSL_MODE:-Disable}"
+DB_SSL_MODE="$(printf '%s' "${DB_SSL_MODE}" | tr '[:upper:]' '[:lower:]')"
 BACKUP_DB_HOST="${BACKUP_DB_HOST:-${DB_HOST}}"
 
 mkdir -p "${BACKUP_DIR}"
@@ -30,9 +37,18 @@ TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
 BACKUP_FILE="${BACKUP_DIR}/costtracker_${TIMESTAMP}.sql.gz"
 
 echo "Creating backup ${BACKUP_FILE}"
-docker run --rm --network host -e PGPASSWORD="${DB_PASSWORD}" postgres:16 \
-  pg_dump -h "${BACKUP_DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" --no-owner --no-privileges --sslmode="${DB_SSL_MODE}" \
+docker run --rm --network host \
+  -e PGPASSWORD="${DB_PASSWORD}" \
+  -e PGSSLMODE="${DB_SSL_MODE}" \
+  postgres:16 \
+  pg_dump -h "${BACKUP_DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" --no-owner --no-privileges \
   | gzip > "${BACKUP_FILE}"
+
+if [[ ! -s "${BACKUP_FILE}" ]]; then
+  echo "Backup file is empty: ${BACKUP_FILE}" >&2
+  exit 1
+fi
+gzip -t "${BACKUP_FILE}"
 
 find "${BACKUP_DIR}" -type f -name 'costtracker_*.sql.gz' -mtime "+${RETENTION_DAYS}" -delete
 

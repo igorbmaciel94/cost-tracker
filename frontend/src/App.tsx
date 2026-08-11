@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './api/client';
 import type { AuthSessionDto, LoginRequest } from './api/types';
@@ -35,6 +35,10 @@ const SaudeFinanceiraPage = lazy(() =>
   import('./pages/SaudeFinanceiraPage').then((module) => ({ default: module.SaudeFinanceiraPage }))
 );
 
+const InvestmentsPage = lazy(() =>
+  import('./features/investments/InvestmentsPage').then((module) => ({ default: module.InvestmentsPage }))
+);
+
 interface AuthenticatedAppProps {
   session: AuthSessionDto;
   onLogout: () => Promise<void>;
@@ -43,11 +47,14 @@ interface AuthenticatedAppProps {
 
 function AuthenticatedApp({ session, onLogout, loggingOut }: AuthenticatedAppProps) {
   const queryClient = useQueryClient();
+  const location = useLocation();
+  const isInvestmentsRoute = location.pathname.startsWith('/investimentos');
   const [selectedMonthId, setSelectedMonthId] = useState<string | null>(null);
 
   const monthsQuery = useQuery({
     queryKey: ['months'],
-    queryFn: api.getMonths
+    queryFn: api.getMonths,
+    enabled: !isInvestmentsRoute
   });
 
   const createMonthMutation = useMutation({
@@ -92,11 +99,11 @@ function AuthenticatedApp({ session, onLogout, loggingOut }: AuthenticatedAppPro
     [months, selectedMonthId]
   );
 
-  if (monthsQuery.isLoading) {
+  if (!isInvestmentsRoute && monthsQuery.isLoading) {
     return <p className="center-message">Carregando meses...</p>;
   }
 
-  if (monthsQuery.isError) {
+  if (!isInvestmentsRoute && monthsQuery.isError) {
     return <p className="center-message">Falha ao carregar os meses.</p>;
   }
 
@@ -150,6 +157,7 @@ function AuthenticatedApp({ session, onLogout, loggingOut }: AuthenticatedAppPro
             />
             <Route path="/saude-financeira" element={<SaudeFinanceiraPage monthId={selectedMonthId} salary={selectedMonth?.salary ?? 0} />} />
             <Route path="/historico" element={<HistoricoPage months={months} />} />
+            <Route path="/investimentos/*" element={<InvestmentsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>

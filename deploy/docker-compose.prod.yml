@@ -28,6 +28,13 @@ services:
       Auth__Username: ${AUTH_USERNAME:?AUTH_USERNAME is required}
       Auth__PasswordHash: ${AUTH_PASSWORD_HASH:?AUTH_PASSWORD_HASH is required}
       Anthropic__ApiKey: ${ANTHROPIC_API_KEY:?ANTHROPIC_API_KEY is required}
+      MarketData__TwelveDataApiKey: ${TWELVE_DATA_API_KEY:-}
+      MarketData__MarketstackApiKey: ${MARKETSTACK_API_KEY:-}
+      MarketData__EnablePublicTestQuotes: ${MARKET_DATA_ENABLE_PUBLIC_TEST_QUOTES:-true}
+      MarketData__EnableBackgroundRefresh: ${MARKET_DATA_ENABLE_BACKGROUND_REFRESH:-true}
+      MarketData__RefreshOnStartup: ${MARKET_DATA_REFRESH_ON_STARTUP:-true}
+      MarketData__RefreshTimeZone: ${MARKET_DATA_REFRESH_TIME_ZONE:-Europe/Lisbon}
+      MarketData__RefreshHour: ${MARKET_DATA_REFRESH_HOUR:-6}
     ports:
       - "${APP_API_BIND_ADDRESS:-0.0.0.0}:${APP_API_BIND_PORT:-18081}:8080"
     healthcheck:
