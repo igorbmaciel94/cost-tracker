@@ -1,6 +1,7 @@
 using CostTracker.Application.Contracts;
 using CostTracker.Application.Exceptions;
 using CostTracker.Application.Interfaces;
+using CostTracker.Application.Investments.MarketData;
 using CostTracker.Application.Options;
 using CostTracker.Application.Projections;
 using CostTracker.Domain.Entities;
@@ -15,7 +16,8 @@ public class PortfolioManagementService(
     ICostTrackerDbContext dbContext,
     PortfolioProjectionService projectionService,
     TimeProvider timeProvider,
-    IOptions<MarketDataOptions> marketDataOptions)
+    IOptions<MarketDataOptions> marketDataOptions,
+    IMarketDataRefreshScheduler marketDataRefreshScheduler)
 {
     public async Task<InvestmentPortfolioDto> GetPortfolioAsync(CancellationToken cancellationToken)
     {
@@ -140,6 +142,7 @@ public class PortfolioManagementService(
         portfolio.Touch(now);
 
         await SaveChangesAsync(cancellationToken);
+        RequestMarketDataRefreshIfNeeded(instrument);
         return projectionService.ToInstrumentDetailDto(instrument);
     }
 
@@ -191,6 +194,7 @@ public class PortfolioManagementService(
         instrument.Portfolio.Touch(now);
 
         await SaveChangesAsync(cancellationToken);
+        RequestMarketDataRefreshIfNeeded(instrument);
         return projectionService.ToInstrumentDetailDto(instrument);
     }
 
@@ -254,6 +258,7 @@ public class PortfolioManagementService(
         instrument.Portfolio.Touch(now);
 
         await SaveChangesAsync(cancellationToken);
+        RequestMarketDataRefreshIfNeeded(instrument);
         return projectionService.ToInstrumentDetailDto(instrument);
     }
 
@@ -313,6 +318,15 @@ public class PortfolioManagementService(
         await dbContext.InvestmentPortfolios.AddAsync(portfolio, cancellationToken);
         await SaveChangesAsync(cancellationToken);
         return portfolio;
+    }
+
+    private void RequestMarketDataRefreshIfNeeded(InvestmentInstrument instrument)
+    {
+        if (instrument.ValuationMode == ValuationMode.MarketQuote &&
+            !string.IsNullOrWhiteSpace(instrument.Ticker))
+        {
+            marketDataRefreshScheduler.RequestRefresh();
+        }
     }
 
     private async Task<InvestmentInstrument> LoadInstrumentAsync(

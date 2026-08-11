@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using CostTracker.Api.Services;
 using CostTracker.Application.Contracts;
 using CostTracker.Application.Investments.MarketData;
 using CostTracker.Application.Options;
@@ -14,6 +15,32 @@ namespace CostTracker.Tests.Integration;
 
 public class InvestmentsApiTests
 {
+    [Fact]
+    public async Task MarketInstrumentRegistration_ShouldRequestImmediateMarketDataRefresh()
+    {
+        using var factory = new TestWebApplicationFactory();
+        using var client = factory.CreateClient();
+        await LoginAndConfigureAsync(client);
+        var signal = factory.Services.GetRequiredService<InvestmentMarketDataRefreshSignal>();
+
+        var response = await client.PostAsJsonAsync("/api/investments/instruments", new CreateInvestmentInstrumentRequest
+        {
+            AssetClass = "REITS",
+            Kind = "REIT",
+            Name = "Realty Income",
+            Ticker = "O",
+            Mic = "XNYS",
+            NativeCurrency = "USD",
+            ValuationMode = "MARKET_QUOTE",
+            AllocationScore = 10,
+            QuantityStep = 0.000001m
+        });
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromMilliseconds(250));
+        await signal.WaitAsync(timeout.Token);
+    }
+
     [Fact]
     public async Task Allocation_ShouldRequireAllFiveClassesAndWholePercentagesAndPersistAtomically()
     {
