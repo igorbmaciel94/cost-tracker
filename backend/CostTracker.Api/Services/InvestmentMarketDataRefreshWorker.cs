@@ -8,6 +8,7 @@ public sealed class InvestmentMarketDataRefreshWorker(
     IServiceScopeFactory scopeFactory,
     IOptions<MarketDataOptions> options,
     TimeProvider timeProvider,
+    InvestmentMarketDataRefreshSignal refreshSignal,
     ILogger<InvestmentMarketDataRefreshWorker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -25,7 +26,32 @@ public sealed class InvestmentMarketDataRefreshWorker(
         {
             var delay = DelayUntilNextRefresh();
             logger.LogInformation("Next investment market-data refresh in {Delay}.", delay);
-            await Task.Delay(delay, timeProvider, stoppingToken);
+            using var waitCancellation = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+            var scheduledRefresh = Task.Delay(delay, timeProvider, waitCancellation.Token);
+            var requestedRefresh = refreshSignal.WaitAsync(waitCancellation.Token).AsTask();
+            var completed = await Task.WhenAny(scheduledRefresh, requestedRefresh);
+            var triggeredByPortfolioChange = completed == requestedRefresh;
+            waitCancellation.Cancel();
+
+            try
+            {
+                await Task.WhenAll(scheduledRefresh, requestedRefresh);
+            }
+            catch (OperationCanceledException) when (!stoppingToken.IsCancellationRequested)
+            {
+                // The losing wait is cancelled after either the schedule or signal wins.
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
+            }
+
+            if (stoppingToken.IsCancellationRequested)
+                break;
+
+            if (triggeredByPortfolioChange)
+                logger.LogInformation("Investment market-data refresh requested after a portfolio change.");
+
             await RefreshSafelyAsync(stoppingToken);
         }
     }

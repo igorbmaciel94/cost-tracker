@@ -2,6 +2,7 @@ using CostTracker.Api.Configuration;
 using CostTracker.Api.Middleware;
 using CostTracker.Api.Services;
 using CostTracker.Application.Integrations.Ai;
+using CostTracker.Application.Investments.MarketData;
 using CostTracker.Application.Options;
 using CostTracker.Application.Pdf;
 using CostTracker.Application.Projections;
@@ -92,6 +93,9 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddInvestmentMarketData(builder.Configuration);
 builder.Services.AddScoped<PortfolioProjectionService>();
+builder.Services.AddSingleton<InvestmentMarketDataRefreshSignal>();
+builder.Services.AddSingleton<IMarketDataRefreshScheduler>(provider =>
+    provider.GetRequiredService<InvestmentMarketDataRefreshSignal>());
 builder.Services.AddScoped<PortfolioManagementService>();
 builder.Services.AddScoped<InvestmentMarketDataService>();
 builder.Services.AddScoped<ContributionPlanningService>();

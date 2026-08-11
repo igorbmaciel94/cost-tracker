@@ -477,7 +477,10 @@ public sealed class InvestmentMarketDataService(
                 // being labelled as GBP and overstating the position by 100x.
                 if (provider.ProviderCode == MarketDataProviderCodes.Marketstack && explicitMapping is null)
                     continue;
-                var symbol = explicitMapping?.ProviderSymbol ?? instrument.Ticker;
+                var symbol = explicitMapping?.ProviderSymbol ?? ResolveProviderSymbol(
+                    provider.ProviderCode,
+                    instrument.Ticker,
+                    instrument.Mic);
                 if (string.IsNullOrWhiteSpace(symbol))
                     continue;
 
@@ -530,6 +533,22 @@ public sealed class InvestmentMarketDataService(
             instrument.Ticker ?? instrument.Name,
             "No configured provider returned a quote for this instrument.",
             false)));
+    }
+
+    private static string? ResolveProviderSymbol(string providerCode, string? ticker, string? mic)
+    {
+        if (string.IsNullOrWhiteSpace(ticker) ||
+            !string.Equals(providerCode, MarketDataProviderCodes.YahooTest, StringComparison.OrdinalIgnoreCase) ||
+            ticker.Contains('.', StringComparison.Ordinal))
+        {
+            return ticker;
+        }
+
+        return mic?.Trim().ToUpperInvariant() switch
+        {
+            "XLON" or "LSE" => $"{ticker}.L",
+            _ => ticker
+        };
     }
 
     private async Task RefreshExchangeRatesAsync(

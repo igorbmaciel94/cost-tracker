@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
@@ -55,7 +56,19 @@ export function InstrumentDetailPage() {
   const { instrumentId = '' } = useParams();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const instrumentsQuery = useQuery({ queryKey: investmentQueryKeys.instruments(), queryFn: investmentsApi.getInstruments });
+  const [quotePollingDeadline] = useState(() => Date.now() + 20_000);
+  const instrumentsQuery = useQuery({
+    queryKey: investmentQueryKeys.instruments(),
+    queryFn: investmentsApi.getInstruments,
+    refetchInterval: (query) => {
+      const current = query.state.data?.find((item) => item.instrumentId === instrumentId);
+      return Date.now() < quotePollingDeadline &&
+        current?.valuationMode === 'MARKET_QUOTE' &&
+        !current.marketData
+        ? 1_000
+        : false;
+    }
+  });
   const transactionsQuery = useQuery({
     queryKey: investmentQueryKeys.transactions(instrumentId),
     queryFn: () => investmentsApi.getTransactions(instrumentId),
