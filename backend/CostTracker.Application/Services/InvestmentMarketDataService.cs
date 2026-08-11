@@ -415,6 +415,8 @@ public sealed class InvestmentMarketDataService(
             portfolio.BaseCurrency.Value,
             portfolio.Version,
             portfolio.AllocationTargets.Count == Enum.GetValues<AssetClass>().Length &&
+            portfolio.AllocationTargets.Select(item => item.AssetClass).Distinct().Count() == portfolio.AllocationTargets.Count &&
+            portfolio.AllocationTargets.All(item => item.Weight * 100m == decimal.Truncate(item.Weight * 100m)) &&
             portfolio.AllocationTargets.Sum(item => item.Weight) == 1m,
             targets,
             new PortfolioValuationSummaryDto(

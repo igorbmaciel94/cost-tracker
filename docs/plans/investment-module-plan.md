@@ -4,7 +4,7 @@
 
 **Data:** 11 de agosto de 2026
 
-**Escopo:** carteira pessoal, quatro classes de ativos, avaliação multimoeda em EUR e planejamento de novos aportes sem execução de ordens.
+**Escopo:** carteira pessoal, cinco categorias-alvo, avaliação multimoeda em EUR e planejamento de novos aportes sem execução de ordens.
 
 ## Resultado esperado
 
@@ -14,6 +14,7 @@ O sistema passará a manter uma carteira longitudinal, independente dos meses do
 - REITs;
 - Renda Fixa Brasil;
 - Renda Fixa Internacional;
+- Criptomoedas, somente como meta percentual, sem instrumentos ou saldo nesta versão;
 - metas por classe que totalizam exatamente 100%;
 - quantidades fracionárias para ativos negociados em mercado;
 - saldos informados manualmente para renda fixa;
@@ -31,7 +32,8 @@ O módulo orienta e registra. Ele não envia ordens a corretoras e não promete 
 | Carteira | Uma carteira global, coerente com o login single-user atual. |
 | Relação com mês | Independente de `Month`; investimentos não são clonados nem fechados na virada mensal. |
 | Moeda base | EUR para avaliação, cálculo do aporte e apresentação consolidada. |
-| Classes | Exatamente as quatro classes descritas; ETF/ADR é uma espécie de instrumento dentro de Stocks, não uma nova classe. |
+| Classes | Cinco categorias-alvo. Stocks, REITs e as duas rendas fixas aceitam instrumentos; Criptomoedas é apenas meta percentual. ETF/ADR é uma espécie de instrumento dentro de Stocks, não uma nova classe. |
+| Precisão das metas | Percentuais inteiros de 0% a 100%, informados somente pelos sliders, e soma exata de 100%. |
 | Moeda do instrumento | Informada/confirmada pelo provedor; nunca inferida pela classe ou apenas pelo ticker. |
 | Renda fixa | Valor atual de resgate informado manualmente, com moeda e data. |
 | Stocks/REITs | Quantidade derivada das movimentações; cotação automática diária. |
@@ -80,10 +82,12 @@ flowchart LR
   - peso entre zero e um;
   - unique por carteira e classe.
 - Invariantes:
-  - as quatro classes aparecem uma única vez;
+  - as cinco categorias aparecem uma única vez;
   - a soma é exatamente `1,00000000`;
+  - cada peso representa um percentual inteiro (`peso × 100` sem fração);
   - atualização completa e atômica;
   - nenhum plano anterior continua válido depois de mudar as metas.
+- `CRYPTOCURRENCIES` não pode ser usada no cadastro de instrumentos, movimentações, cotações ou avaliações manuais.
 
 ### Instrumento e posição
 
@@ -189,7 +193,7 @@ ContributionAllocator.Calculate(
 ) -> ContributionPlan
 ```
 
-### 1. Distribuição entre as quatro classes
+### 1. Distribuição entre as cinco categorias-alvo
 
 Considere:
 
@@ -215,6 +219,8 @@ soma(((V_i + x_i) / (P + A) - t_i)²)
 ```
 
 Logo, o resultado é a carteira pós-aporte mais próxima das metas em pontos percentuais, sujeita a duas regras: não vender e não gastar mais que o aporte.
+
+Criptomoedas participa dessa projeção macro para tornar visível o gap da meta, mas é **target-only** nesta versão. Qualquer parcela planejada para ela permanece como residual explícito e não gera instrumento, cotação, saldo ou linha executável de compra.
 
 Exemplo:
 
@@ -292,7 +298,7 @@ O MVP não estima spread, imposto ou comissão. O preview deixa essa premissa vi
 | Tabela | Finalidade | Precisão/constraints principais |
 |---|---|---|
 | `investment_portfolios` | Moeda base e versão | uma carteira no MVP; `base_currency char(3)` |
-| `investment_allocation_targets` | Quatro metas | `numeric(9,8)`; unique classe; `0..1` |
+| `investment_allocation_targets` | Cinco metas | `numeric(9,8)`; unique classe; `0..1`; novos saves aceitam apenas percentuais inteiros |
 | `investment_instruments` | Catálogo e regra de avaliação | unique por identidade normalizada; soft delete |
 | `market_instrument_mappings` | Símbolo por provedor | unique instrumento + provedor; moeda e multiplicador explícitos |
 | `investment_transactions` | Quantidade, custo e fluxos | quantidade `numeric(24,12)`; preço `numeric(20,8)` |
@@ -304,7 +310,7 @@ O MVP não estima spread, imposto ou comissão. O preview deixa essa premissa vi
 
 Configurações EF devem ficar em `Infrastructure/Persistence/Configurations/Investments`, em vez de aumentar ainda mais o método único atual.
 
-A migração é aditiva e não altera meses, orçamentos ou lançamentos. O onboarding cria a carteira e exige as quatro metas; não será aplicado um percentual padrão arbitrário.
+A migração é aditiva e não altera meses, orçamentos ou lançamentos. Carteiras existentes recebem `CRYPTOCURRENCIES = 0%` sem alterar os quatro pesos anteriores; a versão da carteira é incrementada para invalidar previews antigos. O onboarding exige as cinco metas e não aplica outro percentual padrão arbitrário.
 
 ## Backend
 
@@ -367,10 +373,12 @@ market data/FX, motor de aporte, confirmação auditável e hardening operaciona
 
 Validação concluída em 11 de agosto de 2026:
 
-- 53 testes backend aprovados;
-- 25 testes frontend aprovados e bundle de produção gerado;
+- 58 testes backend aprovados;
+- 26 testes frontend aprovados e bundle de produção gerado;
 - modelo EF sem alterações pendentes;
-- cinco migrações aplicadas do zero em PostgreSQL 16 real;
+- seis migrações aplicadas do zero em PostgreSQL 16 real;
+- migração de Criptomoedas validada sobre carteira legada com quatro metas,
+  incluindo bump de versão e rollback que preserva a soma de 100%;
 - smoke HTTP completo com Npgsql: onboarding, USD/BRL/EUR, cotação manual,
   refresh ECB, valuation, preview, confirmação e idempotência;
 - backup de produção testado e validado com `gzip -t`;
@@ -448,8 +456,8 @@ O cálculo financeiro permanece no backend. React Query mantém estado remoto; R
 ### Telas
 
 1. **Onboarding/Alocação**
-   - quatro sliders com campo numérico equivalente;
-   - precisão de 0,01% usando basis points na UI;
+   - cinco sliders, sem campo numérico digitável;
+   - precisão inteira, em passos de 1 ponto percentual;
    - total em `aria-live` e salvar apenas em 100%;
    - donut e tabela textual “atual × meta × desvio”.
 2. **Carteira**
@@ -541,7 +549,7 @@ Os testes atuais usam EF InMemory e não cobrem `numeric`, constraints, índices
 
 - formatter multimoeda;
 - formulário condicional;
-- editor de 100% com teclado;
+- sliders inteiros de 100% sem campo digitável;
 - vazio/loading/error/stale;
 - privacidade;
 - preview, residual e snapshot expirado;
@@ -560,7 +568,7 @@ Os testes atuais usam EF InMemory e não cobrem `numeric`, constraints, índices
 - separar o shell global do cabeçalho mensal;
 - CRUD de instrumentos e saldos manuais.
 
-**Aceite:** cadastrar as quatro metas em 100% e posições manuais; nada do orçamento mensal muda.
+**Aceite:** cadastrar as cinco metas inteiras em 100%, manter Criptomoedas sem instrumentos e cadastrar posições manuais nas quatro classes operacionais; nada do orçamento mensal muda.
 
 ### Fase 2 — histórico e custo
 

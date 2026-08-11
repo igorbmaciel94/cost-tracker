@@ -2,7 +2,10 @@ export type AssetClass =
   | 'STOCKS'
   | 'REITS'
   | 'BRAZIL_FIXED_INCOME'
-  | 'INTERNATIONAL_FIXED_INCOME';
+  | 'INTERNATIONAL_FIXED_INCOME'
+  | 'CRYPTOCURRENCIES';
+
+export type InvestableAssetClass = Exclude<AssetClass, 'CRYPTOCURRENCIES'>;
 
 export type InstrumentKind = 'STOCK' | 'ETF' | 'ADR' | 'REIT' | 'BOND' | 'ACCOUNT';
 export type ValuationMode = 'MARKET_QUOTE' | 'MANUAL';
@@ -44,7 +47,7 @@ export interface InstrumentPositionDto {
   ticker?: string | null;
   mic?: string | null;
   isin?: string | null;
-  assetClass: AssetClass;
+  assetClass: InvestableAssetClass;
   kind: InstrumentKind;
   valuationMode: ValuationMode;
   nativeCurrency: CurrencyCode;
@@ -93,7 +96,7 @@ export interface UpdateAllocationRequest {
 }
 
 export interface CreateInstrumentRequest {
-  assetClass: AssetClass;
+  assetClass: InvestableAssetClass;
   kind: InstrumentKind;
   name: string;
   identifier?: string;

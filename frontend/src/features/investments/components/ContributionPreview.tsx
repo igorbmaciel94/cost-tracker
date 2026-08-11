@@ -1,5 +1,5 @@
-import { ASSET_CLASS_META, ASSET_CLASSES } from '../constants';
-import type { AssetClass, ContributionPlanDto } from '../types';
+import { ASSET_CLASS_META, INVESTABLE_ASSET_CLASSES } from '../constants';
+import type { ContributionPlanDto, InvestableAssetClass } from '../types';
 import { formatDateIsoToPt, formatPercent } from '../../../utils/format';
 import { FreshnessBadge } from './FreshnessBadge';
 import { InvestmentMoney } from './InvestmentMoney';
@@ -7,12 +7,12 @@ import { PrivacyMask } from '../../../contexts/PrivacyContext';
 
 export function ContributionPreview({ plan }: { plan: ContributionPlanDto }) {
   const byClass = Object.fromEntries(
-    ASSET_CLASSES.map((assetClass) => [
+    INVESTABLE_ASSET_CLASSES.map((assetClass) => [
       assetClass,
       plan.classRecommendations.find((line) => line.assetClass === assetClass)?.recommendedAmountEur
         ?? plan.lines.filter((line) => line.assetClass === assetClass).reduce((sum, line) => sum + line.recommendedAmountEur, 0)
     ])
-  ) as Record<AssetClass, number>;
+  ) as Record<InvestableAssetClass, number>;
 
   return (
     <div className="contribution-preview">
@@ -26,7 +26,7 @@ export function ContributionPreview({ plan }: { plan: ContributionPlanDto }) {
       <section className="investment-panel contribution-macro">
         <header className="investment-panel-header"><div><h2>Distribuição entre classes</h2><p>O cálculo usa dinheiro novo e não sugere vendas.</p></div></header>
         <div className="contribution-class-grid">
-          {ASSET_CLASSES.map((assetClass) => (
+          {INVESTABLE_ASSET_CLASSES.map((assetClass) => (
             <article key={assetClass} style={{ '--asset-color': ASSET_CLASS_META[assetClass].color } as React.CSSProperties}>
               <span>{ASSET_CLASS_META[assetClass].label}</span>
               <strong><InvestmentMoney value={byClass[assetClass]} /></strong>

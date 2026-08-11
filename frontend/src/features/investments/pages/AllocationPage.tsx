@@ -7,7 +7,7 @@ import { StatePanel } from '../components/StatePanel';
 import { ASSET_CLASSES } from '../constants';
 import { investmentQueryKeys } from '../queryKeys';
 import type { AssetClass } from '../types';
-import { basisPointsToWeight } from '../utils';
+import { percentageToWeight } from '../utils';
 
 export function AllocationPage() {
   const queryClient = useQueryClient();
@@ -57,7 +57,7 @@ export function AllocationPage() {
     <div className="investment-page-stack">
       {isOnboarding && (
         <StatePanel title="Configure a sua carteira" tone="warning">
-          <p>Antes de cadastrar ativos, defina quanto cada uma das quatro classes deve representar. Nenhum percentual é escolhido por você automaticamente.</p>
+          <p>Antes de cadastrar ativos, defina quanto cada uma das cinco categorias deve representar. Criptomoedas funciona apenas como meta percentual.</p>
         </StatePanel>
       )}
 
@@ -66,15 +66,16 @@ export function AllocationPage() {
           targets={portfolio?.targets ?? []}
           currentValues={portfolio?.configured ? currentValues : undefined}
           disabled={allocationMutation.isPending}
+          allowUnchangedSubmit={isOnboarding}
           submitLabel={isOnboarding ? 'Criar carteira' : 'Guardar novas metas'}
-          onSubmit={async (basisPoints) => {
+          onSubmit={async (percentages) => {
             setSaveError(null);
             try {
               await allocationMutation.mutateAsync({
                 expectedVersion: portfolio?.version,
                 items: ASSET_CLASSES.map((assetClass) => ({
                   assetClass,
-                  weight: basisPointsToWeight(basisPoints[assetClass])
+                  weight: percentageToWeight(percentages[assetClass])
                 }))
               });
             } catch (error) {

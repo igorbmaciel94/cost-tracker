@@ -5,5 +5,6 @@ public enum AssetClass
     Stocks,
     Reits,
     BrazilFixedIncome,
-    InternationalFixedIncome
+    InternationalFixedIncome,
+    Cryptocurrencies
 }

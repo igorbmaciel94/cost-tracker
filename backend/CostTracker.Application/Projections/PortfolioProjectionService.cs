@@ -18,7 +18,10 @@ public class PortfolioProjectionService
             portfolio.BaseCurrency.Value,
             portfolio.Version,
             portfolio.UpdatedAt,
-            targets.Count == Enum.GetValues<AssetClass>().Length && targets.Sum(target => target.Weight) == 1m,
+            targets.Count == Enum.GetValues<AssetClass>().Length &&
+            targets.Select(target => target.AssetClass).Distinct(StringComparer.Ordinal).Count() == targets.Count &&
+            targets.All(target => target.Weight * 100m == decimal.Truncate(target.Weight * 100m)) &&
+            targets.Sum(target => target.Weight) == 1m,
             targets);
     }
 

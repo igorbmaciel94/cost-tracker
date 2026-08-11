@@ -26,7 +26,8 @@ public sealed class ContributionPlanningService(
         AssetClass.Stocks,
         AssetClass.Reits,
         AssetClass.BrazilFixedIncome,
-        AssetClass.InternationalFixedIncome
+        AssetClass.InternationalFixedIncome,
+        AssetClass.Cryptocurrencies
     ];
 
     private readonly MarketDataOptions _options = marketDataOptions.Value;
@@ -183,7 +184,7 @@ public sealed class ContributionPlanningService(
                     .ToArray()));
 
         AssetClass? fixedIncomeWithoutDestination = calculated.ClassLines
-            .Where(item => !IsMarketClass(item.AssetClass) && item.RecommendedContributionEur > 0m)
+            .Where(item => IsFixedIncomeClass(item.AssetClass) && item.RecommendedContributionEur > 0m)
             .Select(item => (AssetClass?)item.AssetClass)
             .FirstOrDefault(assetClass => instruments.All(instrument => instrument.AssetClass != assetClass));
         if (fixedIncomeWithoutDestination.HasValue)
@@ -452,7 +453,7 @@ public sealed class ContributionPlanningService(
         IReadOnlyDictionary<Guid, ValuedInstrument> valuedInstruments)
     {
         foreach (var classLine in calculated.ClassLines.Where(item =>
-                     !IsMarketClass(item.AssetClass) && item.RecommendedContributionEur > 0m))
+                     IsFixedIncomeClass(item.AssetClass) && item.RecommendedContributionEur > 0m))
         {
             var candidates = valuedInstruments.Values
                 .Where(item => item.Instrument.AssetClass == classLine.AssetClass)
@@ -800,6 +801,9 @@ public sealed class ContributionPlanningService(
     private static bool IsMarketClass(AssetClass assetClass)
         => assetClass is AssetClass.Stocks or AssetClass.Reits;
 
+    private static bool IsFixedIncomeClass(AssetClass assetClass)
+        => assetClass is AssetClass.BrazilFixedIncome or AssetClass.InternationalFixedIncome;
+
     private static decimal RoundMoney(decimal value)
         => decimal.Round(value, 8, MidpointRounding.ToEven);
 
@@ -827,9 +831,10 @@ public sealed class ContributionPlanningService(
     {
         if (portfolio.AllocationTargets.Count != StableClassOrder.Length ||
             StableClassOrder.Any(assetClass => portfolio.AllocationTargets.Count(item => item.AssetClass == assetClass) != 1) ||
+            portfolio.AllocationTargets.Any(item => item.Weight * 100m != decimal.Truncate(item.Weight * 100m)) ||
             portfolio.AllocationTargets.Sum(item => item.Weight) != 1m)
         {
-            throw new ConflictException("Configure all four allocation targets before creating a contribution plan.");
+            throw new ConflictException("Configure all five allocation targets before creating a contribution plan.");
         }
     }
 

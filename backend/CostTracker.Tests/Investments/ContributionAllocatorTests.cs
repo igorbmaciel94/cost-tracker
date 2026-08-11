@@ -136,6 +136,26 @@ public class ContributionAllocatorTests
     }
 
     [Fact]
+    public void Calculate_LeavesCryptocurrencyAllocationAsTransparentResidualWithoutPurchaseLines()
+    {
+        var plan = ContributionAllocator.Calculate(
+            Snapshot(),
+            new ContributionAmount(100m),
+            Policy(cryptocurrencies: 1m),
+            Constraints(.000001m));
+
+        var cryptocurrencies = ClassLine(plan, AssetClass.Cryptocurrencies);
+        Assert.Equal(100m, cryptocurrencies.PlannedContributionEur);
+        Assert.Equal(0m, cryptocurrencies.RecommendedContributionEur);
+        Assert.Equal(100m, cryptocurrencies.ResidualEur);
+        Assert.Equal(100m, plan.ResidualEur);
+        Assert.Empty(plan.InstrumentLines);
+        Assert.Contains(
+            cryptocurrencies.Explanations,
+            explanation => explanation.Code == ContributionExplanationCode.TargetOnlyClass);
+    }
+
+    [Fact]
     public void Calculate_FloorsQuantityToItsStepAndReportsUnusableResidual()
     {
         var portfolio = Snapshot(
@@ -295,11 +315,24 @@ public class ContributionAllocatorTests
         Assert.Contains("sum exactly to one", exception.Message);
     }
 
+    [Fact]
+    public void Calculate_RejectsFractionalClassPercentages()
+    {
+        var exception = Assert.Throws<ArgumentException>(() => ContributionAllocator.Calculate(
+            Snapshot(),
+            new ContributionAmount(100m),
+            Policy(stocks: .405m, reits: .095m, brazilFixedIncome: .30m, internationalFixedIncome: .15m, cryptocurrencies: .05m),
+            Constraints(.000001m)));
+
+        Assert.Contains("whole percentages", exception.Message);
+    }
+
     private static PortfolioSnapshot Snapshot(
         decimal stocks = 0m,
         decimal reits = 0m,
         decimal brazilFixedIncome = 0m,
         decimal internationalFixedIncome = 0m,
+        decimal cryptocurrencies = 0m,
         IReadOnlyList<InstrumentSnapshot>? stockInstruments = null,
         IReadOnlyList<InstrumentSnapshot>? reitInstruments = null)
     {
@@ -309,7 +342,8 @@ public class ContributionAllocatorTests
                 new(AssetClass.Stocks, stocks, stockInstruments ?? []),
                 new(AssetClass.Reits, reits, reitInstruments ?? []),
                 new(AssetClass.BrazilFixedIncome, brazilFixedIncome, []),
-                new(AssetClass.InternationalFixedIncome, internationalFixedIncome, [])
+                new(AssetClass.InternationalFixedIncome, internationalFixedIncome, []),
+                new(AssetClass.Cryptocurrencies, cryptocurrencies, [])
             ]);
     }
 
@@ -318,6 +352,7 @@ public class ContributionAllocatorTests
         decimal reits = 0m,
         decimal brazilFixedIncome = 0m,
         decimal internationalFixedIncome = 0m,
+        decimal cryptocurrencies = 0m,
         IReadOnlyList<InstrumentAllocationScore>? scores = null)
     {
         return new AllocationPolicy(
@@ -326,7 +361,8 @@ public class ContributionAllocatorTests
                 new(AssetClass.Stocks, stocks),
                 new(AssetClass.Reits, reits),
                 new(AssetClass.BrazilFixedIncome, brazilFixedIncome),
-                new(AssetClass.InternationalFixedIncome, internationalFixedIncome)
+                new(AssetClass.InternationalFixedIncome, internationalFixedIncome),
+                new(AssetClass.Cryptocurrencies, cryptocurrencies)
             ],
             scores ?? []);
     }

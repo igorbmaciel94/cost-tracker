@@ -11,6 +11,7 @@ internal static class InvestmentContractCodes
         AssetClass.Reits => "REITS",
         AssetClass.BrazilFixedIncome => "BRAZIL_FIXED_INCOME",
         AssetClass.InternationalFixedIncome => "INTERNATIONAL_FIXED_INCOME",
+        AssetClass.Cryptocurrencies => "CRYPTOCURRENCIES",
         _ => throw new ArgumentOutOfRangeException(nameof(value))
     };
 
@@ -20,7 +21,8 @@ internal static class InvestmentContractCodes
         "REITS" => AssetClass.Reits,
         "BRAZIL_FIXED_INCOME" => AssetClass.BrazilFixedIncome,
         "INTERNATIONAL_FIXED_INCOME" => AssetClass.InternationalFixedIncome,
-        _ => throw new DomainValidationException("assetClass must be STOCKS, REITS, BRAZIL_FIXED_INCOME or INTERNATIONAL_FIXED_INCOME.")
+        "CRYPTOCURRENCIES" => AssetClass.Cryptocurrencies,
+        _ => throw new DomainValidationException("assetClass must be STOCKS, REITS, BRAZIL_FIXED_INCOME, INTERNATIONAL_FIXED_INCOME or CRYPTOCURRENCIES.")
     };
 
     public static string ToCode(this InstrumentKind value) => value switch

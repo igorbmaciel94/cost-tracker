@@ -21,16 +21,19 @@ public sealed class AllocationTargetSet
 
         var materialized = items.ToList();
         if (materialized.Count != RequiredClasses.Length)
-            throw new ArgumentException("Allocation must contain each of the four asset classes exactly once.", nameof(items));
+            throw new ArgumentException("Allocation must contain each of the five asset classes exactly once.", nameof(items));
 
         if (materialized.Select(item => item.AssetClass).Distinct().Count() != RequiredClasses.Length ||
             RequiredClasses.Any(required => materialized.All(item => item.AssetClass != required)))
         {
-            throw new ArgumentException("Allocation must contain each of the four asset classes exactly once.", nameof(items));
+            throw new ArgumentException("Allocation must contain each of the five asset classes exactly once.", nameof(items));
         }
 
         if (materialized.Any(item => item.Weight is < 0m or > 1m))
             throw new ArgumentException("Every allocation weight must be between zero and one.", nameof(items));
+
+        if (materialized.Any(item => item.Weight * 100m != decimal.Truncate(item.Weight * 100m)))
+            throw new ArgumentException("Every allocation weight must be a whole percentage.", nameof(items));
 
         var normalized = materialized.ToDictionary(
             item => item.AssetClass,

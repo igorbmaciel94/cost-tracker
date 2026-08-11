@@ -482,6 +482,12 @@ public class PortfolioManagementService(
         decimal? quantityStepValue)
     {
         var assetClass = InvestmentContractCodes.ParseAssetClass(assetClassValue);
+        if (assetClass == AssetClass.Cryptocurrencies)
+        {
+            throw new DomainValidationException(
+                "CRYPTOCURRENCIES is allocation-target-only and cannot contain instruments.");
+        }
+
         var kind = InvestmentContractCodes.ParseInstrumentKind(kindValue);
         var valuationMode = InvestmentContractCodes.ParseValuationMode(valuationModeValue);
         var currency = ParseCurrency(nativeCurrencyValue);
@@ -586,9 +592,11 @@ public class PortfolioManagementService(
     private static void EnsurePortfolioConfigured(InvestmentPortfolio portfolio)
     {
         if (portfolio.AllocationTargets.Count != Enum.GetValues<AssetClass>().Length ||
+            portfolio.AllocationTargets.Select(item => item.AssetClass).Distinct().Count() != portfolio.AllocationTargets.Count ||
+            portfolio.AllocationTargets.Any(item => item.Weight * 100m != decimal.Truncate(item.Weight * 100m)) ||
             portfolio.AllocationTargets.Sum(item => item.Weight) != 1m)
         {
-            throw new ConflictException("Configure all four allocation targets before adding instruments.");
+            throw new ConflictException("Configure all five allocation targets before adding instruments.");
         }
     }
 

@@ -164,6 +164,35 @@ public sealed class ContributionPlanningServiceTests
     }
 
     [Fact]
+    public async Task Cryptocurrency_target_stays_as_residual_without_requiring_a_destination_or_plan_line()
+    {
+        await using var db = CreateDbContext();
+        var portfolio = CreateConfiguredPortfolio(AssetClass.Cryptocurrencies);
+        var account = CreateManualInstrument(portfolio);
+        account.ManualValuations.Add(new ManualValuation
+        {
+            Id = Guid.NewGuid(),
+            InstrumentId = account.Id,
+            Amount = 500m,
+            Currency = CurrencyCode.Eur,
+            AsOf = new DateOnly(2026, 8, 11),
+            RecordedAt = Now,
+            IdempotencyKey = "crypto-residual-balance"
+        });
+        portfolio.Instruments.Add(account);
+        db.InvestmentPortfolios.Add(portfolio);
+        await db.SaveChangesAsync();
+
+        var preview = await CreateService(db).CreatePlanAsync(
+            new CreateContributionPlanRequest { ContributionAmountEur = 100m },
+            CancellationToken.None);
+
+        Assert.Empty(preview.Lines);
+        Assert.Equal(0m, preview.TotalSuggestedEur);
+        Assert.Equal(100m, preview.ResidualAmountEur);
+    }
+
+    [Fact]
     public async Task Stale_data_requires_an_explicit_audited_override()
     {
         await using var db = CreateDbContext();
