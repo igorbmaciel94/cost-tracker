@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { ASSET_CLASS_META, ASSET_CLASSES, CURRENCIES, defaultKindFor, isMarketAssetClass } from '../constants';
+import { ASSET_CLASS_META, CURRENCIES, INVESTABLE_ASSET_CLASSES, defaultKindFor, isMarketAssetClass } from '../constants';
 import { instrumentFormSchema, type InstrumentFormValues } from '../schemas';
 import type { CreateInstrumentRequest, InstrumentPositionDto, UpdateInstrumentRequest } from '../types';
 import { createIdempotencyKey, todayIso } from '../utils';
@@ -99,7 +99,7 @@ export function InstrumentForm({ instrument, disabled, onSubmit }: InstrumentFor
         <label>
           <span>Classe</span>
           <select {...register('assetClass')} disabled={Boolean(instrument) || disabled || isSubmitting}>
-            {ASSET_CLASSES.map((value) => <option key={value} value={value}>{ASSET_CLASS_META[value].label}</option>)}
+            {INVESTABLE_ASSET_CLASSES.map((value) => <option key={value} value={value}>{ASSET_CLASS_META[value].label}</option>)}
           </select>
           {errors.assetClass?.message && <small className="field-error">{errors.assetClass.message}</small>}
         </label>

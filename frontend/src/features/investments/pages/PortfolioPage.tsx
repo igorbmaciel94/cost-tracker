@@ -6,14 +6,14 @@ import { AllocationDonut } from '../components/AllocationDonut';
 import { PortfolioKpis } from '../components/PortfolioKpis';
 import { PortfolioList } from '../components/PortfolioList';
 import { StatePanel } from '../components/StatePanel';
-import { ASSET_CLASSES } from '../constants';
+import { ASSET_CLASSES, ASSET_CLASS_META } from '../constants';
 import { investmentQueryKeys } from '../queryKeys';
-import type { AssetClass, PortfolioSummaryDto } from '../types';
+import type { AssetClass, InvestableAssetClass, PortfolioSummaryDto } from '../types';
 import { worstFreshness } from '../utils';
 
 export function PortfolioPage() {
   const queryClient = useQueryClient();
-  const [selectedClass, setSelectedClass] = useState<AssetClass | 'ALL'>('ALL');
+  const [selectedClass, setSelectedClass] = useState<InvestableAssetClass | 'ALL'>('ALL');
   const portfolioQuery = useQuery({
     queryKey: investmentQueryKeys.portfolio(),
     queryFn: investmentsApi.getPortfolio,
@@ -65,7 +65,7 @@ export function PortfolioPage() {
   if (needsOnboarding) {
     return (
       <StatePanel title="A sua carteira ainda não está configurada" tone="warning" action={<Link className="investment-primary-link" to="/investimentos/alocacao">Definir alocação</Link>}>
-        <p>Comece pelas metas das quatro classes. Depois poderá cadastrar posições e planejar aportes.</p>
+        <p>Comece pelas metas das cinco categorias. Criptomoedas aparece apenas como meta percentual; as outras quatro aceitam posições e aportes.</p>
       </StatePanel>
     );
   }
@@ -127,7 +127,7 @@ export function PortfolioPage() {
               const current = distribution[assetClass] ?? 0;
               return (
                 <div key={assetClass}>
-                  <span>{assetClass === 'STOCKS' ? 'Stocks' : assetClass === 'REITS' ? 'REITs' : assetClass === 'BRAZIL_FIXED_INCOME' ? 'Renda Fixa Brasil' : 'Renda Fixa Internacional'}</span>
+                  <span>{ASSET_CLASS_META[assetClass].label}</span>
                   <strong>{(current * 100).toFixed(2)}%</strong>
                   <small>Meta {(target * 100).toFixed(2)}% · desvio {((current - target) * 100).toFixed(2)} p.p.</small>
                   <div className="allocation-progress"><span style={{ width: `${Math.min(100, current * 100)}%` }} /></div>

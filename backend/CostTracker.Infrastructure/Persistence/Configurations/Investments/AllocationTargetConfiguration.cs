@@ -35,6 +35,7 @@ public sealed class AllocationTargetConfiguration : IEntityTypeConfiguration<All
         AssetClass.Reits => "REITS",
         AssetClass.BrazilFixedIncome => "BRAZIL_FIXED_INCOME",
         AssetClass.InternationalFixedIncome => "INTERNATIONAL_FIXED_INCOME",
+        AssetClass.Cryptocurrencies => "CRYPTOCURRENCIES",
         _ => throw new ArgumentOutOfRangeException(nameof(value))
     };
 
@@ -44,6 +45,7 @@ public sealed class AllocationTargetConfiguration : IEntityTypeConfiguration<All
         "REITS" => AssetClass.Reits,
         "BRAZIL_FIXED_INCOME" => AssetClass.BrazilFixedIncome,
         "INTERNATIONAL_FIXED_INCOME" => AssetClass.InternationalFixedIncome,
+        "CRYPTOCURRENCIES" => AssetClass.Cryptocurrencies,
         _ => throw new InvalidOperationException($"Unknown investment asset class '{value}'.")
     };
 }

@@ -8,14 +8,15 @@ namespace CostTracker.Domain.Investments.Calculations;
 /// </summary>
 public static class ContributionAllocator
 {
-    public const string CurrentAlgorithmVersion = "simplex-score-v1";
+    public const string CurrentAlgorithmVersion = "simplex-score-target-only-v2";
 
     private static readonly AssetClass[] StableClassOrder =
     [
         AssetClass.Stocks,
         AssetClass.Reits,
         AssetClass.BrazilFixedIncome,
-        AssetClass.InternationalFixedIncome
+        AssetClass.InternationalFixedIncome,
+        AssetClass.Cryptocurrencies
     ];
 
     public static ContributionPlan Calculate(
@@ -72,15 +73,22 @@ public static class ContributionAllocator
                 instrumentLines.AddRange(marketResult.Lines);
                 classExplanations.AddRange(marketResult.Explanations);
             }
-            else
+            else if (IsFixedIncomeClass(assetClass))
             {
                 recommended = planned;
                 classExplanations.Add(new ContributionExplanation(
                     ContributionExplanationCode.FixedIncomeRequiresManualSelection,
                     "O valor foi calculado para a classe; o destino de renda fixa deve ser escolhido manualmente."));
             }
+            else
+            {
+                recommended = 0m;
+                classExplanations.Add(new ContributionExplanation(
+                    ContributionExplanationCode.TargetOnlyClass,
+                    "Criptomoedas são apenas uma meta percentual; a parcela calculada permanece como residual, sem ordem de compra."));
+            }
 
-            if (planned > 0m)
+            if (recommended > 0m)
             {
                 classExplanations.Insert(0, new ContributionExplanation(
                     ContributionExplanationCode.MovesClassTowardTarget,
@@ -122,7 +130,17 @@ public static class ContributionAllocator
                 "O preview não estima comissões, spread, impostos ou taxas.")
         };
 
-        if (residual > 0m)
+        var targetOnlyResidual = classLines
+            .Where(line => line.AssetClass == AssetClass.Cryptocurrencies)
+            .Sum(line => line.ResidualEur);
+        if (targetOnlyResidual > 0m)
+        {
+            planExplanations.Add(new ContributionExplanation(
+                ContributionExplanationCode.TargetOnlyClass,
+                "A parcela de criptomoedas permanece como residual porque esta versão registra apenas a meta percentual da classe."));
+        }
+
+        if (residual > targetOnlyResidual)
         {
             planExplanations.Add(new ContributionExplanation(
                 ContributionExplanationCode.ResidualCouldNotBuyFullStep,
@@ -196,12 +214,12 @@ public static class ContributionAllocator
 
         if (classes.Count != StableClassOrder.Length || StableClassOrder.Any(x => !classes.ContainsKey(x)))
         {
-            throw new ArgumentException("Portfolio must contain each of the four asset classes exactly once.", nameof(portfolio));
+            throw new ArgumentException("Portfolio must contain each of the five asset classes exactly once.", nameof(portfolio));
         }
 
         if (targets.Count != StableClassOrder.Length || StableClassOrder.Any(x => !targets.ContainsKey(x)))
         {
-            throw new ArgumentException("Policy must contain each of the four asset classes exactly once.", nameof(policy));
+            throw new ArgumentException("Policy must contain each of the five asset classes exactly once.", nameof(policy));
         }
 
         if (classes.Values.Any(x => x.CurrentValueEur < 0m))
@@ -213,6 +231,11 @@ public static class ContributionAllocator
             targets.Values.Sum(x => x.TargetWeight) != 1m)
         {
             throw new ArgumentException("Class targets must be between zero and one and sum exactly to one.", nameof(policy));
+        }
+
+        if (targets.Values.Any(x => x.TargetWeight * 100m != decimal.Truncate(x.TargetWeight * 100m)))
+        {
+            throw new ArgumentException("Class targets must use whole percentages.", nameof(policy));
         }
 
         var allInstruments = classes.Values
@@ -603,6 +626,11 @@ public static class ContributionAllocator
     private static bool IsMarketClass(AssetClass assetClass)
     {
         return assetClass is AssetClass.Stocks or AssetClass.Reits;
+    }
+
+    private static bool IsFixedIncomeClass(AssetClass assetClass)
+    {
+        return assetClass is AssetClass.BrazilFixedIncome or AssetClass.InternationalFixedIncome;
     }
 
     private static int StableClassIndex(AssetClass assetClass)

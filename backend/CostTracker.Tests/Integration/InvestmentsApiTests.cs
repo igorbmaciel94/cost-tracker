@@ -15,7 +15,7 @@ namespace CostTracker.Tests.Integration;
 public class InvestmentsApiTests
 {
     [Fact]
-    public async Task Allocation_ShouldRequireAllFourClassesAndPersistAtomically()
+    public async Task Allocation_ShouldRequireAllFiveClassesAndWholePercentagesAndPersistAtomically()
     {
         using var factory = new TestWebApplicationFactory();
         using var client = factory.CreateClient();
@@ -39,6 +39,20 @@ public class InvestmentsApiTests
         });
         Assert.Equal(HttpStatusCode.BadRequest, invalidResponse.StatusCode);
 
+        var fractionalResponse = await client.PutAsJsonAsync("/api/investments/allocation", new UpdateInvestmentAllocationRequest
+        {
+            ExpectedVersion = initial.Version,
+            Items =
+            [
+                new() { AssetClass = "STOCKS", Weight = 0.405m },
+                new() { AssetClass = "REITS", Weight = 0.095m },
+                new() { AssetClass = "BRAZIL_FIXED_INCOME", Weight = 0.30m },
+                new() { AssetClass = "INTERNATIONAL_FIXED_INCOME", Weight = 0.20m },
+                new() { AssetClass = "CRYPTOCURRENCIES", Weight = 0m }
+            ]
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, fractionalResponse.StatusCode);
+
         var validResponse = await client.PutAsJsonAsync("/api/investments/allocation", AllocationRequest(initial.Version));
         Assert.True(
             validResponse.StatusCode == HttpStatusCode.OK,
@@ -47,8 +61,31 @@ public class InvestmentsApiTests
 
         Assert.NotNull(configured);
         Assert.True(configured.IsConfigured);
+        Assert.Equal(5, configured.AllocationTargets.Count);
+        Assert.Equal(0m, Assert.Single(configured.AllocationTargets, item => item.AssetClass == "CRYPTOCURRENCIES").Weight);
         Assert.Equal(1m, configured.AllocationTargets.Sum(item => item.Weight));
         Assert.Equal(initial.Version + 1, configured.Version);
+    }
+
+    [Fact]
+    public async Task Cryptocurrency_class_should_reject_instrument_registration()
+    {
+        using var factory = new TestWebApplicationFactory();
+        using var client = factory.CreateClient();
+        await LoginAndConfigureAsync(client);
+
+        var response = await client.PostAsJsonAsync("/api/investments/instruments", new CreateInvestmentInstrumentRequest
+        {
+            AssetClass = "CRYPTOCURRENCIES",
+            Kind = "ACCOUNT",
+            Name = "Crypto placeholder",
+            NativeCurrency = "EUR",
+            ValuationMode = "MANUAL",
+            AllocationScore = 0
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains("allocation-target-only", await response.Content.ReadAsStringAsync());
     }
 
     [Fact]
@@ -679,7 +716,8 @@ public class InvestmentsApiTests
                 new() { AssetClass = "STOCKS", Weight = 0.40m },
                 new() { AssetClass = "REITS", Weight = 0.10m },
                 new() { AssetClass = "BRAZIL_FIXED_INCOME", Weight = 0.30m },
-                new() { AssetClass = "INTERNATIONAL_FIXED_INCOME", Weight = 0.20m }
+                new() { AssetClass = "INTERNATIONAL_FIXED_INCOME", Weight = 0.20m },
+                new() { AssetClass = "CRYPTOCURRENCIES", Weight = 0m }
             ]
         };
 

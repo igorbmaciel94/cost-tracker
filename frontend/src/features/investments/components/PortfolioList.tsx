@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import { ASSET_CLASS_META, ASSET_CLASSES } from '../constants';
-import type { AssetClass, InstrumentPositionDto } from '../types';
+import { ASSET_CLASS_META, INVESTABLE_ASSET_CLASSES } from '../constants';
+import type { InstrumentPositionDto, InvestableAssetClass } from '../types';
 import { formatDateIsoToPt, formatPercent } from '../../../utils/format';
 import { PrivacyMask } from '../../../contexts/PrivacyContext';
 import { FreshnessBadge } from './FreshnessBadge';
@@ -8,8 +8,8 @@ import { InvestmentMoney } from './InvestmentMoney';
 
 interface PortfolioListProps {
   positions: InstrumentPositionDto[];
-  selectedClass: AssetClass | 'ALL';
-  onSelectClass: (assetClass: AssetClass | 'ALL') => void;
+  selectedClass: InvestableAssetClass | 'ALL';
+  onSelectClass: (assetClass: InvestableAssetClass | 'ALL') => void;
 }
 
 function positionFreshness(position: InstrumentPositionDto) {
@@ -54,7 +54,7 @@ export function PortfolioList({ positions, selectedClass, onSelectClass }: Portf
 
       <div className="investment-filters" aria-label="Filtrar por classe">
         <button type="button" className="filter-chip" aria-pressed={selectedClass === 'ALL'} onClick={() => onSelectClass('ALL')}>Todos</button>
-        {ASSET_CLASSES.map((assetClass) => (
+        {INVESTABLE_ASSET_CLASSES.map((assetClass) => (
           <button
             type="button"
             className="filter-chip"

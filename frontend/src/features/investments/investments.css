@@ -614,27 +614,20 @@
   font-size: 0.72rem;
 }
 
-.allocation-input-row {
+.allocation-slider {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 112px;
-  gap: 0.8rem;
-  align-items: center;
+  gap: 0.15rem;
 }
 
 .allocation-range {
   width: 100%;
-  accent-color: var(--asset-color);
 }
 
-.allocation-number {
+.allocation-slider-value {
   display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.allocation-number input {
-  width: 88px;
-  text-align: right;
+  justify-content: flex-end;
+  color: var(--asset-color);
+  font-size: 1rem;
 }
 
 .investment-form {
@@ -1188,10 +1181,6 @@
 
   .allocation-editor-summary {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .allocation-input-row {
-    grid-template-columns: minmax(0, 1fr) 105px;
   }
 
   .investment-form-grid,

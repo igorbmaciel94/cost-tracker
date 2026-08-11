@@ -1,28 +1,36 @@
 import { z } from 'zod';
-import { BASIS_POINTS_TOTAL } from './constants';
+import { PERCENT_TOTAL } from './constants';
 
-const assetClassSchema = z.enum([
+const investableAssetClassSchema = z.enum([
   'STOCKS',
   'REITS',
   'BRAZIL_FIXED_INCOME',
   'INTERNATIONAL_FIXED_INCOME'
 ]);
 
+const allocationAssetClassSchema = z.enum([
+  'STOCKS',
+  'REITS',
+  'BRAZIL_FIXED_INCOME',
+  'INTERNATIONAL_FIXED_INCOME',
+  'CRYPTOCURRENCIES'
+]);
+
 export const allocationSchema = z.object({
-  targets: z.record(assetClassSchema, z.number().int().min(0).max(BASIS_POINTS_TOTAL))
+  targets: z.record(allocationAssetClassSchema, z.number().int().min(0).max(PERCENT_TOTAL))
 }).superRefine(({ targets }, context) => {
   const total = Object.values(targets).reduce<number>((sum, value) => sum + value, 0);
-  if (total !== BASIS_POINTS_TOTAL) {
+  if (total !== PERCENT_TOTAL) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['targets'],
-      message: 'A soma das quatro classes precisa ser exatamente 100%.'
+      message: 'A soma das cinco categorias precisa ser exatamente 100%.'
     });
   }
 });
 
 export const instrumentFormSchema = z.object({
-  assetClass: assetClassSchema,
+  assetClass: investableAssetClassSchema,
   kind: z.enum(['STOCK', 'ETF', 'ADR', 'REIT', 'BOND', 'ACCOUNT']),
   name: z.string().trim().min(2, 'Informe um nome com pelo menos 2 caracteres.'),
   ticker: z.string().trim().max(24),

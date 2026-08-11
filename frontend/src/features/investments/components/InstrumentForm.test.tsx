@@ -9,6 +9,7 @@ describe('InstrumentForm', () => {
     const onSubmit = vi.fn();
     render(<InstrumentForm onSubmit={onSubmit} />);
 
+    expect(screen.getByLabelText('Classe')).not.toHaveTextContent('Criptomoedas');
     expect(screen.getByLabelText('Ticker')).toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText('Classe'), 'BRAZIL_FIXED_INCOME');
 

@@ -1,16 +1,16 @@
-import { ASSET_CLASSES, DEFAULT_ALLOCATION_BPS } from './constants';
+import { ASSET_CLASSES, DEFAULT_ALLOCATION_PERCENT } from './constants';
 import type { AllocationTargetDto, AssetClass, FreshnessStatus } from './types';
 
-export function allocationToBasisPoints(targets: AllocationTargetDto[]) {
-  const result: Record<AssetClass, number> = { ...DEFAULT_ALLOCATION_BPS };
+export function allocationToPercentages(targets: AllocationTargetDto[]) {
+  const result: Record<AssetClass, number> = { ...DEFAULT_ALLOCATION_PERCENT };
   for (const target of targets) {
-    result[target.assetClass] = Math.round(target.weight * 10_000);
+    result[target.assetClass] = Math.round(target.weight * 100);
   }
   return result;
 }
 
-export function basisPointsToWeight(value: number) {
-  return value / 10_000;
+export function percentageToWeight(value: number) {
+  return value / 100;
 }
 
 export function freshnessRank(status: FreshnessStatus) {

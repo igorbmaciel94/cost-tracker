@@ -16,14 +16,16 @@ describe('investments API adapters', () => {
         { assetClass: 'STOCKS', weight: 0.4 },
         { assetClass: 'REITS', weight: 0.1 },
         { assetClass: 'BRAZIL_FIXED_INCOME', weight: 0.3 },
-        { assetClass: 'INTERNATIONAL_FIXED_INCOME', weight: 0.2 }
+        { assetClass: 'INTERNATIONAL_FIXED_INCOME', weight: 0.2 },
+        { assetClass: 'CRYPTOCURRENCIES', weight: 0 }
       ]
     }), { status: 200, headers: { 'Content-Type': 'application/json' } })));
 
     const portfolio = await investmentsApi.getPortfolio();
 
     expect(portfolio.configured).toBe(true);
-    expect(portfolio.targets).toHaveLength(4);
+    expect(portfolio.targets).toHaveLength(5);
+    expect(portfolio.targets.at(-1)).toMatchObject({ assetClass: 'CRYPTOCURRENCIES', weight: 0 });
     expect(portfolio.targets.reduce((sum, target) => sum + target.weight, 0)).toBe(1);
   });
 

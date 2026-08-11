@@ -28,7 +28,7 @@ public sealed record InstrumentSnapshot(
 public readonly record struct ContributionAmount(decimal Eur);
 
 /// <summary>
-/// The allocation intent. Class targets must contain all four classes and sum exactly to one.
+/// The allocation intent. Class targets must contain all five classes and sum exactly to one.
 /// A missing instrument score has the same meaning as score zero.
 /// </summary>
 public sealed record AllocationPolicy(
@@ -109,6 +109,7 @@ public enum ContributionExplanationCode
     DistributedByScoreAndGap,
     ScoreZeroExcluded,
     FixedIncomeRequiresManualSelection,
+    TargetOnlyClass,
     NoEligibleInstrument,
     RoundedDownToQuantityStep,
     ResidualReinvested,
