@@ -38,7 +38,7 @@ public sealed class EcbExchangeRateProvider(HttpClient httpClient, TimeProvider 
         {
             var currencyKey = string.Join('+', requested.Select(Uri.EscapeDataString));
             var uri = $"service/data/EXR/D.{currencyKey}.EUR.SP00.A" +
-                      $"?startPeriod={asOf.AddDays(-10):yyyy-MM-dd}&endPeriod={asOf:yyyy-MM-dd}" +
+                      $"?endPeriod={asOf:yyyy-MM-dd}" +
                       "&lastNObservations=1&format=csvdata";
             using var response = await httpClient.GetAsync(uri, cancellationToken);
             var payload = await response.Content.ReadAsStringAsync(cancellationToken);
