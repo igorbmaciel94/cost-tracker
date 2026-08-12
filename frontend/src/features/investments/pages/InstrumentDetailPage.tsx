@@ -13,6 +13,7 @@ import type { CurrencyCode, TransactionType } from '../types';
 import { createIdempotencyKey, todayIso } from '../utils';
 import { formatDateIsoToPt } from '../../../utils/format';
 import { PrivacyMask } from '../../../contexts/PrivacyContext';
+import { ConfirmModal } from '../../../components/ConfirmModal';
 
 const transactionSchema = z.object({
   type: z.enum(['BUY', 'SELL', 'DEPOSIT', 'WITHDRAWAL', 'ADJUSTMENT']),
@@ -56,6 +57,7 @@ export function InstrumentDetailPage() {
   const { instrumentId = '' } = useParams();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [archiveConfirmationOpen, setArchiveConfirmationOpen] = useState(false);
   const [quotePollingDeadline] = useState(() => Date.now() + 20_000);
   const instrumentsQuery = useQuery({
     queryKey: investmentQueryKeys.instruments(),
@@ -138,6 +140,7 @@ export function InstrumentDetailPage() {
   const archiveMutation = useMutation({
     mutationFn: () => investmentsApi.archiveInstrument(instrumentId, instrument?.version),
     onSuccess: async () => {
+      setArchiveConfirmationOpen(false);
       await queryClient.invalidateQueries({ queryKey: investmentQueryKeys.all });
       navigate('/investimentos');
     }
@@ -164,9 +167,7 @@ export function InstrumentDetailPage() {
           </div>
           <div className="investment-header-actions">
             <Link className="investment-secondary-link" to={`/investimentos/ativos/${instrumentId}/editar`}>Editar</Link>
-            <button className="button-danger" type="button" disabled={archiveMutation.isPending} onClick={() => {
-              if (window.confirm('Arquivar este ativo? O histórico será preservado.')) archiveMutation.mutate();
-            }}>Arquivar</button>
+            <button className="button-danger" type="button" disabled={archiveMutation.isPending} onClick={() => setArchiveConfirmationOpen(true)}>Arquivar</button>
           </div>
         </header>
         <dl className="instrument-detail-kpis">
@@ -214,7 +215,7 @@ export function InstrumentDetailPage() {
               </details>
             </>
           )}
-          {(transactionMutation.isError || valuationMutation.isError || quoteMutation.isError) && <p className="investment-alert" data-tone="danger" role="alert">{investmentErrorMessage(transactionMutation.error ?? valuationMutation.error ?? quoteMutation.error)}</p>}
+          {(transactionMutation.isError || valuationMutation.isError || quoteMutation.isError || archiveMutation.isError) && <p className="investment-alert" data-tone="danger" role="alert">{investmentErrorMessage(transactionMutation.error ?? valuationMutation.error ?? quoteMutation.error ?? archiveMutation.error)}</p>}
         </section>
 
         <section className="investment-panel">
@@ -240,6 +241,18 @@ export function InstrumentDetailPage() {
           {(transactionsQuery.data?.length ?? 0) === 0 && (valuationsQuery.data?.length ?? 0) === 0 && !transactionsQuery.isLoading && <p className="investment-empty-copy">Ainda não há eventos registrados.</p>}
         </section>
       </div>
+      <ConfirmModal
+        open={archiveConfirmationOpen}
+        title="Arquivar ativo?"
+        description="O ativo deixará de aparecer na carteira, mas todo o histórico será preservado."
+        confirmLabel={archiveMutation.isPending ? 'A arquivar…' : 'Arquivar'}
+        onConfirm={() => {
+          if (!archiveMutation.isPending) archiveMutation.mutate();
+        }}
+        onCancel={() => {
+          if (!archiveMutation.isPending) setArchiveConfirmationOpen(false);
+        }}
+      />
     </div>
   );
 }
