@@ -208,6 +208,28 @@
   font-size: 0.8rem;
 }
 
+.market-refresh-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem 1rem;
+}
+
+.market-refresh-panel > div {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.market-refresh-panel small {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+.market-refresh-panel .investment-alert {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
 .investment-unavailable {
   color: var(--text-secondary);
   font-size: 0.78rem;
@@ -1307,6 +1329,15 @@
   .investment-panel-header {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .market-refresh-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .market-refresh-panel button {
+    width: 100%;
+    justify-content: center;
   }
 
   .investment-kpis,

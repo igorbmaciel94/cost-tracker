@@ -5,6 +5,7 @@ import { InvestmentApiError, investmentErrorMessage, investmentsApi } from '../a
 import { AllocationDonut } from '../components/AllocationDonut';
 import { DividendCashCard } from '../components/DividendCashCard';
 import { FxRatesPanel } from '../components/FxRatesPanel';
+import { InvestmentMoney } from '../components/InvestmentMoney';
 import { PortfolioKpis } from '../components/PortfolioKpis';
 import { PortfolioList } from '../components/PortfolioList';
 import { StatePanel } from '../components/StatePanel';
@@ -92,11 +93,25 @@ export function PortfolioPage() {
 
   return (
     <div className="investment-page-stack">
+      <section className="investment-panel market-refresh-panel">
+        <div>
+          <strong>Atualização de cotações</strong>
+          <small>Executada automaticamente às 06:00. Você também pode buscar os valores mais recentes a qualquer momento.</small>
+        </div>
+        <button type="button" disabled={refreshMutation.isPending} onClick={() => refreshMutation.mutate()}>
+          {refreshMutation.isPending ? 'A atualizar…' : 'Atualizar cotações agora'}
+        </button>
+        {refreshMutation.isError && <p className="investment-alert" data-tone="danger" role="alert">{investmentErrorMessage(refreshMutation.error, 'Não foi possível atualizar as cotações.')}</p>}
+        {refreshMutation.isSuccess && (
+          <p className="investment-alert" data-tone={refreshMutation.data.freshness === 'FRESH' ? undefined : 'warning'} role="status">
+            {refreshMutation.data.freshness === 'FRESH' ? 'Cotações atualizadas.' : refreshMutation.data.message || 'Atualização executada; alguns dados continuam pendentes.'}
+          </p>
+        )}
+      </section>
       {marketStatusQuery.data && marketStatusQuery.data.freshness !== 'FRESH' && (
         <StatePanel
           title={marketStatusQuery.data.freshness === 'STALE' ? 'Cotações desatualizadas' : 'Dados de mercado incompletos'}
           tone={marketStatusQuery.data.freshness === 'STALE' ? 'warning' : 'danger'}
-          action={<button type="button" disabled={refreshMutation.isPending} onClick={() => refreshMutation.mutate()}>{refreshMutation.isPending ? 'A atualizar…' : 'Atualizar dados'}</button>}
         >
           <p>{marketStatusQuery.data.message || 'Os valores exibidos usam o último snapshot disponível. Um novo aporte pode ficar bloqueado até a atualização.'}</p>
           {(marketStatusQuery.data.failures?.length ?? 0) > 0 && (
@@ -114,7 +129,8 @@ export function PortfolioPage() {
         <section className="investment-panel allocation-overview">
           <AllocationDonut
             values={distribution}
-            centerLabel={computedSummary.isPartial ? 'Subtotal' : 'Patrimônio'}
+            centerLabel=""
+            centerValue={<InvestmentMoney value={computedSummary.totalValueEur} />}
             title={computedSummary.isPartial ? 'Posições conhecidas por classe' : 'Carteira por classe'}
           />
         </section>
