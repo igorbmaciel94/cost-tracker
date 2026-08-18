@@ -121,58 +121,110 @@ public sealed class YahooTestMarketQuoteProvider(
         }
 
         var result = results[0];
-        if (!result.TryGetProperty("meta", out var meta) ||
-            !result.TryGetProperty("timestamp", out var timestamps) ||
-            timestamps.ValueKind != JsonValueKind.Array ||
-            !result.TryGetProperty("indicators", out var indicators) ||
-            !indicators.TryGetProperty("quote", out var quoteArrays) ||
-            quoteArrays.ValueKind != JsonValueKind.Array ||
-            quoteArrays.GetArrayLength() == 0 ||
-            !quoteArrays[0].TryGetProperty("close", out var closes) ||
-            closes.ValueKind != JsonValueKind.Array)
+        if (!result.TryGetProperty("meta", out var meta))
         {
             return false;
         }
 
-        var count = Math.Min(timestamps.GetArrayLength(), closes.GetArrayLength());
-        for (var index = count - 1; index >= 0; index--)
-        {
-            var close = closes[index];
-            if (close.ValueKind != JsonValueKind.Number || !close.TryGetDecimal(out var price) || price <= 0m ||
-                timestamps[index].ValueKind != JsonValueKind.Number || !timestamps[index].TryGetInt64(out var unixTimestamp))
-            {
-                continue;
-            }
+        var symbol = MarketDataParsing.GetString(meta, "symbol");
+        var currency = MarketDataParsing.NormalizeProviderCurrency(
+            MarketDataParsing.GetString(meta, "currency"));
+        if (string.IsNullOrWhiteSpace(symbol) || string.IsNullOrWhiteSpace(currency))
+            return false;
 
-            var timestamp = DateTimeOffset.FromUnixTimeSeconds(unixTimestamp);
-            var timezoneName = MarketDataParsing.GetString(meta, "exchangeTimezoneName");
+        var exchange = MarketDataParsing.GetString(meta, "fullExchangeName", "exchangeName");
+        var timezoneName = MarketDataParsing.GetString(meta, "exchangeTimezoneName");
+        ParsedQuote? latestClose = null;
+
+        if (result.TryGetProperty("timestamp", out var timestamps) &&
+            timestamps.ValueKind == JsonValueKind.Array &&
+            result.TryGetProperty("indicators", out var indicators) &&
+            indicators.TryGetProperty("quote", out var quoteArrays) &&
+            quoteArrays.ValueKind == JsonValueKind.Array &&
+            quoteArrays.GetArrayLength() > 0 &&
+            quoteArrays[0].TryGetProperty("close", out var closes) &&
+            closes.ValueKind == JsonValueKind.Array)
+        {
+            var count = Math.Min(timestamps.GetArrayLength(), closes.GetArrayLength());
+            for (var index = count - 1; index >= 0; index--)
+            {
+                var close = closes[index];
+                if (close.ValueKind != JsonValueKind.Number || !close.TryGetDecimal(out var price) || price <= 0m ||
+                    timestamps[index].ValueKind != JsonValueKind.Number || !timestamps[index].TryGetInt64(out var unixTimestamp) ||
+                    !TryConvertTimestamp(unixTimestamp, timezoneName, out var timestamp))
+                {
+                    continue;
+                }
+
+                latestClose = new ParsedQuote(
+                    symbol,
+                    exchange,
+                    currency,
+                    price,
+                    DateOnly.FromDateTime(timestamp.Date));
+                break;
+            }
+        }
+
+        ParsedQuote? regularMarketQuote = null;
+        if (MarketDataParsing.TryGetDecimal(meta, "regularMarketPrice", out var regularMarketPrice) &&
+            regularMarketPrice > 0m &&
+            meta.TryGetProperty("regularMarketTime", out var regularMarketTime) &&
+            regularMarketTime.ValueKind == JsonValueKind.Number &&
+            regularMarketTime.TryGetInt64(out var regularMarketUnixTimestamp) &&
+            TryConvertTimestamp(regularMarketUnixTimestamp, timezoneName, out var regularMarketTimestamp))
+        {
+            regularMarketQuote = new ParsedQuote(
+                symbol,
+                exchange,
+                currency,
+                regularMarketPrice,
+                DateOnly.FromDateTime(regularMarketTimestamp.Date));
+        }
+
+        if (regularMarketQuote is not null &&
+            (latestClose is null || regularMarketQuote.AsOf > latestClose.AsOf))
+        {
+            quote = regularMarketQuote;
+            return true;
+        }
+
+        if (latestClose is null)
+            return false;
+
+        quote = latestClose;
+        return true;
+    }
+
+    private static bool TryConvertTimestamp(
+        long unixTimestamp,
+        string? timezoneName,
+        out DateTimeOffset timestamp)
+    {
+        try
+        {
+            timestamp = DateTimeOffset.FromUnixTimeSeconds(unixTimestamp);
             if (!string.IsNullOrWhiteSpace(timezoneName))
             {
                 try
                 {
-                    timestamp = TimeZoneInfo.ConvertTime(timestamp, TimeZoneInfo.FindSystemTimeZoneById(timezoneName));
+                    timestamp = TimeZoneInfo.ConvertTime(
+                        timestamp,
+                        TimeZoneInfo.FindSystemTimeZoneById(timezoneName));
                 }
-                catch (TimeZoneNotFoundException)
+                catch (Exception exception) when (exception is TimeZoneNotFoundException or InvalidTimeZoneException)
                 {
-                    // UTC is deterministic when the host lacks the exchange timezone database.
+                    // UTC is deterministic when the host lacks valid exchange timezone data.
                 }
             }
 
-            var symbol = MarketDataParsing.GetString(meta, "symbol");
-            var currency = MarketDataParsing.GetString(meta, "currency");
-            if (string.IsNullOrWhiteSpace(symbol) || string.IsNullOrWhiteSpace(currency))
-                return false;
-
-            quote = new ParsedQuote(
-                symbol,
-                MarketDataParsing.GetString(meta, "fullExchangeName", "exchangeName"),
-                MarketDataParsing.NormalizeProviderCurrency(currency)!,
-                price,
-                DateOnly.FromDateTime(timestamp.Date));
             return true;
         }
-
-        return false;
+        catch (ArgumentOutOfRangeException)
+        {
+            timestamp = default;
+            return false;
+        }
     }
 
     private sealed record ParsedQuote(string Symbol, string? Exchange, string Currency, decimal Price, DateOnly AsOf);
