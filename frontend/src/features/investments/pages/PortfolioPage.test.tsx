@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -47,8 +46,8 @@ function renderPage(fetchMock: ReturnType<typeof vi.fn>) {
 }
 
 describe('PortfolioPage', () => {
-  it('keeps manual market refresh available even when data is fresh', async () => {
-    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+  it('does not render the market refresh control inside the portfolio', async () => {
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
       const url = String(input);
       if (url.endsWith('/investments/portfolio/valuation')) {
         return apiResponse({
@@ -60,25 +59,14 @@ describe('PortfolioPage', () => {
         });
       }
       if (url.endsWith('/investments/dividends/cash')) return apiResponse({ totalEur: 0, isPartial: false, balances: [] });
-      if (url.endsWith('/investments/market-data/refresh')) {
-        expect(init?.method).toBe('POST');
-        return apiResponse({ freshness: 'FRESH', message: 'Atualizado.' });
-      }
       return apiResponse({ freshness: 'FRESH', message: 'Dados atualizados.' });
     });
-    const user = userEvent.setup();
     renderPage(fetchMock);
 
-    const refreshButton = await screen.findByRole('button', { name: 'Atualizar cotações agora' });
+    await screen.findByTestId('allocation-donut');
+    expect(screen.queryByRole('button', { name: 'Atualizar cotações agora' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Atualização de cotações')).not.toBeInTheDocument();
     expect(screen.queryByText('Cotações desatualizadas')).not.toBeInTheDocument();
-    await user.click(refreshButton);
-
-    expect(await screen.findByRole('status')).toHaveTextContent('Cotações atualizadas.');
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining('/investments/market-data/refresh'),
-      expect.objectContaining({ method: 'POST' })
-    ));
-
     expect(screen.queryByRole('heading', { name: 'Caixa de dividendos' })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Câmbio utilizado' })).not.toBeInTheDocument();
   });
@@ -100,7 +88,7 @@ describe('PortfolioPage', () => {
       return apiResponse({ freshness: 'FRESH' });
     }));
 
-    await screen.findByRole('button', { name: 'Atualizar cotações agora' });
+    await screen.findByTestId('allocation-donut');
     expect(within(screen.getByTestId('allocation-donut')).getByText('***')).toBeInTheDocument();
     expect(screen.queryByText('Patrimônio')).not.toBeInTheDocument();
   });

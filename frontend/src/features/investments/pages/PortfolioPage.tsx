@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { InvestmentApiError, investmentErrorMessage, investmentsApi } from '../api';
@@ -13,7 +13,6 @@ import type { AssetClass, InvestableAssetClass, PortfolioSummaryDto } from '../t
 import { worstFreshness } from '../utils';
 
 export function PortfolioPage() {
-  const queryClient = useQueryClient();
   const [selectedClass, setSelectedClass] = useState<InvestableAssetClass | 'ALL'>('ALL');
   const portfolioQuery = useQuery({
     queryKey: investmentQueryKeys.portfolio(),
@@ -26,17 +25,6 @@ export function PortfolioPage() {
     enabled: portfolioQuery.isSuccess && portfolioQuery.data.configured,
     retry: false
   });
-  const refreshMutation = useMutation({
-    mutationFn: investmentsApi.refreshMarketData,
-    onSuccess: async (status) => {
-      queryClient.setQueryData(investmentQueryKeys.marketDataStatus(), status);
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: investmentQueryKeys.portfolio() }),
-        queryClient.invalidateQueries({ queryKey: investmentQueryKeys.instruments() })
-      ]);
-    }
-  });
-
   const needsOnboarding = (portfolioQuery.error instanceof InvestmentApiError && portfolioQuery.error.status === 404)
     || portfolioQuery.data?.configured === false;
   const portfolio = portfolioQuery.data;
@@ -91,21 +79,6 @@ export function PortfolioPage() {
 
   return (
     <div className="investment-page-stack">
-      <section className="investment-panel market-refresh-panel">
-        <div>
-          <strong>Atualização de cotações</strong>
-          <small>Executada automaticamente às 06:00. Você também pode buscar os valores mais recentes a qualquer momento.</small>
-        </div>
-        <button type="button" disabled={refreshMutation.isPending} onClick={() => refreshMutation.mutate()}>
-          {refreshMutation.isPending ? 'A atualizar…' : 'Atualizar cotações agora'}
-        </button>
-        {refreshMutation.isError && <p className="investment-alert" data-tone="danger" role="alert">{investmentErrorMessage(refreshMutation.error, 'Não foi possível atualizar as cotações.')}</p>}
-        {refreshMutation.isSuccess && (
-          <p className="investment-alert" data-tone={refreshMutation.data.freshness === 'FRESH' ? undefined : 'warning'} role="status">
-            {refreshMutation.data.freshness === 'FRESH' ? 'Cotações atualizadas.' : refreshMutation.data.message || 'Atualização executada; alguns dados continuam pendentes.'}
-          </p>
-        )}
-      </section>
       {marketStatusQuery.data && marketStatusQuery.data.freshness !== 'FRESH' && (
         <StatePanel
           title={marketStatusQuery.data.freshness === 'STALE' ? 'Cotações desatualizadas' : 'Dados de mercado incompletos'}
