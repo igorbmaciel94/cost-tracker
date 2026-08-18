@@ -16,12 +16,13 @@ import { formatDateIsoToPt } from '../../../utils/format';
 import { PrivacyMask } from '../../../contexts/PrivacyContext';
 import { ConfirmModal } from '../../../components/ConfirmModal';
 import { DividendEventsPanel } from '../components/DividendEventsPanel';
+import { decimalTextSchema } from '../schemas';
 
 const transactionSchema = z.object({
   type: z.enum(['BUY', 'SELL', 'DEPOSIT', 'WITHDRAWAL', 'ADJUSTMENT']),
   occurredOn: z.string().min(1),
   quantity: z.union([z.literal(''), z.coerce.number().refine((value) => value !== 0, 'A quantidade não pode ser zero.')]),
-  unitPrice: z.union([z.literal(''), z.coerce.number().positive()]),
+  unitPrice: decimalTextSchema({ allowEmpty: true }),
   amount: z.union([z.literal(''), z.coerce.number().positive()]),
   fees: z.union([z.literal(''), z.coerce.number().nonnegative()]),
   exchangeRate: z.union([z.literal(''), z.coerce.number().positive()]),
@@ -45,7 +46,7 @@ const valuationSchema = z.object({
 });
 
 const quoteSchema = z.object({
-  price: z.coerce.number().positive('Informe uma cotação positiva.'),
+  price: decimalTextSchema({ message: 'Informe uma cotação positiva usando ponto como separador decimal.' }),
   currency: z.string().length(3),
   asOf: z.string().min(1),
   providerSymbol: z.string().max(128, 'O símbolo não pode exceder 128 caracteres.')
@@ -96,7 +97,7 @@ export function InstrumentDetailPage() {
   });
   const quoteForm = useForm<QuoteForm>({
     resolver: zodResolver(quoteSchema),
-    defaultValues: { price: 0, currency: '', asOf: todayIso(), providerSymbol: '' }
+    defaultValues: { price: '', currency: '', asOf: todayIso(), providerSymbol: '' }
   });
   const selectedTransactionType = transactionForm.watch('type');
 
@@ -135,7 +136,7 @@ export function InstrumentDetailPage() {
       mic: instrument?.mic || undefined
     }),
     onSuccess: async () => {
-      quoteForm.setValue('price', 0);
+      quoteForm.setValue('price', '');
       await queryClient.invalidateQueries({ queryKey: investmentQueryKeys.all });
     }
   });
@@ -207,7 +208,7 @@ export function InstrumentDetailPage() {
                 <label><span>Tipo</span><select {...transactionForm.register('type')}><option value="BUY">Compra</option><option value="SELL">Venda</option><option value="ADJUSTMENT">Ajuste</option></select></label>
                 <label><span>Data</span><input type="date" max={todayIso()} {...transactionForm.register('occurredOn')} /></label>
                 <label><span>Quantidade</span><input type="number" min={selectedTransactionType === 'ADJUSTMENT' ? undefined : 0} step="any" {...transactionForm.register('quantity')} />{transactionForm.formState.errors.quantity?.message && <small className="field-error">{transactionForm.formState.errors.quantity.message}</small>}</label>
-                <label><span>Preço unitário</span><input type="number" min={0} step="any" {...transactionForm.register('unitPrice')} />{transactionForm.formState.errors.unitPrice?.message && <small className="field-error">{transactionForm.formState.errors.unitPrice.message}</small>}</label>
+                <label><span>Preço unitário</span><input type="text" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="0.00" {...transactionForm.register('unitPrice')} />{transactionForm.formState.errors.unitPrice?.message && <small className="field-error">{transactionForm.formState.errors.unitPrice.message}</small>}</label>
                 <label><span>Taxas</span><input type="number" min={0} step="0.01" {...transactionForm.register('fees')} /></label>
                 <label><span>Moeda</span><select {...transactionForm.register('currency')}><option value={instrument.nativeCurrency}>{instrument.nativeCurrency}</option></select></label>
                 {instrument.nativeCurrency !== 'EUR' && <label><span>{instrument.nativeCurrency} por EUR na data (opcional)</span><input type="number" min={0} step="any" {...transactionForm.register('exchangeRate')} /></label>}
@@ -217,7 +218,7 @@ export function InstrumentDetailPage() {
                 <summary>Informar cotação manual de fallback</summary>
                 <p>Use apenas quando os provedores públicos não devolverem este ativo. O valor ficará identificado como manual.</p>
                 <form className="compact-investment-form" onSubmit={quoteForm.handleSubmit((values) => quoteMutation.mutate(values))}>
-                  <label><span>Preço atual</span><input type="number" min={0} step="any" {...quoteForm.register('price')} />{quoteForm.formState.errors.price?.message && <small className="field-error">{quoteForm.formState.errors.price.message}</small>}</label>
+                  <label><span>Preço atual</span><input type="text" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="0.00" {...quoteForm.register('price')} />{quoteForm.formState.errors.price?.message && <small className="field-error">{quoteForm.formState.errors.price.message}</small>}</label>
                   <label><span>Moeda</span><select {...quoteForm.register('currency')}><option value={instrument.nativeCurrency}>{instrument.nativeCurrency}</option></select></label>
                   <label><span>Data da cotação</span><input type="date" max={todayIso()} {...quoteForm.register('asOf')} /></label>
                   <label><span>Símbolo do provedor</span><input type="text" {...quoteForm.register('providerSymbol')} /></label>

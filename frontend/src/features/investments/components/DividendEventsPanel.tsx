@@ -11,9 +11,10 @@ import { investmentQueryKeys } from '../queryKeys';
 import type { CurrencyCode, DividendEventDto } from '../types';
 import { createIdempotencyKey } from '../utils';
 import { InvestmentMoney } from './InvestmentMoney';
+import { decimalTextSchema } from '../schemas';
 
 const dividendSchema = z.object({
-  grossAmountPerUnit: z.coerce.number().positive('Informe um valor positivo.'),
+  grossAmountPerUnit: decimalTextSchema({ message: 'Informe um valor positivo usando ponto como separador decimal.' }),
   withholdingTaxPercent: z.coerce.number().min(0).lt(100, 'O imposto deve ser inferior a 100%.'),
   currency: z.string().length(3),
   exDate: z.string().min(1, 'Informe a data ex.'),
@@ -45,7 +46,7 @@ export function DividendEventsPanel({ instrumentId, nativeCurrency }: { instrume
   const form = useForm<DividendForm>({
     resolver: zodResolver(dividendSchema),
     defaultValues: {
-      grossAmountPerUnit: 0,
+      grossAmountPerUnit: '',
       withholdingTaxPercent: 0,
       currency: nativeCurrency,
       exDate: '',
@@ -67,7 +68,7 @@ export function DividendEventsPanel({ instrumentId, nativeCurrency }: { instrume
       idempotencyKey: createIdempotencyKey('dividend-event')
     }),
     onSuccess: async () => {
-      form.reset({ grossAmountPerUnit: 0, withholdingTaxPercent: 0, currency: nativeCurrency, exDate: '', paymentDate: '', notes: '' });
+      form.reset({ grossAmountPerUnit: '', withholdingTaxPercent: 0, currency: nativeCurrency, exDate: '', paymentDate: '', notes: '' });
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: investmentQueryKeys.dividends(instrumentId) }),
         queryClient.invalidateQueries({ queryKey: investmentQueryKeys.dividendCash() })
@@ -91,7 +92,7 @@ export function DividendEventsPanel({ instrumentId, nativeCurrency }: { instrume
         <summary>Cadastrar dividendo</summary>
         <p>A quantidade com direito será a que você possuía antes da data ex. O valor líquido entra no caixa às 06:00 do dia do pagamento.</p>
         <form className="compact-investment-form" onSubmit={form.handleSubmit((values) => createMutation.mutate(values))}>
-          <label><span>Valor bruto por ação/cota</span><input type="number" min={0} step="any" {...form.register('grossAmountPerUnit')} />{form.formState.errors.grossAmountPerUnit?.message && <small className="field-error">{form.formState.errors.grossAmountPerUnit.message}</small>}</label>
+          <label><span>Valor bruto por ação/cota</span><input type="text" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="0.00" {...form.register('grossAmountPerUnit')} />{form.formState.errors.grossAmountPerUnit?.message && <small className="field-error">{form.formState.errors.grossAmountPerUnit.message}</small>}</label>
           <label><span>Moeda</span><select {...form.register('currency')}>{currencies.map((currency) => <option key={currency} value={currency}>{currency}</option>)}</select></label>
           <label><span>Data ex</span><input type="date" {...form.register('exDate')} />{form.formState.errors.exDate?.message && <small className="field-error">{form.formState.errors.exDate.message}</small>}</label>
           <label><span>Data de pagamento</span><input type="date" min={exDate || undefined} {...form.register('paymentDate')} />{form.formState.errors.paymentDate?.message && <small className="field-error">{form.formState.errors.paymentDate.message}</small>}</label>

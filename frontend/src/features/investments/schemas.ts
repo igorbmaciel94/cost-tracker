@@ -1,6 +1,21 @@
 import { z } from 'zod';
 import { PERCENT_TOTAL } from './constants';
 
+const decimalTextPattern = /^(?:\d+(?:\.\d*)?|\.\d+)$/;
+
+export function decimalTextSchema({
+  allowEmpty = false,
+  allowZero = false,
+  message = 'Use somente números e ponto como separador decimal.'
+}: { allowEmpty?: boolean; allowZero?: boolean; message?: string } = {}) {
+  return z.string().trim().refine((value) => {
+    if (allowEmpty && value === '') return true;
+    if (!decimalTextPattern.test(value)) return false;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && (allowZero ? parsed >= 0 : parsed > 0);
+  }, message);
+}
+
 const investableAssetClassSchema = z.enum([
   'STOCKS',
   'REITS',
@@ -41,7 +56,7 @@ export const instrumentFormSchema = z.object({
   allocationScore: z.coerce.number().int().min(0).max(100),
   quantityStep: z.coerce.number().positive().max(1),
   openingQuantity: z.union([z.literal(''), z.coerce.number().positive()]),
-  openingUnitCost: z.union([z.literal(''), z.coerce.number().positive()]),
+  openingUnitCost: decimalTextSchema({ allowEmpty: true }),
   openingBalance: z.union([z.literal(''), z.coerce.number().nonnegative()]),
   asOf: z.string().min(1, 'Informe a data de referência.')
 }).superRefine((values, context) => {

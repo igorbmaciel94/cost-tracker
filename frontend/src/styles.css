@@ -619,6 +619,15 @@ input::placeholder {
   color: var(--text-secondary);
 }
 
+/* iOS Safari amplia automaticamente a página ao focar controles abaixo de 16px. */
+@supports (-webkit-touch-callout: none) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
 /* ===== Data Tables ===== */
 .data-table {
   width: 100%;
