@@ -18,6 +18,8 @@ export function InvestmentsShell({ children }: { children: ReactNode }) {
         <NavLink to="/investimentos/alocacao">Alocação</NavLink>
         <NavLink to="/investimentos/aporte">Novo aporte</NavLink>
         <NavLink to="/investimentos/ativos/novo">Cadastrar ativo</NavLink>
+        <NavLink to="/investimentos/dividendos">Caixa de dividendos</NavLink>
+        <NavLink to="/investimentos/cambio">Câmbio utilizado</NavLink>
       </nav>
 
       {children}

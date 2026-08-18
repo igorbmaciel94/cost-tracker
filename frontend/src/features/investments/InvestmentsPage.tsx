@@ -2,6 +2,8 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { InvestmentsShell } from './components/InvestmentsShell';
 import { AllocationPage } from './pages/AllocationPage';
 import { ContributionPage } from './pages/ContributionPage';
+import { DividendCashPage } from './pages/DividendCashPage';
+import { FxRatesPage } from './pages/FxRatesPage';
 import { InstrumentDetailPage } from './pages/InstrumentDetailPage';
 import { InstrumentFormPage } from './pages/InstrumentFormPage';
 import { PortfolioPage } from './pages/PortfolioPage';
@@ -15,6 +17,8 @@ export function InvestmentsPage() {
         <Route path="alocacao" element={<AllocationPage />} />
         <Route path="aporte" element={<ContributionPage />} />
         <Route path="ativos/novo" element={<InstrumentFormPage />} />
+        <Route path="dividendos" element={<DividendCashPage />} />
+        <Route path="cambio" element={<FxRatesPage />} />
         <Route path="ativos/:instrumentId/editar" element={<InstrumentFormPage />} />
         <Route path="ativos/:instrumentId" element={<InstrumentDetailPage />} />
         <Route path="*" element={<Navigate to="/investimentos" replace />} />
