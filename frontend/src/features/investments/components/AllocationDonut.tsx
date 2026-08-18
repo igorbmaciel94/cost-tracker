@@ -2,11 +2,12 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { ASSET_CLASS_META, ASSET_CLASSES } from '../constants';
 import type { AssetClass } from '../types';
 import { formatPercent } from '../../../utils/format';
+import type { ReactNode } from 'react';
 
 interface AllocationDonutProps {
   values: Partial<Record<AssetClass, number>>;
   centerLabel?: string;
-  centerValue?: string;
+  centerValue?: ReactNode;
   title?: string;
 }
 
@@ -44,7 +45,7 @@ export function AllocationDonut({
         </ResponsiveContainer>
         <div className="allocation-chart-center">
           {centerValue && <strong>{centerValue}</strong>}
-          <span>{centerLabel}</span>
+          {centerLabel && <span>{centerLabel}</span>}
         </div>
       </div>
       <ul className="allocation-legend" aria-label="Resumo textual da distribuição">
