@@ -197,7 +197,8 @@ export function InstrumentForm({ instrument, disabled, onSubmit }: InstrumentFor
                 </label>
                 <label>
                   <span>Custo unitário (opcional)</span>
-                  <input type="number" min={0} step="any" inputMode="decimal" {...register('openingUnitCost')} />
+                  <input type="text" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="0.00" {...register('openingUnitCost')} />
+                  {errors.openingUnitCost?.message && <small className="field-error">{errors.openingUnitCost.message}</small>}
                 </label>
               </>
             ) : (

@@ -78,6 +78,13 @@ describe('PortfolioPage', () => {
       expect.stringContaining('/investments/market-data/refresh'),
       expect.objectContaining({ method: 'POST' })
     ));
+
+    const dividendCashButton = screen.getByRole('button', { name: 'Caixa de dividendos' });
+    expect(dividendCashButton).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.queryByRole('heading', { name: 'Caixa de dividendos' })).not.toBeInTheDocument();
+    await user.click(dividendCashButton);
+    expect(await screen.findByRole('heading', { name: 'Caixa de dividendos' })).toBeInTheDocument();
+    expect(dividendCashButton).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('hides the portfolio value in the donut when privacy mode is enabled', async () => {

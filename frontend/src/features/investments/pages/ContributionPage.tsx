@@ -8,7 +8,7 @@ import { investmentErrorMessage, investmentsApi } from '../api';
 import { ContributionPreview } from '../components/ContributionPreview';
 import { InvestmentMoney } from '../components/InvestmentMoney';
 import { StatePanel } from '../components/StatePanel';
-import { contributionAmountSchema, type ContributionAmountFormValues } from '../schemas';
+import { contributionAmountSchema, decimalTextSchema, type ContributionAmountFormValues } from '../schemas';
 import { investmentQueryKeys } from '../queryKeys';
 import type { ContributionPlanDto } from '../types';
 import { createIdempotencyKey, todayIso } from '../utils';
@@ -21,7 +21,7 @@ const executionSchema = z.object({
     actualAmountEur: z.coerce.number().nonnegative(),
     actualNativeAmount: z.union([z.literal(''), z.coerce.number().nonnegative()]),
     actualQuantity: z.union([z.literal(''), z.coerce.number().nonnegative()]),
-    actualUnitPrice: z.union([z.literal(''), z.coerce.number().nonnegative()]),
+    actualUnitPrice: decimalTextSchema({ allowEmpty: true, allowZero: true }),
     fees: z.union([z.literal(''), z.coerce.number().nonnegative()]),
     currency: z.string()
   }))
@@ -108,7 +108,7 @@ export function ContributionPage() {
         actualAmountEur: line.recommendedAmountEur,
         actualNativeAmount: line.recommendedNativeAmount ?? '',
         actualQuantity: line.suggestedQuantity ?? '',
-        actualUnitPrice: line.unitPrice ?? '',
+        actualUnitPrice: line.unitPrice == null ? '' : String(line.unitPrice),
         fees: '',
         currency: line.nativeCurrency ?? 'EUR'
       }))
@@ -173,7 +173,7 @@ export function ContributionPage() {
                       <label><span>Valor na moeda do destino</span><input type="number" min={0} step="any" {...executionForm.register(`lines.${index}.actualNativeAmount`)} /></label>
                     )}
                     <label><span>Quantidade</span><input type="number" min={0} step="any" {...executionForm.register(`lines.${index}.actualQuantity`)} /></label>
-                    <label><span>Preço unitário</span><input type="number" min={0} step="any" {...executionForm.register(`lines.${index}.actualUnitPrice`)} /></label>
+                    <label><span>Preço unitário</span><input type="text" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="0.00" {...executionForm.register(`lines.${index}.actualUnitPrice`)} />{executionForm.formState.errors.lines?.[index]?.actualUnitPrice?.message && <small className="field-error">{executionForm.formState.errors.lines[index]?.actualUnitPrice?.message}</small>}</label>
                     <label><span>Taxas</span><input type="number" min={0} step="0.01" {...executionForm.register(`lines.${index}.fees`)} /></label>
                     <input type="hidden" {...executionForm.register(`lines.${index}.planLineId`)} />
                     {line?.instrumentId && <input type="hidden" {...executionForm.register(`lines.${index}.instrumentId`)} />}

@@ -17,6 +17,7 @@ import { worstFreshness } from '../utils';
 export function PortfolioPage() {
   const queryClient = useQueryClient();
   const [selectedClass, setSelectedClass] = useState<InvestableAssetClass | 'ALL'>('ALL');
+  const [openDataPanel, setOpenDataPanel] = useState<'DIVIDENDS' | 'FX' | null>(null);
   const portfolioQuery = useQuery({
     queryKey: investmentQueryKeys.portfolio(),
     queryFn: investmentsApi.getPortfolio,
@@ -123,8 +124,27 @@ export function PortfolioPage() {
         </StatePanel>
       )}
       <PortfolioKpis summary={computedSummary} />
-      <DividendCashCard />
-      <FxRatesPanel positions={positions} />
+      <nav className="investment-panel portfolio-data-submenu" aria-label="Informações complementares da carteira">
+        <span>Informações complementares</span>
+        <div>
+          <button
+            type="button"
+            aria-pressed={openDataPanel === 'DIVIDENDS'}
+            onClick={() => setOpenDataPanel((current) => current === 'DIVIDENDS' ? null : 'DIVIDENDS')}
+          >
+            Caixa de dividendos
+          </button>
+          <button
+            type="button"
+            aria-pressed={openDataPanel === 'FX'}
+            onClick={() => setOpenDataPanel((current) => current === 'FX' ? null : 'FX')}
+          >
+            Câmbio utilizado
+          </button>
+        </div>
+      </nav>
+      {openDataPanel === 'DIVIDENDS' && <DividendCashCard />}
+      {openDataPanel === 'FX' && <FxRatesPanel positions={positions} />}
       <div className="portfolio-overview-grid">
         <section className="investment-panel allocation-overview">
           <AllocationDonut
