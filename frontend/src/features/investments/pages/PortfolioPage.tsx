@@ -3,8 +3,6 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { InvestmentApiError, investmentErrorMessage, investmentsApi } from '../api';
 import { AllocationDonut } from '../components/AllocationDonut';
-import { DividendCashCard } from '../components/DividendCashCard';
-import { FxRatesPanel } from '../components/FxRatesPanel';
 import { InvestmentMoney } from '../components/InvestmentMoney';
 import { PortfolioKpis } from '../components/PortfolioKpis';
 import { PortfolioList } from '../components/PortfolioList';
@@ -17,7 +15,6 @@ import { worstFreshness } from '../utils';
 export function PortfolioPage() {
   const queryClient = useQueryClient();
   const [selectedClass, setSelectedClass] = useState<InvestableAssetClass | 'ALL'>('ALL');
-  const [openDataPanel, setOpenDataPanel] = useState<'DIVIDENDS' | 'FX' | null>(null);
   const portfolioQuery = useQuery({
     queryKey: investmentQueryKeys.portfolio(),
     queryFn: investmentsApi.getPortfolio,
@@ -124,27 +121,6 @@ export function PortfolioPage() {
         </StatePanel>
       )}
       <PortfolioKpis summary={computedSummary} />
-      <nav className="investment-panel portfolio-data-submenu" aria-label="Informações complementares da carteira">
-        <span>Informações complementares</span>
-        <div>
-          <button
-            type="button"
-            aria-pressed={openDataPanel === 'DIVIDENDS'}
-            onClick={() => setOpenDataPanel((current) => current === 'DIVIDENDS' ? null : 'DIVIDENDS')}
-          >
-            Caixa de dividendos
-          </button>
-          <button
-            type="button"
-            aria-pressed={openDataPanel === 'FX'}
-            onClick={() => setOpenDataPanel((current) => current === 'FX' ? null : 'FX')}
-          >
-            Câmbio utilizado
-          </button>
-        </div>
-      </nav>
-      {openDataPanel === 'DIVIDENDS' && <DividendCashCard />}
-      {openDataPanel === 'FX' && <FxRatesPanel positions={positions} />}
       <div className="portfolio-overview-grid">
         <section className="investment-panel allocation-overview">
           <AllocationDonut

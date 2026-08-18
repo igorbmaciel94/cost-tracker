@@ -16,13 +16,12 @@ export function FxRatesPanel({ positions }: { positions: InstrumentPositionDto[]
       .map((rate) => [`${rate!.baseCurrency}/${rate!.quoteCurrency}`, rate!] as const)
   ).values());
 
-  if (rates.length === 0) return null;
-
   return (
     <section className="investment-panel fx-rates-panel">
       <header className="investment-panel-header">
         <div><h2>Câmbio utilizado</h2><p>Taxas efetivamente usadas para converter as posições para EUR.</p></div>
       </header>
+      {rates.length === 0 && <p className="investment-empty-copy">Nenhuma conversão de moeda foi utilizada nas posições atuais.</p>}
       <div className="fx-rate-list">
         {rates.map((rate) => (
           <article key={`${rate.baseCurrency}/${rate.quoteCurrency}`}>
