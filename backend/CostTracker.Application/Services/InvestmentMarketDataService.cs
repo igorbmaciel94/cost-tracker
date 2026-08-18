@@ -32,7 +32,9 @@ public sealed class InvestmentMarketDataService(
     public async Task<MarketDataStatusDto> GetStatusAsync(CancellationToken cancellationToken = default)
         => await BuildStatusAsync([], cancellationToken);
 
-    public async Task<MarketDataStatusDto> RefreshAsync(CancellationToken cancellationToken = default)
+    public async Task<MarketDataStatusDto> RefreshAsync(
+        CancellationToken cancellationToken = default,
+        bool retryStaleSources = false)
     {
         await RefreshGate.WaitAsync(cancellationToken);
         try
@@ -50,12 +52,18 @@ public sealed class InvestmentMarketDataService(
                 .Where(instrument => RequiresMarketData(instrument))
                 .ToList();
 
-            await RefreshExchangeRatesAsync(instrumentsRequiringValuation, today, failures, cancellationToken);
+            await RefreshExchangeRatesAsync(
+                instrumentsRequiringValuation,
+                today,
+                retryStaleSources,
+                failures,
+                cancellationToken);
             await RefreshQuotesAsync(
                 instrumentsRequiringValuation
                     .Where(item => item.ValuationMode == ValuationMode.MarketQuote)
                     .ToList(),
                 today,
+                retryStaleSources,
                 failures,
                 cancellationToken);
 
@@ -433,6 +441,7 @@ public sealed class InvestmentMarketDataService(
     private async Task RefreshQuotesAsync(
         IReadOnlyList<InvestmentInstrument> instruments,
         DateOnly today,
+        bool retryStaleSources,
         List<ProviderFailure> failures,
         CancellationToken cancellationToken)
     {
@@ -444,14 +453,22 @@ public sealed class InvestmentMarketDataService(
             .Where(item => instrumentIds.Contains(item.InstrumentId))
             .AsNoTracking()
             .ToListAsync(cancellationToken);
-        var latestFetches = await dbContext.MarketQuoteSnapshots
+        var snapshotMetadata = await dbContext.MarketQuoteSnapshots
             .Where(item => instrumentIds.Contains(item.InstrumentId))
-            .GroupBy(item => item.InstrumentId)
-            .Select(group => new { InstrumentId = group.Key, FetchedAt = group.Max(item => item.FetchedAt) })
+            .Select(item => new { item.InstrumentId, item.AsOf, item.FetchedAt })
+            .AsNoTracking()
             .ToListAsync(cancellationToken);
-        var refreshedToday = latestFetches
-            .Where(item => LocalDate(item.FetchedAt) == today)
-            .Select(item => item.InstrumentId)
+        var refreshedToday = snapshotMetadata
+            .GroupBy(item => item.InstrumentId)
+            .Where(group => LocalDate(group.Max(item => item.FetchedAt)) == today)
+            .Where(group => !retryStaleSources ||
+                            ClassifyQuote(
+                                group.OrderByDescending(item => item.AsOf)
+                                    .ThenByDescending(item => item.FetchedAt)
+                                    .First()
+                                    .AsOf,
+                                today) == DataFreshnessCodes.Fresh)
+            .Select(group => group.Key)
             .ToHashSet();
         var unresolved = instruments
             .Where(item => !refreshedToday.Contains(item.Id))
@@ -554,6 +571,7 @@ public sealed class InvestmentMarketDataService(
     private async Task RefreshExchangeRatesAsync(
         IReadOnlyList<InvestmentInstrument> instruments,
         DateOnly today,
+        bool retryStaleSources,
         List<ProviderFailure> failures,
         CancellationToken cancellationToken)
     {
@@ -565,13 +583,23 @@ public sealed class InvestmentMarketDataService(
         if (unresolved.Count > 0)
         {
             var currencies = unresolved.Select(value => new CurrencyCode(value)).ToList();
-            var latestFetches = await dbContext.FxRateSnapshots
+            var snapshotMetadata = await dbContext.FxRateSnapshots
                 .Where(item => item.BaseCurrency == CurrencyCode.Eur && currencies.Contains(item.QuoteCurrency))
-                .GroupBy(item => item.QuoteCurrency)
-                .Select(group => new { QuoteCurrency = group.Key, FetchedAt = group.Max(item => item.FetchedAt) })
+                .Select(item => new { item.QuoteCurrency, item.AsOf, item.FetchedAt })
+                .AsNoTracking()
                 .ToListAsync(cancellationToken);
-            foreach (var recent in latestFetches.Where(item => LocalDate(item.FetchedAt) == today))
-                unresolved.Remove(recent.QuoteCurrency.Value);
+            foreach (var group in snapshotMetadata.GroupBy(item => item.QuoteCurrency))
+            {
+                if (LocalDate(group.Max(item => item.FetchedAt)) != today)
+                    continue;
+
+                var current = group
+                    .OrderByDescending(item => item.AsOf)
+                    .ThenByDescending(item => item.FetchedAt)
+                    .First();
+                if (!retryStaleSources || ClassifyQuote(current.AsOf, today) == DataFreshnessCodes.Fresh)
+                    unresolved.Remove(group.Key.Value);
+            }
         }
 
         foreach (var provider in _exchangeRateProviders)

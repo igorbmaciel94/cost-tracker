@@ -14,7 +14,7 @@ public sealed class InvestmentMarketDataController(InvestmentMarketDataService s
 
     [HttpPost("refresh")]
     public async Task<ActionResult<MarketDataStatusDto>> Refresh(CancellationToken cancellationToken)
-        => Ok(await service.RefreshAsync(cancellationToken));
+        => Ok(await service.RefreshAsync(cancellationToken, retryStaleSources: true));
 
     [HttpGet("instruments/{instrumentId:guid}/mappings")]
     public async Task<ActionResult<IReadOnlyList<MarketInstrumentMappingDto>>> GetMappings(

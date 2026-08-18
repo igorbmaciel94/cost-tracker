@@ -7,14 +7,66 @@ using CostTracker.Application.Options;
 using CostTracker.Domain.Entities;
 using CostTracker.Domain.ValueObjects;
 using CostTracker.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 namespace CostTracker.Tests.Integration;
 
 public class InvestmentsApiTests
 {
+    [Fact]
+    public async Task ManualMarketDataRefresh_ShouldRetryAStaleQuoteFetchedEarlierTheSameDay()
+    {
+        var now = new DateTimeOffset(2026, 8, 18, 6, 44, 0, TimeSpan.Zero);
+        var quoteProvider = new SequencedHttpQuoteProvider(
+            now,
+            new DateOnly(2026, 8, 14),
+            new DateOnly(2026, 8, 17));
+        using var baseFactory = new TestWebApplicationFactory();
+        using var factory = baseFactory.WithWebHostBuilder(builder =>
+            builder.ConfigureServices(services =>
+            {
+                services.RemoveAll<TimeProvider>();
+                services.AddSingleton<TimeProvider>(new FixedTimeProvider(now));
+                services.RemoveAll<IMarketQuoteProvider>();
+                services.AddSingleton<IMarketQuoteProvider>(quoteProvider);
+                services.RemoveAll<IExchangeRateProvider>();
+                services.AddSingleton<IExchangeRateProvider>(new FixedExchangeRateProvider(now));
+            }));
+        using var client = factory.CreateClient();
+        await LoginAndConfigureAsync(client);
+
+        var createResponse = await client.PostAsJsonAsync(
+            "/api/investments/instruments",
+            new CreateInvestmentInstrumentRequest
+            {
+                AssetClass = "STOCKS",
+                Kind = "STOCK",
+                Name = "Bank of America",
+                Ticker = "BAC",
+                Mic = "XNYS",
+                NativeCurrency = "USD",
+                ValuationMode = "MARKET_QUOTE",
+                AllocationScore = 10,
+                QuantityStep = 0.000001m
+            });
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+
+        var firstResponse = await client.PostAsync("/api/investments/market-data/refresh", null);
+        var first = await firstResponse.Content.ReadFromJsonAsync<MarketDataStatusDto>();
+        var retryResponse = await client.PostAsync("/api/investments/market-data/refresh", null);
+        var retried = await retryResponse.Content.ReadFromJsonAsync<MarketDataStatusDto>();
+
+        Assert.Equal(HttpStatusCode.OK, firstResponse.StatusCode);
+        Assert.Equal(DataFreshnessCodes.Stale, first!.Freshness);
+        Assert.Equal(HttpStatusCode.OK, retryResponse.StatusCode);
+        Assert.Equal(2, quoteProvider.CallCount);
+        Assert.Equal(DataFreshnessCodes.Fresh, retried!.Freshness);
+    }
+
     [Fact]
     public async Task MarketInstrumentRegistration_ShouldRequestImmediateMarketDataRefresh()
     {
@@ -766,5 +818,63 @@ public class InvestmentsApiTests
             Password = TestWebApplicationFactory.TestPassword
         });
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    private sealed class SequencedHttpQuoteProvider(
+        DateTimeOffset fetchedAt,
+        params DateOnly[] dates) : IMarketQuoteProvider
+    {
+        public string ProviderCode => "TEST_QUOTES";
+        public int CallCount { get; private set; }
+
+        public Task<ProviderBatchResult<MarketQuoteResult>> GetLatestQuotesAsync(
+            IReadOnlyList<MarketQuoteRequest> requests,
+            CancellationToken cancellationToken)
+        {
+            var asOf = dates[Math.Min(CallCount, dates.Length - 1)];
+            CallCount++;
+            IReadOnlyList<MarketQuoteResult> quotes = requests.Select(request => new MarketQuoteResult(
+                request.InstrumentId,
+                ProviderCode,
+                request.ProviderSymbol,
+                request.Exchange,
+                request.Mic,
+                100m,
+                request.ExpectedCurrency,
+                "LATEST_AVAILABLE",
+                asOf,
+                fetchedAt,
+                false,
+                new string('e', 64))).ToList();
+            return Task.FromResult(new ProviderBatchResult<MarketQuoteResult>(quotes, []));
+        }
+    }
+
+    private sealed class FixedExchangeRateProvider(DateTimeOffset fetchedAt) : IExchangeRateProvider
+    {
+        public string ProviderCode => "TEST_FX";
+
+        public Task<ProviderBatchResult<ExchangeRateResult>> GetLatestRatesAsync(
+            IReadOnlyCollection<string> quoteCurrencies,
+            DateOnly asOf,
+            CancellationToken cancellationToken)
+        {
+            IReadOnlyList<ExchangeRateResult> rates = quoteCurrencies.Select(currency => new ExchangeRateResult(
+                ProviderCode,
+                "EUR",
+                currency,
+                2m,
+                "TEST",
+                asOf,
+                fetchedAt,
+                false,
+                new string('f', 64))).ToList();
+            return Task.FromResult(new ProviderBatchResult<ExchangeRateResult>(rates, []));
+        }
+    }
+
+    private sealed class FixedTimeProvider(DateTimeOffset now) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => now;
     }
 }
