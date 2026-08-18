@@ -35,6 +35,10 @@ services:
       MarketData__RefreshOnStartup: ${MARKET_DATA_REFRESH_ON_STARTUP:-true}
       MarketData__RefreshTimeZone: ${MARKET_DATA_REFRESH_TIME_ZONE:-Europe/Lisbon}
       MarketData__RefreshHour: ${MARKET_DATA_REFRESH_HOUR:-6}
+      Dividends__EnableBackgroundProcessing: ${DIVIDEND_BACKGROUND_PROCESSING:-true}
+      Dividends__ProcessOnStartup: ${DIVIDEND_PROCESS_ON_STARTUP:-true}
+      Dividends__ProcessingTimeZone: ${DIVIDEND_PROCESSING_TIME_ZONE:-Europe/Lisbon}
+      Dividends__ProcessingHour: ${DIVIDEND_PROCESSING_HOUR:-6}
     ports:
       - "${APP_API_BIND_ADDRESS:-0.0.0.0}:${APP_API_BIND_PORT:-18081}:8080"
     healthcheck:

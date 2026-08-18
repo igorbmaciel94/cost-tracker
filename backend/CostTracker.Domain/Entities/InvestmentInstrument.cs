@@ -28,6 +28,7 @@ public class InvestmentInstrument
     public InvestmentPortfolio Portfolio { get; set; } = null!;
     public ICollection<InvestmentTransaction> Transactions { get; set; } = new List<InvestmentTransaction>();
     public ICollection<ManualValuation> ManualValuations { get; set; } = new List<ManualValuation>();
+    public ICollection<DividendEvent> DividendEvents { get; set; } = new List<DividendEvent>();
 
     public void Touch(DateTimeOffset now)
     {

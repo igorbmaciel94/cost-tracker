@@ -19,5 +19,6 @@ public interface ICostTrackerDbContext
     DbSet<MarketInstrumentMapping> MarketInstrumentMappings { get; }
     DbSet<MarketQuoteSnapshot> MarketQuoteSnapshots { get; }
     DbSet<FxRateSnapshot> FxRateSnapshots { get; }
+    DbSet<DividendEvent> DividendEvents { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

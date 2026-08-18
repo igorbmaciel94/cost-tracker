@@ -1,11 +1,14 @@
 import type {
   ConfirmContributionPlanRequest,
   ContributionPlanDto,
+  CreateDividendEventRequest,
   CreateContributionPlanRequest,
   CreateInstrumentRequest,
   CreateManualValuationRequest,
   CreateTransactionRequest,
   InvestmentTransactionDto,
+  DividendCashSummaryDto,
+  DividendEventDto,
   InstrumentPositionDto,
   ManualValuationDto,
   ManualMarketQuoteRequest,
@@ -32,7 +35,28 @@ function normalizeMarketData(value: UnknownRecord): InstrumentPositionDto['marke
     fetchedAt: value.fetchedAt == null ? null : String(value.fetchedAt),
     source: value.source == null ? null : String(value.source),
     freshness: String(value.freshness ?? 'MISSING') as NonNullable<InstrumentPositionDto['marketData']>['freshness'],
-    isFallback: Boolean(value.isFallback)
+    isFallback: Boolean(value.isFallback),
+    price: asNumber(value.price) ?? 0,
+    currency: String(value.currency ?? 'EUR'),
+    priceKind: String(value.priceKind ?? 'LATEST_AVAILABLE'),
+    providerSymbol: String(value.providerSymbol ?? ''),
+    exchange: value.exchange == null ? null : String(value.exchange),
+    mic: value.mic == null ? null : String(value.mic)
+  };
+}
+
+function normalizeFxData(value: UnknownRecord): InstrumentPositionDto['fxData'] {
+  if (Object.keys(value).length === 0) return null;
+  return {
+    asOf: value.asOf == null ? null : String(value.asOf),
+    fetchedAt: value.fetchedAt == null ? null : String(value.fetchedAt),
+    source: value.source == null ? null : String(value.source),
+    freshness: String(value.freshness ?? 'MISSING') as NonNullable<InstrumentPositionDto['fxData']>['freshness'],
+    isFallback: Boolean(value.isFallback),
+    rate: asNumber(value.rate) ?? 0,
+    baseCurrency: String(value.baseCurrency ?? 'EUR'),
+    quoteCurrency: String(value.quoteCurrency ?? 'EUR'),
+    rateKind: String(value.rateKind ?? 'LATEST_AVAILABLE')
   };
 }
 
@@ -71,7 +95,7 @@ function normalizeInstrument(value: unknown): InstrumentPositionDto {
     archived: Boolean(source.archived ?? source.isArchived),
     freshness: source.freshness == null ? undefined : String(source.freshness) as InstrumentPositionDto['freshness'],
     marketData: normalizeMarketData(marketData),
-    fxData: normalizeMarketData(fxData),
+    fxData: normalizeFxData(fxData),
     lastValuationAsOf: source.lastValuationAsOf == null
       ? position.currentManualValueAsOf == null ? latestManual.asOf == null ? null : String(latestManual.asOf) : String(position.currentManualValueAsOf)
       : String(source.lastValuationAsOf)
@@ -229,6 +253,53 @@ function normalizeMarketDataStatus(value: unknown): MarketDataStatusDto {
   };
 }
 
+function normalizeDividendEvent(value: unknown): DividendEventDto {
+  const source = asRecord(value);
+  return {
+    id: String(source.id ?? ''),
+    instrumentId: String(source.instrumentId ?? ''),
+    instrumentName: String(source.instrumentName ?? 'Ativo'),
+    ticker: source.ticker == null ? null : String(source.ticker),
+    grossAmountPerUnit: asNumber(source.grossAmountPerUnit) ?? 0,
+    withholdingTaxPercent: asNumber(source.withholdingTaxPercent) ?? 0,
+    currency: String(source.currency ?? 'EUR'),
+    exDate: String(source.exDate ?? ''),
+    paymentDate: String(source.paymentDate ?? ''),
+    notes: source.notes == null ? null : String(source.notes),
+    status: String(source.status ?? 'SCHEDULED') as DividendEventDto['status'],
+    eligibleQuantity: asNumber(source.eligibleQuantity) ?? null,
+    grossAmount: asNumber(source.grossAmount) ?? null,
+    withholdingTaxAmount: asNumber(source.withholdingTaxAmount) ?? null,
+    netAmount: asNumber(source.netAmount) ?? null,
+    currencyPerEurRate: asNumber(source.currencyPerEurRate) ?? null,
+    netAmountEur: asNumber(source.netAmountEur) ?? null,
+    fxAsOf: source.fxAsOf == null ? null : String(source.fxAsOf),
+    fxSource: source.fxSource == null ? null : String(source.fxSource),
+    processedAt: source.processedAt == null ? null : String(source.processedAt),
+    createdAt: String(source.createdAt ?? ''),
+    canDelete: Boolean(source.canDelete)
+  };
+}
+
+function normalizeDividendCash(value: unknown): DividendCashSummaryDto {
+  const source = asRecord(value);
+  const balances = Array.isArray(source.balances) ? source.balances : [];
+  return {
+    totalEur: asNumber(source.totalEur) ?? null,
+    isPartial: Boolean(source.isPartial),
+    balances: balances.map((value) => {
+      const balance = asRecord(value);
+      return {
+        currency: String(balance.currency ?? 'EUR'),
+        amount: asNumber(balance.amount) ?? 0,
+        amountEur: asNumber(balance.amountEur) ?? null,
+        lastPaymentDate: balance.lastPaymentDate == null ? null : String(balance.lastPaymentDate),
+        fxData: normalizeFxData(asRecord(balance.fxData))
+      };
+    })
+  };
+}
+
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ??
   (import.meta.env.PROD ? '/api' : 'http://localhost:8080/api');
@@ -320,6 +391,18 @@ export const investmentsApi = {
     normalizeMarketDataStatus(await investmentFetch<unknown>('/investments/market-data/status')),
   refreshMarketData: async () =>
     normalizeMarketDataStatus(await investmentFetch<unknown>('/investments/market-data/refresh', { method: 'POST' })),
+  getDividendEvents: async (instrumentId?: string) => {
+    const query = instrumentId ? `?instrumentId=${encodeURIComponent(instrumentId)}` : '';
+    return (await investmentFetch<unknown[]>(`/investments/dividends${query}`)).map(normalizeDividendEvent);
+  },
+  createDividendEvent: async (instrumentId: string, request: CreateDividendEventRequest) =>
+    normalizeDividendEvent(await investmentFetch<unknown>(`/investments/instruments/${instrumentId}/dividends`, {
+      method: 'POST',
+      body: JSON.stringify(request)
+    })),
+  deleteDividendEvent: (eventId: string) =>
+    investmentFetch<void>(`/investments/dividends/${eventId}`, { method: 'DELETE' }),
+  getDividendCash: async () => normalizeDividendCash(await investmentFetch<unknown>('/investments/dividends/cash')),
   createContributionPlan: async (request: CreateContributionPlanRequest) =>
     normalizeContributionPlan(await investmentFetch<unknown>('/investments/contribution-plans', {
       method: 'POST',

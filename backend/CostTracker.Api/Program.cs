@@ -2,6 +2,7 @@ using CostTracker.Api.Configuration;
 using CostTracker.Api.Middleware;
 using CostTracker.Api.Services;
 using CostTracker.Application.Integrations.Ai;
+using CostTracker.Application.Investments.Dividends;
 using CostTracker.Application.Investments.MarketData;
 using CostTracker.Application.Options;
 using CostTracker.Application.Pdf;
@@ -85,6 +86,10 @@ builder.Services.AddCors(options =>
 builder.Services.AddOptions<AnthropicOptions>()
     .Bind(builder.Configuration.GetSection("Anthropic"))
     .ValidateOnStart();
+builder.Services.AddOptions<DividendOptions>()
+    .Bind(builder.Configuration.GetSection("Dividends"))
+    .Validate(options => options.ProcessingHour is >= 0 and <= 23, "Dividends:ProcessingHour must be between 0 and 23.")
+    .ValidateOnStart();
 
 builder.Services.AddSingleton<IAiAnalysisClient, ClaudeAnalysisClient>();
 builder.Services.AddSingleton<IPdfRenderer, AnalysisPdfRenderer>();
@@ -96,10 +101,15 @@ builder.Services.AddScoped<PortfolioProjectionService>();
 builder.Services.AddSingleton<InvestmentMarketDataRefreshSignal>();
 builder.Services.AddSingleton<IMarketDataRefreshScheduler>(provider =>
     provider.GetRequiredService<InvestmentMarketDataRefreshSignal>());
+builder.Services.AddSingleton<DividendProcessingSignal>();
+builder.Services.AddSingleton<IDividendProcessingScheduler>(provider =>
+    provider.GetRequiredService<DividendProcessingSignal>());
 builder.Services.AddScoped<PortfolioManagementService>();
 builder.Services.AddScoped<InvestmentMarketDataService>();
+builder.Services.AddScoped<DividendService>();
 builder.Services.AddScoped<ContributionPlanningService>();
 builder.Services.AddHostedService<InvestmentMarketDataRefreshWorker>();
+builder.Services.AddHostedService<DividendPaymentWorker>();
 builder.Services.AddScoped<MonthProjectionService>();
 builder.Services.AddScoped<PasswordHashService>();
 builder.Services.AddScoped<MonthService>();

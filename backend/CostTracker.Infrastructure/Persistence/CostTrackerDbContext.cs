@@ -24,6 +24,7 @@ public class CostTrackerDbContext(DbContextOptions<CostTrackerDbContext> options
     public DbSet<FxRateSnapshot> FxRateSnapshots => Set<FxRateSnapshot>();
     public DbSet<ContributionPlan> ContributionPlans => Set<ContributionPlan>();
     public DbSet<ContributionPlanLine> ContributionPlanLines => Set<ContributionPlanLine>();
+    public DbSet<DividendEvent> DividendEvents => Set<DividendEvent>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

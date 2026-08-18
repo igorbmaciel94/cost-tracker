@@ -5,6 +5,7 @@ import { formatDateIsoToPt, formatPercent } from '../../../utils/format';
 import { PrivacyMask } from '../../../contexts/PrivacyContext';
 import { FreshnessBadge } from './FreshnessBadge';
 import { InvestmentMoney } from './InvestmentMoney';
+import { ValuationBreakdown } from './ValuationBreakdown';
 
 interface PortfolioListProps {
   positions: InstrumentPositionDto[];
@@ -102,6 +103,10 @@ export function PortfolioList({ positions, selectedClass, onSelectClass }: Portf
                     <td>
                       <FreshnessBadge status={positionFreshness(position)} />
                       {oldestPositionDate(position) && <small className="as-of">{formatDateIsoToPt(oldestPositionDate(position) ?? '')}</small>}
+                      <details className="valuation-source-details">
+                        <summary>Ver cálculo e fontes</summary>
+                        <ValuationBreakdown position={position} compact />
+                      </details>
                     </td>
                     <td><Link className="table-action-link" to={`/investimentos/ativos/${position.instrumentId}`}>Detalhes</Link></td>
                   </tr>
@@ -123,6 +128,10 @@ export function PortfolioList({ positions, selectedClass, onSelectClass }: Portf
                   <div><dt>Peso</dt><dd>{position.portfolioWeight == null ? '—' : formatPercent(position.portfolioWeight)}</dd></div>
                   <div><dt>Dados</dt><dd><FreshnessBadge status={positionFreshness(position)} /></dd></div>
                 </dl>
+                <details className="valuation-source-details">
+                  <summary>Ver cálculo e fontes</summary>
+                  <ValuationBreakdown position={position} compact />
+                </details>
                 <Link className="investment-secondary-link" to={`/investimentos/ativos/${position.instrumentId}`}>Ver detalhes</Link>
               </article>
             ))}

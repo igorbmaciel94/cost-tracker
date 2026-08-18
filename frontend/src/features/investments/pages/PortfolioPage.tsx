@@ -3,6 +3,8 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { InvestmentApiError, investmentErrorMessage, investmentsApi } from '../api';
 import { AllocationDonut } from '../components/AllocationDonut';
+import { DividendCashCard } from '../components/DividendCashCard';
+import { FxRatesPanel } from '../components/FxRatesPanel';
 import { PortfolioKpis } from '../components/PortfolioKpis';
 import { PortfolioList } from '../components/PortfolioList';
 import { StatePanel } from '../components/StatePanel';
@@ -106,6 +108,8 @@ export function PortfolioPage() {
         </StatePanel>
       )}
       <PortfolioKpis summary={computedSummary} />
+      <DividendCashCard />
+      <FxRatesPanel positions={positions} />
       <div className="portfolio-overview-grid">
         <section className="investment-panel allocation-overview">
           <AllocationDonut
