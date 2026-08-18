@@ -280,7 +280,7 @@ public sealed class InvestmentMarketDataService(
             decimal? nativeValue;
             DateOnly? valueAsOf;
             string valueFreshness;
-            DataReferenceDto? quoteReference = null;
+            MarketQuoteReferenceDto? quoteReference = null;
             if (!requiresMarketData)
             {
                 nativeValue = 0m;
@@ -294,12 +294,18 @@ public sealed class InvestmentMarketDataService(
                 valueFreshness = quote is null ? DataFreshnessCodes.Missing : ClassifyQuote(quote.AsOf, today);
                 if (quote is not null)
                 {
-                    quoteReference = new DataReferenceDto(
+                    quoteReference = new MarketQuoteReferenceDto(
                         quote.AsOf,
                         quote.FetchedAt,
                         quote.ProviderCode,
                         valueFreshness,
-                        quote.IsFallback);
+                        quote.IsFallback,
+                        quote.Price,
+                        quote.Currency.Value,
+                        quote.PriceKind,
+                        quote.ProviderSymbol,
+                        quote.Exchange,
+                        quote.Mic);
                 }
             }
             else
@@ -313,7 +319,7 @@ public sealed class InvestmentMarketDataService(
 
             decimal? eurValue;
             string fxFreshness;
-            DataReferenceDto? fxReference;
+            FxRateReferenceDto? fxReference;
             if (!requiresMarketData)
             {
                 eurValue = 0m;
@@ -324,7 +330,16 @@ public sealed class InvestmentMarketDataService(
             {
                 eurValue = nativeValue;
                 fxFreshness = DataFreshnessCodes.Fresh;
-                fxReference = new DataReferenceDto(today, timeProvider.GetUtcNow(), "IDENTITY", DataFreshnessCodes.Fresh, false);
+                fxReference = new FxRateReferenceDto(
+                    today,
+                    timeProvider.GetUtcNow(),
+                    "IDENTITY",
+                    DataFreshnessCodes.Fresh,
+                    false,
+                    1m,
+                    CurrencyCode.Eur.Value,
+                    CurrencyCode.Eur.Value,
+                    "IDENTITY");
             }
             else if (fxRate is null)
             {
@@ -336,12 +351,16 @@ public sealed class InvestmentMarketDataService(
             {
                 eurValue = nativeValue / fxRate.Rate;
                 fxFreshness = ClassifyQuote(fxRate.AsOf, today);
-                fxReference = new DataReferenceDto(
+                fxReference = new FxRateReferenceDto(
                     fxRate.AsOf,
                     fxRate.FetchedAt,
                     fxRate.ProviderCode,
                     fxFreshness,
-                    fxRate.IsFallback);
+                    fxRate.IsFallback,
+                    fxRate.Rate,
+                    fxRate.BaseCurrency.Value,
+                    fxRate.QuoteCurrency.Value,
+                    fxRate.RateKind);
             }
 
             provisional.Add(new ProvisionalValuation(
@@ -944,7 +963,7 @@ public sealed class InvestmentMarketDataService(
         decimal? NativeValue,
         decimal? ValueEur,
         string Freshness,
-        DataReferenceDto? QuoteReference,
-        DataReferenceDto? FxReference,
+        MarketQuoteReferenceDto? QuoteReference,
+        FxRateReferenceDto? FxReference,
         DateOnly? ValueAsOf);
 }

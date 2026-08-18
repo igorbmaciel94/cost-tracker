@@ -512,6 +512,199 @@
   margin-top: 0.2rem;
 }
 
+.valuation-source-details {
+  margin-top: 0.4rem;
+}
+
+.valuation-source-details summary {
+  color: var(--brand);
+  cursor: pointer;
+  font-size: 0.68rem;
+  font-weight: 650;
+}
+
+.valuation-breakdown {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.6rem;
+  margin: 0;
+}
+
+.valuation-breakdown > div {
+  min-width: 0;
+  padding: 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+}
+
+.valuation-breakdown dt {
+  color: var(--text-secondary);
+  font-size: 0.68rem;
+}
+
+.valuation-breakdown dd {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0.25rem 0 0;
+  overflow-wrap: anywhere;
+  font-size: 0.78rem;
+}
+
+.valuation-breakdown dd small {
+  color: var(--text-secondary);
+  font-size: 0.65rem;
+}
+
+.valuation-breakdown-compact {
+  grid-template-columns: minmax(250px, 1fr);
+  margin-top: 0.5rem;
+}
+
+.valuation-breakdown-compact > div {
+  padding: 0.5rem;
+}
+
+.fx-rate-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.65rem;
+}
+
+.fx-rate-list article {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+}
+
+.fx-rate-list span,
+.fx-rate-list small {
+  color: var(--text-secondary);
+  font-size: 0.68rem;
+}
+
+.dividend-cash-total {
+  display: grid;
+  justify-items: end;
+  gap: 0.15rem;
+}
+
+.dividend-cash-total span,
+.dividend-cash-balances small {
+  color: var(--text-secondary);
+  font-size: 0.68rem;
+}
+
+.dividend-cash-balances {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.65rem;
+}
+
+.dividend-cash-balances article {
+  display: grid;
+  gap: 0.18rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--positive);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+}
+
+.dividend-cash-balances article > span {
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  font-weight: 650;
+}
+
+.dividend-registration {
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+}
+
+.dividend-registration summary {
+  color: var(--brand);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.dividend-registration > p {
+  margin: 0.6rem 0 0.8rem;
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+}
+
+.dividend-event-list {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+}
+
+.dividend-event-list > article {
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.dividend-event-list article > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+
+.dividend-event-list article > header > div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.dividend-event-list small,
+.dividend-event-list p {
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+}
+
+.dividend-event-list dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0.7rem 0 0;
+}
+
+.dividend-event-list dt {
+  color: var(--text-secondary);
+  font-size: 0.65rem;
+}
+
+.dividend-event-list dd {
+  margin: 0.15rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 650;
+}
+
+.investment-text-button {
+  min-height: auto;
+  margin-top: 0.65rem;
+  padding: 0;
+  color: var(--danger);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  font-size: 0.7rem;
+}
+
+.investment-text-button:hover:not(:disabled) {
+  background: transparent;
+  box-shadow: none;
+  text-decoration: underline;
+  transform: none;
+}
+
 .asset-class-pill {
   display: inline-flex;
   padding: 0.25rem 0.5rem;
@@ -1034,7 +1227,8 @@
   }
 
   .instrument-detail-kpis,
-  .contribution-line dl {
+  .contribution-line dl,
+  .dividend-event-list dl {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
@@ -1200,7 +1394,8 @@
   }
 
   .instrument-detail-kpis,
-  .contribution-line dl {
+  .contribution-line dl,
+  .dividend-event-list dl {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 

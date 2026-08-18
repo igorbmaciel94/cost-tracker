@@ -19,6 +19,7 @@ export type TransactionType =
   | 'WITHDRAWAL'
   | 'ADJUSTMENT';
 export type ContributionPlanStatus = 'DRAFT' | 'CONFIRMED' | 'EXPIRED' | 'CANCELLED';
+export type DividendEventStatus = 'SCHEDULED' | 'DUE' | 'CREDITED' | 'NO_ENTITLEMENT';
 
 export interface MoneyDto {
   amount: number;
@@ -32,12 +33,30 @@ export interface AllocationTargetDto {
   currentValueEur?: number;
 }
 
-export interface MarketDataReferenceDto {
+export interface MarketQuoteReferenceDto {
   asOf: string | null;
   fetchedAt?: string | null;
   source?: string | null;
   freshness: FreshnessStatus;
   isFallback?: boolean;
+  price: number;
+  currency: CurrencyCode;
+  priceKind: string;
+  providerSymbol: string;
+  exchange?: string | null;
+  mic?: string | null;
+}
+
+export interface FxRateReferenceDto {
+  asOf: string | null;
+  fetchedAt?: string | null;
+  source?: string | null;
+  freshness: FreshnessStatus;
+  isFallback?: boolean;
+  rate: number;
+  baseCurrency: CurrencyCode;
+  quoteCurrency: CurrencyCode;
+  rateKind: string;
 }
 
 export interface InstrumentPositionDto {
@@ -66,8 +85,8 @@ export interface InstrumentPositionDto {
   quantityStep?: number;
   archived?: boolean;
   freshness?: FreshnessStatus;
-  marketData?: MarketDataReferenceDto | null;
-  fxData?: MarketDataReferenceDto | null;
+  marketData?: MarketQuoteReferenceDto | null;
+  fxData?: FxRateReferenceDto | null;
   lastValuationAsOf?: string | null;
 }
 
@@ -257,4 +276,53 @@ export interface ContributionExecutionLineRequest {
 export interface ConfirmContributionPlanRequest {
   idempotencyKey: string;
   executions: ContributionExecutionLineRequest[];
+}
+
+export interface CreateDividendEventRequest {
+  grossAmountPerUnit: number;
+  withholdingTaxPercent: number;
+  currency: CurrencyCode;
+  exDate: string;
+  paymentDate: string;
+  notes?: string;
+  idempotencyKey: string;
+}
+
+export interface DividendEventDto {
+  id: string;
+  instrumentId: string;
+  instrumentName: string;
+  ticker?: string | null;
+  grossAmountPerUnit: number;
+  withholdingTaxPercent: number;
+  currency: CurrencyCode;
+  exDate: string;
+  paymentDate: string;
+  notes?: string | null;
+  status: DividendEventStatus;
+  eligibleQuantity?: number | null;
+  grossAmount?: number | null;
+  withholdingTaxAmount?: number | null;
+  netAmount?: number | null;
+  currencyPerEurRate?: number | null;
+  netAmountEur?: number | null;
+  fxAsOf?: string | null;
+  fxSource?: string | null;
+  processedAt?: string | null;
+  createdAt: string;
+  canDelete: boolean;
+}
+
+export interface DividendCashBalanceDto {
+  currency: CurrencyCode;
+  amount: number;
+  amountEur?: number | null;
+  lastPaymentDate?: string | null;
+  fxData?: FxRateReferenceDto | null;
+}
+
+export interface DividendCashSummaryDto {
+  totalEur?: number | null;
+  isPartial: boolean;
+  balances: DividendCashBalanceDto[];
 }

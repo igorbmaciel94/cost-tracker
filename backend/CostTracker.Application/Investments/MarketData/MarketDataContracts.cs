@@ -47,12 +47,29 @@ public sealed record MarketInstrumentMappingDto(
     bool IsEnabled,
     DateTimeOffset UpdatedAt);
 
-public sealed record DataReferenceDto(
+public sealed record MarketQuoteReferenceDto(
     DateOnly? AsOf,
     DateTimeOffset? FetchedAt,
     string? Source,
     string Freshness,
-    bool IsFallback);
+    bool IsFallback,
+    decimal Price,
+    string Currency,
+    string PriceKind,
+    string ProviderSymbol,
+    string? Exchange,
+    string? Mic);
+
+public sealed record FxRateReferenceDto(
+    DateOnly? AsOf,
+    DateTimeOffset? FetchedAt,
+    string? Source,
+    string Freshness,
+    bool IsFallback,
+    decimal Rate,
+    string BaseCurrency,
+    string QuoteCurrency,
+    string RateKind);
 
 public sealed record ValuedInvestmentPositionDto(
     Guid InstrumentId,
@@ -80,8 +97,8 @@ public sealed record ValuedInvestmentPositionDto(
     decimal QuantityStep,
     bool Archived,
     string Freshness,
-    DataReferenceDto? MarketData,
-    DataReferenceDto? FxData,
+    MarketQuoteReferenceDto? MarketData,
+    FxRateReferenceDto? FxData,
     DateOnly? LastValuationAsOf);
 
 public sealed record ValuedAllocationTargetDto(

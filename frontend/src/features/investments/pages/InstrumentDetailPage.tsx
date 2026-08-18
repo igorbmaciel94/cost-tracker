@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { investmentErrorMessage, investmentsApi } from '../api';
 import { InvestmentMoney } from '../components/InvestmentMoney';
 import { StatePanel } from '../components/StatePanel';
+import { ValuationBreakdown } from '../components/ValuationBreakdown';
 import { ASSET_CLASS_META, isMarketAssetClass } from '../constants';
 import { investmentQueryKeys } from '../queryKeys';
 import type { CurrencyCode, TransactionType } from '../types';
@@ -14,6 +15,7 @@ import { createIdempotencyKey, todayIso } from '../utils';
 import { formatDateIsoToPt } from '../../../utils/format';
 import { PrivacyMask } from '../../../contexts/PrivacyContext';
 import { ConfirmModal } from '../../../components/ConfirmModal';
+import { DividendEventsPanel } from '../components/DividendEventsPanel';
 
 const transactionSchema = z.object({
   type: z.enum(['BUY', 'SELL', 'DEPOSIT', 'WITHDRAWAL', 'ADJUSTMENT']),
@@ -179,6 +181,15 @@ export function InstrumentDetailPage() {
           <div><dt>Nota</dt><dd>{instrument.allocationScore}</dd></div>
         </dl>
       </section>
+
+      <section className="investment-panel valuation-audit-panel">
+        <header className="investment-panel-header">
+          <div><h2>Como este valor foi calculado</h2><p>Cotação, câmbio, fontes e datas usados no valor final da posição.</p></div>
+        </header>
+        <ValuationBreakdown position={instrument} />
+      </section>
+
+      {!manual && <DividendEventsPanel instrumentId={instrumentId} nativeCurrency={instrument.nativeCurrency} />}
 
       <div className="instrument-detail-grid">
         <section className="investment-panel">
