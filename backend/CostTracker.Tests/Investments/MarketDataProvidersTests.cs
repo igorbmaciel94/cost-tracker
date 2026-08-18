@@ -196,7 +196,9 @@ public class MarketDataProvidersTests
                     "symbol": "KO",
                     "currency": "USD",
                     "fullExchangeName": "NYSE",
-                    "exchangeTimezoneName": "America/New_York"
+                    "exchangeTimezoneName": "America/New_York",
+                    "regularMarketPrice": 71.00,
+                    "regularMarketTime": 1786395600
                   },
                   "timestamp": [1786305600, 1786392000],
                   "indicators": { "quote": [{ "close": [69.25, 70.50] }] }
@@ -220,6 +222,48 @@ public class MarketDataProvidersTests
         var quote = Assert.Single(result.Items);
         Assert.Empty(result.Failures);
         Assert.Equal(70.50m, quote.Price);
+        Assert.Equal("LATEST_AVAILABLE", quote.PriceKind);
+        Assert.True(quote.IsFallback);
+    }
+
+    [Fact]
+    public async Task PublicTestProvider_ShouldUseRegularMarketPriceWhenLatestDailyCloseIsNull()
+    {
+        const string payload = """
+            {
+              "chart": {
+                "result": [{
+                  "meta": {
+                    "symbol": "BAC",
+                    "currency": "USD",
+                    "fullExchangeName": "NYSE",
+                    "exchangeTimezoneName": "America/New_York",
+                    "regularMarketPrice": 63.89,
+                    "regularMarketTime": 1786996803
+                  },
+                  "timestamp": [1786714200, 1786973400],
+                  "indicators": { "quote": [{ "close": [64.49, null] }] }
+                }],
+                "error": null
+              }
+            }
+            """;
+        var provider = new YahooTestMarketQuoteProvider(
+            new HttpClient(new StubHttpMessageHandler(_ => JsonResponse(payload)))
+            {
+                BaseAddress = new Uri("https://query1.finance.yahoo.com/")
+            },
+            Options.Create(new MarketDataOptions { EnablePublicTestQuotes = true }),
+            new FixedTimeProvider(FixedNow));
+
+        var result = await provider.GetLatestQuotesAsync(
+            [new MarketQuoteRequest(Guid.NewGuid(), "BAC", "NYSE", "XNYS", "USD")],
+            CancellationToken.None);
+
+        var quote = Assert.Single(result.Items);
+        Assert.Empty(result.Failures);
+        Assert.Equal(63.89m, quote.Price);
+        Assert.Equal(new DateOnly(2026, 8, 17), quote.AsOf);
         Assert.Equal("LATEST_AVAILABLE", quote.PriceKind);
         Assert.True(quote.IsFallback);
     }
