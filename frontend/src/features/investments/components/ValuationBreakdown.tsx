@@ -7,6 +7,8 @@ function sourceLabel(source?: string | null) {
   switch (source) {
     case 'TWELVE_DATA': return 'Twelve Data';
     case 'MARKETSTACK': return 'Marketstack';
+    case 'ALPHA_VANTAGE': return 'Alpha Vantage';
+    case 'EODHD': return 'EODHD';
     case 'YAHOO_TEST': return 'Yahoo (fallback)';
     case 'ECB': return 'Banco Central Europeu (ECB)';
     case 'BCB_PTAX': return 'Banco Central do Brasil (PTAX)';
@@ -20,7 +22,7 @@ function referenceDate(value?: string | null) {
   return value ? formatDateIsoToPt(value) : 'data indisponível';
 }
 
-export function ValuationBreakdown({ position, compact = false }: { position: InstrumentPositionDto; compact?: boolean }) {
+export function ValuationBreakdown({ position }: { position: InstrumentPositionDto }) {
   const quote = position.marketData;
   const fx = position.fxData;
   const quantity = position.quantity;
@@ -33,7 +35,7 @@ export function ValuationBreakdown({ position, compact = false }: { position: In
     : null;
 
   return (
-    <dl className={compact ? 'valuation-breakdown valuation-breakdown-compact' : 'valuation-breakdown'}>
+    <dl className="valuation-breakdown">
       {position.valuationMode === 'MARKET_QUOTE' && (
         <div>
           <dt>Cotação utilizada</dt>
