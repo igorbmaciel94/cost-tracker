@@ -492,6 +492,7 @@ public sealed class InvestmentMarketDataService(
         var unresolved = instruments
             .Where(item => !refreshedToday.Contains(item.Id))
             .ToDictionary(item => item.Id);
+        var instrumentsWithAcceptedQuote = new HashSet<Guid>();
 
         foreach (var provider in _quoteProviders)
         {
@@ -558,17 +559,23 @@ public sealed class InvestmentMarketDataService(
                 }
 
                 if (TryAddQuoteSnapshot(quote, today))
-                    unresolved.Remove(quote.InstrumentId);
+                {
+                    instrumentsWithAcceptedQuote.Add(quote.InstrumentId);
+                    if (ClassifyQuote(quote.AsOf, today) != DataFreshnessCodes.Blocked)
+                        unresolved.Remove(quote.InstrumentId);
+                }
                 else
                     failures.Add(new ProviderFailure(quote.Provider, quote.ProviderSymbol, "Provider quote failed validation.", false));
             }
         }
 
-        failures.AddRange(unresolved.Values.Select(instrument => new ProviderFailure(
-            "ALL",
-            instrument.Ticker ?? instrument.Name,
-            "No configured provider returned a quote for this instrument.",
-            false)));
+        failures.AddRange(unresolved.Values
+            .Where(instrument => !instrumentsWithAcceptedQuote.Contains(instrument.Id))
+            .Select(instrument => new ProviderFailure(
+                "ALL",
+                instrument.Ticker ?? instrument.Name,
+                "No configured provider returned a quote for this instrument.",
+                false)));
     }
 
     private static string? ResolveProviderSymbol(string providerCode, string? ticker, string? mic)
