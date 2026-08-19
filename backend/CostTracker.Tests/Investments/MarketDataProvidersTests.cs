@@ -106,6 +106,93 @@ public class MarketDataProvidersTests
     }
 
     [Fact]
+    public async Task AlphaVantage_ShouldUseLatestDailyCloseAndApplyTheConfiguredPriceMultiplier()
+    {
+        const string payload = """
+            {
+              "Meta Data": {
+                "1. Information": "Daily Prices (open, high, low, close) and Volumes",
+                "2. Symbol": "BARC.LON",
+                "3. Last Refreshed": "2026-08-18"
+              },
+              "Time Series (Daily)": {
+                "2026-08-17": { "4. close": "515.4000" },
+                "2026-08-18": { "4. close": "503.6000" }
+              }
+            }
+            """;
+        Uri? requestedUri = null;
+        var provider = new AlphaVantageMarketQuoteProvider(
+            new HttpClient(new StubHttpMessageHandler(request =>
+            {
+                requestedUri = request.RequestUri;
+                return JsonResponse(payload);
+            }))
+            {
+                BaseAddress = new Uri("https://www.alphavantage.co/")
+            },
+            Options.Create(new MarketDataOptions { AlphaVantageApiKey = "test-key" }),
+            new FixedTimeProvider(FixedNow));
+
+        var result = await provider.GetLatestQuotesAsync(
+            [new MarketQuoteRequest(Guid.NewGuid(), "BARC.LON", "LSE", "XLON", "GBP", 0.01m)],
+            CancellationToken.None);
+
+        var quote = Assert.Single(result.Items);
+        Assert.Empty(result.Failures);
+        Assert.Equal("/query", requestedUri!.AbsolutePath);
+        Assert.Contains("function=TIME_SERIES_DAILY", requestedUri.Query, StringComparison.Ordinal);
+        Assert.Contains("symbol=BARC.LON", requestedUri.Query, StringComparison.Ordinal);
+        Assert.Equal(MarketDataProviderCodes.AlphaVantage, quote.Provider);
+        Assert.Equal(5.0360m, quote.Price);
+        Assert.Equal("GBP", quote.Currency);
+        Assert.Equal("XLON", quote.Mic);
+        Assert.Equal(new DateOnly(2026, 8, 18), quote.AsOf);
+        Assert.False(quote.IsFallback);
+    }
+
+    [Fact]
+    public async Task AlphaVantage_ShouldNotCallNetworkWithoutApiKey()
+    {
+        var handler = new StubHttpMessageHandler(_ => throw new InvalidOperationException("Network should not be called."));
+        var provider = new AlphaVantageMarketQuoteProvider(
+            new HttpClient(handler) { BaseAddress = new Uri("https://www.alphavantage.co/") },
+            Options.Create(new MarketDataOptions()),
+            new FixedTimeProvider(FixedNow));
+
+        var result = await provider.GetLatestQuotesAsync(
+            [new MarketQuoteRequest(Guid.NewGuid(), "BARC.LON", "LSE", "XLON", "GBP", 0.01m)],
+            CancellationToken.None);
+
+        Assert.Empty(result.Items);
+        Assert.Contains(result.Failures, failure => failure.Message.Contains("not configured", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(0, handler.CallCount);
+    }
+
+    [Fact]
+    public async Task AlphaVantage_ShouldTreatRateLimitInformationAsTransientFailure()
+    {
+        const string payload = """
+            { "Information": "Please spread out free API requests more sparingly." }
+            """;
+        var provider = new AlphaVantageMarketQuoteProvider(
+            new HttpClient(new StubHttpMessageHandler(_ => JsonResponse(payload)))
+            {
+                BaseAddress = new Uri("https://www.alphavantage.co/")
+            },
+            Options.Create(new MarketDataOptions { AlphaVantageApiKey = "test-key" }),
+            new FixedTimeProvider(FixedNow));
+
+        var result = await provider.GetLatestQuotesAsync(
+            [new MarketQuoteRequest(Guid.NewGuid(), "BARC.LON", "LSE", "XLON", "GBP", 0.01m)],
+            CancellationToken.None);
+
+        Assert.Empty(result.Items);
+        var failure = Assert.Single(result.Failures);
+        Assert.True(failure.IsTransient);
+    }
+
+    [Fact]
     public async Task Ecb_ShouldReturnCurrencyUnitsPerEur()
     {
         const string csv = """

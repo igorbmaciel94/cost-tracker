@@ -31,6 +31,7 @@ public static class MarketDataDependencyInjectionExtensions
 
         AddProviderClient<TwelveDataMarketQuoteProvider>(services, "https://api.twelvedata.com/");
         AddProviderClient<MarketstackMarketQuoteProvider>(services, "https://api.marketstack.com/");
+        AddProviderClient<AlphaVantageMarketQuoteProvider>(services, "https://www.alphavantage.co/");
         AddProviderClient<YahooTestMarketQuoteProvider>(services, "https://query1.finance.yahoo.com/");
         AddProviderClient<EcbExchangeRateProvider>(services, "https://data-api.ecb.europa.eu/");
         AddProviderClient<BcbPtaxExchangeRateProvider>(
@@ -39,6 +40,7 @@ public static class MarketDataDependencyInjectionExtensions
 
         services.AddTransient<IMarketQuoteProvider>(provider => provider.GetRequiredService<TwelveDataMarketQuoteProvider>());
         services.AddTransient<IMarketQuoteProvider>(provider => provider.GetRequiredService<MarketstackMarketQuoteProvider>());
+        services.AddTransient<IMarketQuoteProvider>(provider => provider.GetRequiredService<AlphaVantageMarketQuoteProvider>());
         services.AddTransient<IMarketQuoteProvider>(provider => provider.GetRequiredService<YahooTestMarketQuoteProvider>());
         services.AddTransient<IExchangeRateProvider>(provider => provider.GetRequiredService<EcbExchangeRateProvider>());
         services.AddTransient<IExchangeRateProvider>(provider => provider.GetRequiredService<BcbPtaxExchangeRateProvider>());

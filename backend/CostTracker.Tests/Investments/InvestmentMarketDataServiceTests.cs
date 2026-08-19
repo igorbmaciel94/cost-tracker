@@ -75,7 +75,7 @@ public sealed class InvestmentMarketDataServiceTests
     }
 
     [Fact]
-    public async Task Refresh_ShouldUseOnlyYahooForLondonInstruments()
+    public async Task Refresh_ShouldUseAlphaVantageForLondonAndTwelveDataForUs()
     {
         var options = new DbContextOptionsBuilder<CostTrackerDbContext>()
             .UseInMemoryDatabase($"market-london-provider-{Guid.NewGuid():N}")
@@ -91,15 +91,18 @@ public sealed class InvestmentMarketDataServiceTests
         dbContext.MarketInstrumentMappings.AddRange(
             CreateMapping(barc, MarketDataProviderCodes.TwelveData, "BARC"),
             CreateMapping(lloyds, MarketDataProviderCodes.TwelveData, "LLOY", isEnabled: false),
-            CreateMapping(lloyds, MarketDataProviderCodes.Marketstack, "LLOY.XLON"));
+            CreateMapping(lloyds, MarketDataProviderCodes.Marketstack, "LLOY.XLON"),
+            CreateMapping(barc, MarketDataProviderCodes.AlphaVantage, "BARC.LON"),
+            CreateMapping(lloyds, MarketDataProviderCodes.AlphaVantage, "LLOY.LON"));
         await dbContext.SaveChangesAsync();
 
         var twelveData = new CapturingQuoteProvider(FixedNow, MarketDataProviderCodes.TwelveData);
         var marketstack = new CapturingQuoteProvider(FixedNow, MarketDataProviderCodes.Marketstack);
+        var alphaVantage = new CapturingQuoteProvider(FixedNow, MarketDataProviderCodes.AlphaVantage);
         var yahoo = new CapturingQuoteProvider(FixedNow);
         var service = new InvestmentMarketDataService(
             dbContext,
-            [twelveData, marketstack, yahoo],
+            [twelveData, marketstack, alphaVantage, yahoo],
             [new CapturingExchangeRateProvider(FixedNow)],
             new PortfolioProjectionService(),
             Options.Create(new MarketDataOptions
@@ -114,8 +117,9 @@ public sealed class InvestmentMarketDataServiceTests
         Assert.Equal(["O"], twelveData.Requests.Select(request => request.ProviderSymbol).ToArray());
         Assert.Empty(marketstack.Requests);
         Assert.Equal(
-            ["BARC.L", "LLOY.L"],
-            yahoo.Requests.Select(request => request.ProviderSymbol).Order().ToArray());
+            ["BARC.LON", "LLOY.LON"],
+            alphaVantage.Requests.Select(request => request.ProviderSymbol).Order().ToArray());
+        Assert.Empty(yahoo.Requests);
     }
 
     [Fact]
@@ -201,10 +205,12 @@ public sealed class InvestmentMarketDataServiceTests
         var instrument = CreateQuotedInstrument(portfolio, "BARC", "XLON");
         portfolio.Instruments.Add(instrument);
         dbContext.InvestmentPortfolios.Add(portfolio);
+        dbContext.MarketInstrumentMappings.Add(
+            CreateMapping(instrument, MarketDataProviderCodes.AlphaVantage, "BARC.LON"));
         await dbContext.SaveChangesAsync();
 
         var blockedProvider = new FixedQuoteProvider(
-            "BLOCKED_PRIMARY",
+            MarketDataProviderCodes.AlphaVantage,
             FixedNow,
             new DateOnly(2023, 10, 18),
             1.5164m);

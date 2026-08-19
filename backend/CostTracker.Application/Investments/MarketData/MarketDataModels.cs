@@ -4,6 +4,7 @@ public static class MarketDataProviderCodes
 {
     public const string TwelveData = "TWELVE_DATA";
     public const string Marketstack = "MARKETSTACK";
+    public const string AlphaVantage = "ALPHA_VANTAGE";
     public const string YahooTest = "YAHOO_TEST";
     public const string Ecb = "ECB";
     public const string BcbPtax = "BCB_PTAX";
