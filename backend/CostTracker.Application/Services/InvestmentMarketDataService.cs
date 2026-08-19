@@ -509,6 +509,14 @@ public sealed class InvestmentMarketDataService(
                     string.Equals(item.ProviderCode, provider.ProviderCode, StringComparison.OrdinalIgnoreCase));
                 if (explicitMapping is { IsEnabled: false })
                     continue;
+                // The configured Twelve Data and Marketstack plans do not provide
+                // current London quotes. Route London instruments to Yahoo until a
+                // dedicated LSE provider is added.
+                if (IsLondonExchange(explicitMapping?.Mic ?? instrument.Mic) &&
+                    provider.ProviderCode is MarketDataProviderCodes.TwelveData or MarketDataProviderCodes.Marketstack)
+                {
+                    continue;
+                }
                 // Marketstack EOD rows do not identify the quote currency/unit.
                 // Requiring an explicit mapping prevents an LSE pence quote from
                 // being labelled as GBP and overstating the position by 100x.
@@ -593,6 +601,10 @@ public sealed class InvestmentMarketDataService(
             _ => ticker
         };
     }
+
+    private static bool IsLondonExchange(string? mic)
+        => string.Equals(mic?.Trim(), "XLON", StringComparison.OrdinalIgnoreCase) ||
+           string.Equals(mic?.Trim(), "LSE", StringComparison.OrdinalIgnoreCase);
 
     private async Task RefreshExchangeRatesAsync(
         IReadOnlyList<InvestmentInstrument> instruments,

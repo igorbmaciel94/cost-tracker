@@ -75,6 +75,50 @@ public sealed class InvestmentMarketDataServiceTests
     }
 
     [Fact]
+    public async Task Refresh_ShouldUseOnlyYahooForLondonInstruments()
+    {
+        var options = new DbContextOptionsBuilder<CostTrackerDbContext>()
+            .UseInMemoryDatabase($"market-london-provider-{Guid.NewGuid():N}")
+            .Options;
+        await using var dbContext = new CostTrackerDbContext(options);
+        var portfolio = InvestmentPortfolio.Create(FixedNow);
+        var barc = CreateQuotedInstrument(portfolio, "BARC", "XLON");
+        var lloyds = CreateQuotedInstrument(portfolio, "LLOY", "LSE");
+        portfolio.Instruments.Add(barc);
+        portfolio.Instruments.Add(lloyds);
+        portfolio.Instruments.Add(CreateQuotedInstrument(portfolio, "O", "XNYS"));
+        dbContext.InvestmentPortfolios.Add(portfolio);
+        dbContext.MarketInstrumentMappings.AddRange(
+            CreateMapping(barc, MarketDataProviderCodes.TwelveData, "BARC"),
+            CreateMapping(lloyds, MarketDataProviderCodes.TwelveData, "LLOY", isEnabled: false),
+            CreateMapping(lloyds, MarketDataProviderCodes.Marketstack, "LLOY.XLON"));
+        await dbContext.SaveChangesAsync();
+
+        var twelveData = new CapturingQuoteProvider(FixedNow, MarketDataProviderCodes.TwelveData);
+        var marketstack = new CapturingQuoteProvider(FixedNow, MarketDataProviderCodes.Marketstack);
+        var yahoo = new CapturingQuoteProvider(FixedNow);
+        var service = new InvestmentMarketDataService(
+            dbContext,
+            [twelveData, marketstack, yahoo],
+            [new CapturingExchangeRateProvider(FixedNow)],
+            new PortfolioProjectionService(),
+            Options.Create(new MarketDataOptions
+            {
+                RefreshTimeZone = "Europe/Lisbon",
+                EnablePublicTestQuotes = true
+            }),
+            new FixedTimeProvider(FixedNow));
+
+        await service.RefreshAsync();
+
+        Assert.Equal(["O"], twelveData.Requests.Select(request => request.ProviderSymbol).ToArray());
+        Assert.Empty(marketstack.Requests);
+        Assert.Equal(
+            ["BARC.L", "LLOY.L"],
+            yahoo.Requests.Select(request => request.ProviderSymbol).Order().ToArray());
+    }
+
+    [Fact]
     public async Task Refresh_ShouldRetryAStaleQuoteOnlyWhenRequestedLaterOnTheSameDay()
     {
         var now = new DateTimeOffset(2026, 8, 18, 6, 44, 0, TimeSpan.Zero);
@@ -220,9 +264,31 @@ public sealed class InvestmentMarketDataServiceTests
             UpdatedAt = FixedNow
         };
 
-    private sealed class CapturingQuoteProvider(DateTimeOffset fetchedAt) : IMarketQuoteProvider
+    private static MarketInstrumentMapping CreateMapping(
+        InvestmentInstrument instrument,
+        string providerCode,
+        string providerSymbol,
+        bool isEnabled = true)
+        => new()
+        {
+            Id = Guid.NewGuid(),
+            InstrumentId = instrument.Id,
+            Instrument = instrument,
+            ProviderCode = providerCode,
+            ProviderSymbol = providerSymbol,
+            Exchange = "LSE",
+            Mic = "XLON",
+            QuoteCurrency = instrument.NativeCurrency,
+            IsEnabled = isEnabled,
+            CreatedAt = FixedNow,
+            UpdatedAt = FixedNow
+        };
+
+    private sealed class CapturingQuoteProvider(
+        DateTimeOffset fetchedAt,
+        string providerCode = MarketDataProviderCodes.YahooTest) : IMarketQuoteProvider
     {
-        public string ProviderCode => MarketDataProviderCodes.YahooTest;
+        public string ProviderCode => providerCode;
         public IReadOnlyList<MarketQuoteRequest> Requests { get; private set; } = [];
 
         public Task<ProviderBatchResult<MarketQuoteResult>> GetLatestQuotesAsync(
