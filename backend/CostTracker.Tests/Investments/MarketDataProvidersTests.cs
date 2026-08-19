@@ -193,6 +193,64 @@ public class MarketDataProvidersTests
     }
 
     [Fact]
+    public async Task Eodhd_ShouldUseLatestDailyCloseAndApplyTheConfiguredPriceMultiplier()
+    {
+        const string payload = """
+            [
+              { "date": "2026-08-17", "close": 515.4 },
+              { "date": "2026-08-18", "close": 503.6 }
+            ]
+            """;
+        Uri? requestedUri = null;
+        var provider = new EodhdMarketQuoteProvider(
+            new HttpClient(new StubHttpMessageHandler(request =>
+            {
+                requestedUri = request.RequestUri;
+                return JsonResponse(payload);
+            }))
+            {
+                BaseAddress = new Uri("https://eodhd.com/api/")
+            },
+            Options.Create(new MarketDataOptions { EodhdApiKey = "test-key" }),
+            new FixedTimeProvider(FixedNow));
+
+        var result = await provider.GetLatestQuotesAsync(
+            [new MarketQuoteRequest(Guid.NewGuid(), "BARC.LSE", "LSE", "XLON", "GBP", 0.01m)],
+            CancellationToken.None);
+
+        var quote = Assert.Single(result.Items);
+        Assert.Empty(result.Failures);
+        Assert.Equal("/api/eod/BARC.LSE", requestedUri!.AbsolutePath);
+        Assert.Contains("api_token=test-key", requestedUri.Query, StringComparison.Ordinal);
+        Assert.Contains("fmt=json", requestedUri.Query, StringComparison.Ordinal);
+        Assert.Contains("from=2026-07-12", requestedUri.Query, StringComparison.Ordinal);
+        Assert.Equal(MarketDataProviderCodes.Eodhd, quote.Provider);
+        Assert.Equal(5.036m, quote.Price);
+        Assert.Equal("GBP", quote.Currency);
+        Assert.Equal("XLON", quote.Mic);
+        Assert.Equal(new DateOnly(2026, 8, 18), quote.AsOf);
+        Assert.True(quote.IsFallback);
+    }
+
+    [Fact]
+    public async Task Eodhd_ShouldNotCallNetworkWithoutApiKey()
+    {
+        var handler = new StubHttpMessageHandler(_ => throw new InvalidOperationException("Network should not be called."));
+        var provider = new EodhdMarketQuoteProvider(
+            new HttpClient(handler) { BaseAddress = new Uri("https://eodhd.com/api/") },
+            Options.Create(new MarketDataOptions()),
+            new FixedTimeProvider(FixedNow));
+
+        var result = await provider.GetLatestQuotesAsync(
+            [new MarketQuoteRequest(Guid.NewGuid(), "BARC.LSE", "LSE", "XLON", "GBP", 0.01m)],
+            CancellationToken.None);
+
+        Assert.Empty(result.Items);
+        Assert.Contains(result.Failures, failure => failure.Message.Contains("not configured", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(0, handler.CallCount);
+    }
+
+    [Fact]
     public async Task Ecb_ShouldReturnCurrencyUnitsPerEur()
     {
         const string csv = """

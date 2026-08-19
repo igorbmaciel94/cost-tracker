@@ -4,17 +4,17 @@ Pesquisa verificada em **19 de agosto de 2026**, usando fontes oficiais dos prov
 
 ## Conclusão
 
-A alternativa gratuita validada para `BARC` é o **Alpha Vantage**. A documentação oficial inclui ações da London Stock Exchange no endpoint diário global, usa o sufixo `.LON` e permite as 100 observações mais recentes com chave gratuita. A franquia gratuita atual é de **25 chamadas por dia**, suficiente para uma consulta EOD diária de `BARC`. O fornecedor também declara que licencia dados oficialmente da LSE. [Documentação do `TIME_SERIES_DAILY`](https://www.alphavantage.co/documentation/#daily), [limite gratuito](https://www.alphavantage.co/support/) e [origens/cobertura](https://www.alphavantage.co/stock_api_landing/)
+As alternativas gratuitas validadas para `BARC` são **Alpha Vantage** e **EODHD**. O Alpha Vantage inclui ações da London Stock Exchange no endpoint diário global, usa o sufixo `.LON` e permite as 100 observações mais recentes com chave gratuita. A franquia gratuita atual é de **25 chamadas por dia**. O EODHD usa o símbolo `BARC.LSE`, aceitou a chave gratuita no endpoint EOD e anuncia **20 chamadas por dia**. [Documentação do `TIME_SERIES_DAILY`](https://www.alphavantage.co/documentation/#daily), [limite gratuito Alpha Vantage](https://www.alphavantage.co/support/) e [API EODHD](https://eodhd.com/financial-apis/api-for-historical-data-and-volumes)
 
-O símbolo `BARC.LON` foi confirmado diretamente no `TIME_SERIES_DAILY`: o Alpha Vantage retornou 18/08/2026 como último pregão concluído e fechamento de `503,60 GBX`, idêntico ao Yahoo para a mesma data. A LSE confirma o ticker `BARC`, MIC `XLON`, moeda de cotação `GBX` e ISIN `GB0031348658`. [Instrumento oficial na LSE](https://www.londonstockexchange.com/stock/BARC/barclays-plc/company-page)
+Os símbolos `BARC.LON` e `BARC.LSE` foram confirmados diretamente: Alpha Vantage e EODHD retornaram 18/08/2026 como último pregão concluído e fechamento de `503,60 GBX`; o Yahoo também mostrou esse fechamento para a mesma data e já exibiu `496,10 GBX` para 19/08. A LSE confirma o ticker `BARC`, MIC `XLON`, moeda de cotação `GBX` e ISIN `GB0031348658`. [Instrumento oficial na LSE](https://www.londonstockexchange.com/stock/BARC/barclays-plc/company-page)
 
 Não foi encontrado outro provedor que possa ser afirmado, sem credenciais, como fonte gratuita e atual de `BARC/XLON`. O **London Strategic Edge** é uma segunda tentativa experimental: declara API REST gratuita, sem cartão, candles diários e ações internacionais, mas não expõe publicamente a lista que permitiria confirmar BARC nem a linhagem do feed. [API gratuita](https://londonstrategicedge.com/free-market-data-api/) e [limites do databank](https://www.londonstrategicedge.com/data/)
 
 Recomendação operacional:
 
-1. Usar Alpha Vantage para `BARC`, mantendo o Yahoo como fallback.
+1. Usar Alpha Vantage para `BARC`, EODHD como segundo provedor e Yahoo como fallback final.
 2. Preservar o multiplicador `0,01` para converter a cotação em `GBX` para `GBP`.
-3. Tratar limite de requisições ou resposta sem série diária como falha e continuar automaticamente para o Yahoo.
+3. Tratar limite de requisições ou resposta inválida como falha e continuar automaticamente para o próximo provedor.
 4. Manter Marketstack somente como fallback para ativos dos EUA que passem no preflight, não para `BARC`.
 
 ## Comparação
@@ -23,7 +23,7 @@ Recomendação operacional:
 |---|---:|---|---|---|
 | **Alpha Vantage** | 25 chamadas/dia | `TIME_SERIES_DAILY` global; LSE documentada; 100 pontos no `compact` disponível para chaves grátis | `BARC.LON` | **Validado** contra o Yahoo em três pregões consecutivos |
 | **London Strategic Edge** | API grátis; 10 downloads/hora no databank | Declara 3.987 ações US e internacionais e candles de `1d` | não confirmado | Candidato experimental; BARC e origem do feed precisam de preflight |
-| **EODHD** | 20 chamadas/dia | As páginas oficiais divergem: a documentação EOD menciona qualquer ticker, mas a oferta grátis geral limita preços/fundamentos aos EUA | `BARC.LSE` no plano global | Não considerar BARC grátis sem confirmação escrita do fornecedor |
+| **EODHD** | 20 chamadas/dia | O endpoint EOD gratuito aceitou `BARC.LSE`; a documentação permite o último ano | `BARC.LSE` | **Validado** com o mesmo fechamento do Alpha Vantage |
 | **Marketstack** | 100 chamadas/mês; EOD; 1 ano | Declara EOD global, mas o teste do projeto para `BARC.XLON` devolveu como última observação `2023-10-18` | `BARC.XLON` | **Não usar para BARC**; o plano pago Basic não promete corrigir esse feed |
 | **Twelve Data** | 8 créditos/minuto e 800/dia | Grátis para ações/ETFs dos EUA; internacional apenas em símbolos de teste | `BARC`, exchange `LSE`, MIC `XLON` | Catálogo e preço atuais existem, mas o EOD global requer Grow ou superior |
 | **FMP** | 250 chamadas/dia | O Basic grátis oferece EOD apenas para um conjunto limitado; cobertura UK aparece no Premium | normalmente ticker com extensão de bolsa | Não é uma alternativa gratuita para BARC |
@@ -71,7 +71,7 @@ O EODHD usa a convenção `CODE.EXCHANGE`; sua documentação mostra que a Londo
 GET https://eodhd.com/api/eod/BARC.LSE?api_token=<KEY>&fmt=json&from=<YYYY-MM-DD>
 ```
 
-A documentação EOD diz que o plano gratuito dá acesso a qualquer ticker no último ano, com 20 chamadas/dia, mas a página geral da oferta descreve o plano gratuito como limitado a EOD/fundamentos dos EUA. Duas tentativas com chaves próprias devolveram `401 Unauthenticated` antes da validação do símbolo. Portanto, o EODHD permanece fora da integração até a autenticação ser comprovada. O símbolo `BARC.LSE` continua válido para um eventual preflight ou plano global pago. [API EOD](https://eodhd.com/financial-apis/api-for-historical-data-and-volumes), [preços](https://eodhd.com/pricing) e [lista de bolsas](https://eodhd.com/financial-apis/exchanges-api-list-of-tickers-and-trading-hours)
+A documentação EOD diz que o plano gratuito dá acesso a qualquer ticker no último ano, com 20 chamadas/dia, embora a página geral da oferta descreva o plano gratuito como limitado a EOD/fundamentos dos EUA. O preflight autenticado resolveu a ambiguidade para este caso: `AAPL.US` e `BARC.LSE` responderam `HTTP 200`, e `BARC.LSE` retornou fechamento de `503,60 GBX` em 18/08/2026, igual ao Alpha Vantage. O token deve ser enviado como valor do query parameter `api_token`; a variável `EODHD_API_KEY` deve conter somente o token. [API EOD](https://eodhd.com/financial-apis/api-for-historical-data-and-volumes), [preços](https://eodhd.com/pricing) e [lista de bolsas](https://eodhd.com/financial-apis/exchanges-api-list-of-tickers-and-trading-hours)
 
 ### Marketstack e Twelve Data
 
@@ -91,4 +91,4 @@ O Twelve Data identifica oficialmente Barclays como `BARC`, LSE, MIC `XLON`, cot
 
 ## Decisão implementada
 
-Para instrumentos de Londres com mapping explícito e unidade segura, a ordem passa a ser **Alpha Vantage → Yahoo**. Twelve Data e Marketstack continuam ignorados para `XLON/LSE`; para os ativos americanos, permanece **Twelve Data → Marketstack → Yahoo**.
+Para instrumentos de Londres com mapping explícito e unidade segura, a ordem passa a ser **Alpha Vantage → EODHD → Yahoo**. Twelve Data e Marketstack continuam ignorados para `XLON/LSE`; para os ativos americanos, permanece **Twelve Data → Marketstack → Yahoo**.
