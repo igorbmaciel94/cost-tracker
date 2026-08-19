@@ -30,6 +30,8 @@ services:
       Anthropic__ApiKey: ${ANTHROPIC_API_KEY:?ANTHROPIC_API_KEY is required}
       MarketData__TwelveDataApiKey: ${TWELVE_DATA_API_KEY:-}
       MarketData__MarketstackApiKey: ${MARKETSTACK_API_KEY:-}
+      MarketData__AlphaVantageApiKey: ${ALPHA_VANTAGE_API_KEY:-}
+      MarketData__EodhdApiKey: ${EODHD_API_KEY:-}
       MarketData__EnablePublicTestQuotes: ${MARKET_DATA_ENABLE_PUBLIC_TEST_QUOTES:-true}
       MarketData__EnableBackgroundRefresh: ${MARKET_DATA_ENABLE_BACKGROUND_REFRESH:-true}
       MarketData__RefreshOnStartup: ${MARKET_DATA_REFRESH_ON_STARTUP:-true}

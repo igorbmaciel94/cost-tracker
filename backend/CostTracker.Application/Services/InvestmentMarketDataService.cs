@@ -509,18 +509,27 @@ public sealed class InvestmentMarketDataService(
                     string.Equals(item.ProviderCode, provider.ProviderCode, StringComparison.OrdinalIgnoreCase));
                 if (explicitMapping is { IsEnabled: false })
                     continue;
+                var isLondonInstrument = IsLondonExchange(explicitMapping?.Mic ?? instrument.Mic);
                 // The configured Twelve Data and Marketstack plans do not provide
-                // current London quotes. Route London instruments to Yahoo until a
-                // dedicated LSE provider is added.
-                if (IsLondonExchange(explicitMapping?.Mic ?? instrument.Mic) &&
+                // current London quotes. Alpha Vantage and EODHD cover the LSE.
+                if (isLondonInstrument &&
                     provider.ProviderCode is MarketDataProviderCodes.TwelveData or MarketDataProviderCodes.Marketstack)
                 {
                     continue;
                 }
+                if (!isLondonInstrument &&
+                    provider.ProviderCode is MarketDataProviderCodes.AlphaVantage or MarketDataProviderCodes.Eodhd)
+                    continue;
                 // Marketstack EOD rows do not identify the quote currency/unit.
                 // Requiring an explicit mapping prevents an LSE pence quote from
                 // being labelled as GBP and overstating the position by 100x.
                 if (provider.ProviderCode == MarketDataProviderCodes.Marketstack && explicitMapping is null)
+                    continue;
+                // Alpha Vantage and EODHD daily rows also omit the quote
+                // currency/unit. An explicit mapping is required to safely
+                // convert GBX into GBP.
+                if (provider.ProviderCode is MarketDataProviderCodes.AlphaVantage or MarketDataProviderCodes.Eodhd &&
+                    explicitMapping is null)
                     continue;
                 var symbol = explicitMapping?.ProviderSymbol ?? ResolveProviderSymbol(
                     provider.ProviderCode,

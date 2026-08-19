@@ -4,6 +4,8 @@ public sealed class MarketDataOptions
 {
     public string TwelveDataApiKey { get; set; } = string.Empty;
     public string MarketstackApiKey { get; set; } = string.Empty;
+    public string AlphaVantageApiKey { get; set; } = string.Empty;
+    public string EodhdApiKey { get; set; } = string.Empty;
     public bool EnablePublicTestQuotes { get; set; }
     public bool EnableBackgroundRefresh { get; set; }
     public bool RefreshOnStartup { get; set; } = true;
