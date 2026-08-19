@@ -539,17 +539,6 @@
   margin-top: 0.2rem;
 }
 
-.valuation-source-details {
-  margin-top: 0.4rem;
-}
-
-.valuation-source-details summary {
-  color: var(--brand);
-  cursor: pointer;
-  font-size: 0.68rem;
-  font-weight: 650;
-}
-
 .valuation-breakdown {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
@@ -581,15 +570,6 @@
 .valuation-breakdown dd small {
   color: var(--text-secondary);
   font-size: 0.65rem;
-}
-
-.valuation-breakdown-compact {
-  grid-template-columns: minmax(250px, 1fr);
-  margin-top: 0.5rem;
-}
-
-.valuation-breakdown-compact > div {
-  padding: 0.5rem;
 }
 
 .fx-rate-list {
