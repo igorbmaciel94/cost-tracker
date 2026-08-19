@@ -64,6 +64,48 @@ public class MarketDataProvidersTests
     }
 
     [Fact]
+    public async Task Marketstack_ShouldUseV1EodAndApplyTheConfiguredPriceMultiplier()
+    {
+        const string payload = """
+            {
+              "pagination": { "limit": 100, "offset": 0, "count": 1, "total": 1 },
+              "data": [{
+                "symbol": "BARC.XLON",
+                "exchange": "XLON",
+                "date": "2026-08-10T00:00:00+0000",
+                "close": 514.20
+              }]
+            }
+            """;
+        Uri? requestedUri = null;
+        var provider = new MarketstackMarketQuoteProvider(
+            new HttpClient(new StubHttpMessageHandler(request =>
+            {
+                requestedUri = request.RequestUri;
+                return JsonResponse(payload);
+            }))
+            {
+                BaseAddress = new Uri("https://api.marketstack.com/")
+            },
+            Options.Create(new MarketDataOptions { MarketstackApiKey = "test-key" }),
+            new FixedTimeProvider(FixedNow));
+
+        var result = await provider.GetLatestQuotesAsync(
+            [new MarketQuoteRequest(Guid.NewGuid(), "BARC.XLON", "LSE", "XLON", "GBP", 0.01m)],
+            CancellationToken.None);
+
+        var quote = Assert.Single(result.Items);
+        Assert.Empty(result.Failures);
+        Assert.Equal("/v1/eod/latest", requestedUri!.AbsolutePath);
+        Assert.Contains("symbols=BARC.XLON", requestedUri.Query, StringComparison.Ordinal);
+        Assert.Equal(5.1420m, quote.Price);
+        Assert.Equal("GBP", quote.Currency);
+        Assert.Equal("XLON", quote.Exchange);
+        Assert.Equal("XLON", quote.Mic);
+        Assert.True(quote.IsFallback);
+    }
+
+    [Fact]
     public async Task Ecb_ShouldReturnCurrencyUnitsPerEur()
     {
         const string csv = """

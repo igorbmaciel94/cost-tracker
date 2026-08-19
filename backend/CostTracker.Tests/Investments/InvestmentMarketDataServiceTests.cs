@@ -146,6 +146,57 @@ public sealed class InvestmentMarketDataServiceTests
             asOf => Assert.Equal(new DateOnly(2026, 8, 17), asOf));
     }
 
+    [Fact]
+    public async Task Refresh_ShouldContinueToFallbackWhenAProviderReturnsABlockedQuote()
+    {
+        var options = new DbContextOptionsBuilder<CostTrackerDbContext>()
+            .UseInMemoryDatabase($"market-blocked-fallback-{Guid.NewGuid():N}")
+            .Options;
+        await using var dbContext = new CostTrackerDbContext(options);
+        var portfolio = InvestmentPortfolio.Create(FixedNow);
+        var instrument = CreateQuotedInstrument(portfolio, "BARC", "XLON");
+        portfolio.Instruments.Add(instrument);
+        dbContext.InvestmentPortfolios.Add(portfolio);
+        await dbContext.SaveChangesAsync();
+
+        var blockedProvider = new FixedQuoteProvider(
+            "BLOCKED_PRIMARY",
+            FixedNow,
+            new DateOnly(2023, 10, 18),
+            1.5164m);
+        var freshProvider = new FixedQuoteProvider(
+            "YAHOO_TEST",
+            FixedNow,
+            new DateOnly(2026, 8, 10),
+            5.1420m);
+        var service = new InvestmentMarketDataService(
+            dbContext,
+            [blockedProvider, freshProvider],
+            [new CapturingExchangeRateProvider(FixedNow)],
+            new PortfolioProjectionService(),
+            Options.Create(new MarketDataOptions
+            {
+                RefreshTimeZone = "Europe/Lisbon",
+                EnablePublicTestQuotes = true,
+                QuoteWarningSessions = 1,
+                QuoteBlockingSessions = 2
+            }),
+            new FixedTimeProvider(FixedNow));
+
+        var status = await service.RefreshAsync();
+
+        Assert.Equal(DataFreshnessCodes.Fresh, status.Freshness);
+        Assert.Equal(1, blockedProvider.CallCount);
+        Assert.Equal(1, freshProvider.CallCount);
+        var snapshots = await dbContext.MarketQuoteSnapshots
+            .Where(item => item.InstrumentId == instrument.Id)
+            .OrderBy(item => item.AsOf)
+            .ToListAsync();
+        Assert.Equal(2, snapshots.Count);
+        Assert.Equal("YAHOO_TEST", snapshots[^1].ProviderCode);
+        Assert.Equal(5.1420m, snapshots[^1].Price);
+    }
+
     private static InvestmentInstrument CreateQuotedInstrument(
         InvestmentPortfolio portfolio,
         string ticker,
@@ -222,6 +273,37 @@ public sealed class InvestmentMarketDataServiceTests
                 fetchedAt,
                 true,
                 new string('c', 64))).ToList();
+            return Task.FromResult(new ProviderBatchResult<MarketQuoteResult>(quotes, []));
+        }
+    }
+
+    private sealed class FixedQuoteProvider(
+        string providerCode,
+        DateTimeOffset fetchedAt,
+        DateOnly asOf,
+        decimal price) : IMarketQuoteProvider
+    {
+        public string ProviderCode => providerCode;
+        public int CallCount { get; private set; }
+
+        public Task<ProviderBatchResult<MarketQuoteResult>> GetLatestQuotesAsync(
+            IReadOnlyList<MarketQuoteRequest> requests,
+            CancellationToken cancellationToken)
+        {
+            CallCount++;
+            IReadOnlyList<MarketQuoteResult> quotes = requests.Select(request => new MarketQuoteResult(
+                request.InstrumentId,
+                ProviderCode,
+                request.ProviderSymbol,
+                request.Exchange,
+                request.Mic,
+                price,
+                request.ExpectedCurrency,
+                "EOD_CLOSE",
+                asOf,
+                fetchedAt,
+                true,
+                new string('e', 64))).ToList();
             return Task.FromResult(new ProviderBatchResult<MarketQuoteResult>(quotes, []));
         }
     }

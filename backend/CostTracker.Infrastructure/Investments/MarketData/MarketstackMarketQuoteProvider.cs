@@ -36,7 +36,7 @@ public sealed class MarketstackMarketQuoteProvider(
         {
             try
             {
-                var uri = $"v2/eod/latest?access_key={Uri.EscapeDataString(options.Value.MarketstackApiKey)}" +
+                var uri = $"v1/eod/latest?access_key={Uri.EscapeDataString(options.Value.MarketstackApiKey)}" +
                           $"&symbols={Uri.EscapeDataString(request.ProviderSymbol)}";
                 using var response = await httpClient.GetAsync(uri, cancellationToken);
                 var payload = await response.Content.ReadAsStringAsync(cancellationToken);
