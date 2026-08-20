@@ -3,17 +3,14 @@ import type { AssetClass, CurrencyCode, InstrumentKind, InvestableAssetClass } f
 export const ASSET_CLASSES: AssetClass[] = [
   'STOCKS',
   'REITS',
-  'BRAZIL_FIXED_INCOME',
+  'CRYPTOCURRENCIES',
   'INTERNATIONAL_FIXED_INCOME',
-  'CRYPTOCURRENCIES'
+  'BRAZIL_FIXED_INCOME'
 ];
 
-export const INVESTABLE_ASSET_CLASSES: InvestableAssetClass[] = [
-  'STOCKS',
-  'REITS',
-  'BRAZIL_FIXED_INCOME',
-  'INTERNATIONAL_FIXED_INCOME'
-];
+export const INVESTABLE_ASSET_CLASSES: InvestableAssetClass[] = ASSET_CLASSES.filter(
+  (assetClass): assetClass is InvestableAssetClass => assetClass !== 'CRYPTOCURRENCIES'
+);
 
 export const ASSET_CLASS_META: Record<
   AssetClass,

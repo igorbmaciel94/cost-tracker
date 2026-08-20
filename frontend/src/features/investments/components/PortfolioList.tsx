@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ASSET_CLASS_META, INVESTABLE_ASSET_CLASSES } from '../constants';
+import { ASSET_CLASSES, ASSET_CLASS_META, INVESTABLE_ASSET_CLASSES } from '../constants';
 import type { InstrumentPositionDto, InvestableAssetClass } from '../types';
 import { formatDateIsoToPt, formatPercent } from '../../../utils/format';
 import { PrivacyMask } from '../../../contexts/PrivacyContext';
@@ -41,6 +41,9 @@ export function PortfolioList({ positions, selectedClass, onSelectClass }: Portf
   const filtered = selectedClass === 'ALL'
     ? positions
     : positions.filter((position) => position.assetClass === selectedClass);
+  const orderedPositions = [...filtered].sort(
+    (left, right) => ASSET_CLASSES.indexOf(left.assetClass) - ASSET_CLASSES.indexOf(right.assetClass)
+  );
 
   return (
     <section className="investment-panel portfolio-list-panel">
@@ -91,7 +94,7 @@ export function PortfolioList({ positions, selectedClass, onSelectClass }: Portf
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((position) => (
+                {orderedPositions.map((position) => (
                   <tr key={position.instrumentId}>
                     <td><InstrumentName position={position} /></td>
                     <td><span className="asset-class-pill" style={{ '--asset-color': ASSET_CLASS_META[position.assetClass].color } as React.CSSProperties}>{ASSET_CLASS_META[position.assetClass].shortLabel}</span></td>
@@ -111,7 +114,7 @@ export function PortfolioList({ positions, selectedClass, onSelectClass }: Portf
           </div>
 
           <div className="instrument-card-list">
-            {filtered.map((position) => (
+            {orderedPositions.map((position) => (
               <article className="instrument-card" key={position.instrumentId}>
                 <header>
                   <InstrumentName position={position} />
