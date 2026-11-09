@@ -15,6 +15,60 @@ public sealed class InvestmentMarketDataServiceTests
 {
     private static readonly DateTimeOffset FixedNow = new(2026, 8, 11, 6, 0, 0, TimeSpan.Zero);
 
+    [Theory]
+    [InlineData(AssetClass.BrazilFixedIncome, 8, "BRL", 0, "FRESH")]
+    [InlineData(AssetClass.BrazilFixedIncome, 180, "BRL", 0, "FRESH")]
+    [InlineData(AssetClass.InternationalFixedIncome, 8, "USD", 0, "FRESH")]
+    [InlineData(AssetClass.InternationalFixedIncome, 180, "EUR", 0, "FRESH")]
+    [InlineData(AssetClass.InternationalFixedIncome, 180, "USD", 30, "BLOCKED")]
+    [InlineData(AssetClass.BrazilFixedIncome, 180, "BRL", -1, "MISSING")]
+    [InlineData(AssetClass.BrazilFixedIncome, -1, "BRL", 0, "MISSING")]
+    [InlineData(AssetClass.InternationalFixedIncome, -1, "EUR", 0, "MISSING")]
+    [InlineData(AssetClass.Stocks, 8, "EUR", 0, "STALE")]
+    [InlineData(AssetClass.Stocks, 180, "EUR", 0, "BLOCKED")]
+    public async Task ManualBalanceFreshness_ShouldRespectAssetClassAndRequiredData(
+        AssetClass assetClass, int ageDays, string currency, int fxAgeDays, string expected)
+    {
+        var options = new DbContextOptionsBuilder<CostTrackerDbContext>()
+            .UseInMemoryDatabase($"fixed-income-age-{Guid.NewGuid():N}").Options;
+        await using var dbContext = new CostTrackerDbContext(options);
+        var portfolio = InvestmentPortfolio.Create(FixedNow);
+        var instrument = CreateQuotedInstrument(portfolio, "FIXED", "XNYS");
+        instrument.AssetClass = assetClass;
+        instrument.Kind = InstrumentKind.Bond;
+        instrument.ValuationMode = ValuationMode.Manual;
+        instrument.NativeCurrency = new CurrencyCode(currency);
+        if (ageDays >= 0)
+            instrument.ManualValuations.Add(new ManualValuation
+            {
+                Id = Guid.NewGuid(), InstrumentId = instrument.Id, Instrument = instrument,
+                Amount = 1000m, Currency = instrument.NativeCurrency,
+                AsOf = DateOnly.FromDateTime(FixedNow.UtcDateTime).AddDays(-ageDays),
+                RecordedAt = FixedNow.AddDays(-ageDays), IdempotencyKey = "balance"
+            });
+        if (currency != "EUR" && fxAgeDays >= 0)
+            dbContext.FxRateSnapshots.Add(new FxRateSnapshot
+            {
+                Id = Guid.NewGuid(), BaseCurrency = CurrencyCode.Eur,
+                QuoteCurrency = instrument.NativeCurrency, Rate = 5m,
+                AsOf = DateOnly.FromDateTime(FixedNow.UtcDateTime).AddDays(-fxAgeDays),
+                FetchedAt = FixedNow, ProviderCode = "TEST"
+            });
+        portfolio.Instruments.Add(instrument);
+        dbContext.InvestmentPortfolios.Add(portfolio);
+        await dbContext.SaveChangesAsync();
+        var service = new InvestmentMarketDataService(dbContext, [], [],
+            new PortfolioProjectionService(), Options.Create(new MarketDataOptions()),
+            new FixedTimeProvider(FixedNow));
+
+        var status = await service.GetStatusAsync();
+        var valuation = await service.GetPortfolioValuationAsync();
+
+        Assert.Equal(expected, status.Freshness);
+        Assert.Equal(expected, valuation.Summary.Freshness);
+        Assert.Equal(expected, Assert.Single(valuation.Positions).Freshness);
+    }
+
     [Fact]
     public async Task Refresh_ShouldSeedEverySupportedFxCurrencyWithoutInstruments()
     {

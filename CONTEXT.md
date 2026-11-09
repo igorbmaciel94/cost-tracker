@@ -38,6 +38,7 @@ _Evitar_: Valor justo, preço em tempo real
 
 **Avaliação manual**:
 O saldo corrente informado pelo usuário para uma posição sem cotação automática.
+Para Renda Fixa Brasil e Renda Fixa Internacional, permanece válido até uma nova avaliação, sem expirar por idade. O câmbio necessário à conversão continua sujeito às regras de atualização.
 _Evitar_: Aporte, custo de aquisição
 
 **Plano de aporte**:

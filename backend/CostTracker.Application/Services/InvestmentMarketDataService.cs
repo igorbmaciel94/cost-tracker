@@ -313,7 +313,7 @@ public sealed class InvestmentMarketDataService(
                 nativeValue = position.CurrentManualValueNative;
                 valueAsOf = position.CurrentManualValueAsOf;
                 valueFreshness = valueAsOf.HasValue
-                    ? ClassifyManualValuation(valueAsOf.Value, today)
+                    ? ClassifyManualValuation(instrument.AssetClass, valueAsOf.Value, today)
                     : DataFreshnessCodes.Missing;
             }
 
@@ -845,7 +845,7 @@ public sealed class InvestmentMarketDataService(
                     .FirstOrDefault();
                 valueStatus = valuation is null
                     ? DataFreshnessCodes.Missing
-                    : ClassifyManualValuation(valuation.AsOf, today);
+                    : ClassifyManualValuation(instrument.AssetClass, valuation.AsOf, today);
                 if (valuation is not null)
                 {
                     dates.Add(valuation.AsOf);
@@ -910,8 +910,12 @@ public sealed class InvestmentMarketDataService(
             : DataFreshnessCodes.Blocked;
     }
 
-    private string ClassifyManualValuation(DateOnly asOf, DateOnly today)
+    private string ClassifyManualValuation(AssetClass assetClass, DateOnly asOf, DateOnly today)
     {
+        // Fixed-income balances remain valid until the user records a new valuation.
+        if (assetClass is AssetClass.BrazilFixedIncome or AssetClass.InternationalFixedIncome)
+            return DataFreshnessCodes.Fresh;
+
         var age = Math.Max(0, today.DayNumber - asOf.DayNumber);
         if (age <= options.Value.ManualValuationWarningDays)
             return DataFreshnessCodes.Fresh;
