@@ -104,6 +104,13 @@
   border: 1px solid var(--border);
 }
 
+.investment-secondary-link:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--brand-soft);
+  border-color: var(--brand-muted);
+  box-shadow: none;
+}
+
 .investments-tabs {
   display: flex;
   gap: 0.75rem;
